@@ -84,7 +84,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="luxury-divider mb-6" />
+        <div className="luxury-divider mb-4 sm:mb-6" />
         <p className="text-center text-xs text-muted-foreground tracking-[0.2em] uppercase">© 2026 HIGHLIGHTS. All rights reserved.</p>
       </div>
     </footer>
