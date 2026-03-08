@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       orders: {
         Row: {
+          consignment_id: string | null
+          courier_provider: string | null
           created_at: string
           customer_address: string
           customer_city: string
@@ -27,10 +29,13 @@ export type Database = {
           payment_method: string
           status: string
           total: number
+          tracking_code: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          consignment_id?: string | null
+          courier_provider?: string | null
           created_at?: string
           customer_address: string
           customer_city: string
@@ -42,10 +47,13 @@ export type Database = {
           payment_method?: string
           status?: string
           total: number
+          tracking_code?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          consignment_id?: string | null
+          courier_provider?: string | null
           created_at?: string
           customer_address?: string
           customer_city?: string
@@ -57,6 +65,7 @@ export type Database = {
           payment_method?: string
           status?: string
           total?: number
+          tracking_code?: string | null
           updated_at?: string
           user_id?: string | null
         }
