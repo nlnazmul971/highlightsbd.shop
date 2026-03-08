@@ -252,23 +252,27 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Reviews */}
-            {reviews.length > 0 && (
-              <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
-                <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
-                <div className="space-y-3 sm:space-y-4">
+            {/* Review Form & Reviews */}
+            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
+              <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
+              
+              <ReviewForm productId={product.id} />
+
+              {reviews.length > 0 && (
+                <div className="space-y-3 sm:space-y-4 mt-6">
                   {reviews.map(r => (
                     <div key={r.id} className="pb-3 sm:pb-4 border-b border-border last:border-0">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} size={11} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />)}</div>
                         <span className="text-[11px] font-medium">{r.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
                       </div>
                       <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
