@@ -134,20 +134,20 @@ const Header = () => {
       </header>
 
       {/* Mobile bottom floating buttons - Chat & Cart */}
-      <div className="fixed bottom-4 right-4 z-50 sm:hidden flex flex-col gap-3">
+      <div className="fixed bottom-4 right-4 z-50 sm:hidden flex flex-col gap-2.5">
         <button
           onClick={() => {/* Chat functionality */}}
-          className="w-12 h-12 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
+          className="w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm text-foreground flex items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-border/50 hover:bg-background/80 transition-all"
         >
-          <MessageCircle size={20} />
+          <MessageCircle size={17} />
         </button>
         <button
           onClick={() => setIsCartOpen(true)}
-          className="w-12 h-12 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity relative"
+          className="w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm text-foreground flex items-center justify-center shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-border/50 hover:bg-background/80 transition-all relative"
         >
-          <ShoppingBag size={20} />
+          <ShoppingBag size={17} />
           {itemCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-destructive-foreground text-[10px] rounded-full flex items-center justify-center font-medium">
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[9px] rounded-full flex items-center justify-center font-medium">
               {itemCount}
             </span>
           )}
