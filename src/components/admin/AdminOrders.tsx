@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const statusOptions = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+const courierOptions = [
+  { id: 'steadfast', name: 'Steadfast Courier' },
+  { id: 'pathao', name: 'Pathao Courier' },
+];
 
 const COURIER_STATUS_MAP: Record<string, string> = {
   in_review: 'Processing',
@@ -43,51 +47,111 @@ const AdminOrders = () => {
   const [syncingStatus, setSyncingStatus] = useState<string | null>(null);
   const [returnLoading, setReturnLoading] = useState<string | null>(null);
 
+  // Courier selection modal state
+  const [courierModal, setCourierModal] = useState<{ open: boolean; order: any | null }>({ open: false, order: null });
+  const [selectedCourier, setSelectedCourier] = useState<string>('steadfast');
+
   const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
 
   // Send order to Steadfast courier
-  const sendToCourier = async (order: any) => {
+  const sendToSteadfast = async (order: any) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
+
+    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
+      body: {
+        action: 'create_order',
+        data: {
+          invoice: order.id.slice(0, 8),
+          recipient_name: order.customer_name,
+          recipient_phone: order.customer_phone,
+          recipient_address: `${order.customer_address}, ${order.customer_city}`,
+          cod_amount: order.payment_method === 'cod' ? order.total : 0,
+          note: `Order #${order.id.slice(0, 8)}`,
+          item_description: itemDesc,
+          delivery_type: 0,
+        },
+      },
+    });
+
+    if (error) throw error;
+
+    if (result.success && result.data?.consignment) {
+      const c = result.data.consignment;
+      return {
+        consignment_id: c.consignment_id?.toString(),
+        tracking_code: c.tracking_code,
+        courier_provider: 'steadfast',
+      };
+    } else {
+      throw new Error(result.error || result.data?.message || 'Steadfast failed');
+    }
+  };
+
+  // Send order to Pathao courier
+  const sendToPathao = async (order: any) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
+
+    const { data: result, error } = await supabase.functions.invoke('pathao-courier', {
+      body: {
+        action: 'create_order',
+        data: {
+          store_id: 1, // Default store - may need configuration
+          merchant_order_id: order.id.slice(0, 8),
+          recipient_name: order.customer_name,
+          recipient_phone: order.customer_phone,
+          recipient_address: order.customer_address,
+          recipient_city: 1, // Default - Dhaka
+          recipient_zone: 1, // Default zone
+          delivery_type: 48, // Normal delivery
+          item_type: 2, // Parcel
+          special_instruction: itemDesc,
+          item_quantity: items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0),
+          item_weight: 0.5,
+          amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
+          item_description: itemDesc,
+        },
+      },
+    });
+
+    if (error) throw error;
+
+    if (result.success && result.data?.data) {
+      const c = result.data.data;
+      return {
+        consignment_id: c.consignment_id?.toString(),
+        tracking_code: c.consignment_id?.toString(),
+        courier_provider: 'pathao',
+      };
+    } else {
+      throw new Error(result.error || result.data?.message || 'Pathao failed');
+    }
+  };
+
+  // Main send to courier function
+  const sendToCourier = async (order: any, courierProvider: string) => {
     setCourierSending(order.id);
     try {
-      const items = Array.isArray(order.items) ? order.items : [];
-      const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
-
-      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-        body: {
-          action: 'create_order',
-          data: {
-            invoice: order.id.slice(0, 8),
-            recipient_name: order.customer_name,
-            recipient_phone: order.customer_phone,
-            recipient_address: `${order.customer_address}, ${order.customer_city}`,
-            cod_amount: order.payment_method === 'cod' ? order.total : 0,
-            note: `Order #${order.id.slice(0, 8)}`,
-            item_description: itemDesc,
-            delivery_type: 0,
-          },
-        },
-      });
-
-      if (error) throw error;
-
-      if (result.success && result.data?.consignment) {
-        const c = result.data.consignment;
-        await updateOrder.mutateAsync({
-          id: order.id,
-          status: 'Processing',
-          consignment_id: c.consignment_id?.toString(),
-          tracking_code: c.tracking_code,
-          courier_provider: 'steadfast',
-        });
-        setSelectedOrder((prev: any) => prev ? { ...prev, status: 'Processing', consignment_id: c.consignment_id?.toString(), tracking_code: c.tracking_code, courier_provider: 'steadfast' } : null);
-        toast.success(`Courier order created! Tracking: ${c.tracking_code}`);
+      let courierData;
+      if (courierProvider === 'pathao') {
+        courierData = await sendToPathao(order);
       } else {
-        toast.error('Courier error: ' + (result.error || result.data?.message || 'Failed'));
+        courierData = await sendToSteadfast(order);
       }
+
+      await updateOrder.mutateAsync({
+        id: order.id,
+        status: 'Processing',
+        ...courierData,
+      });
+      setSelectedOrder((prev: any) => prev ? { ...prev, status: 'Processing', ...courierData } : null);
+      toast.success(`Courier order created! Tracking: ${courierData.tracking_code || courierData.consignment_id}`);
     } catch (err: any) {
       toast.error('Failed to send to courier: ' + err.message);
     } finally {
       setCourierSending(null);
+      setCourierModal({ open: false, order: null });
     }
   };
 
@@ -96,21 +160,27 @@ const AdminOrders = () => {
     if (!order.consignment_id) { toast.error('No consignment ID'); return; }
     setSyncingStatus(order.id);
     try {
-      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-        body: { action: 'check_status', data: { consignment_id: order.consignment_id } },
+      const courierFunc = order.courier_provider === 'pathao' ? 'pathao-courier' : 'steadfast-courier';
+      const actionName = order.courier_provider === 'pathao' ? 'view_order' : 'check_status';
+      
+      const { data: result, error } = await supabase.functions.invoke(courierFunc, {
+        body: { action: actionName, data: { consignment_id: order.consignment_id } },
       });
       if (error) throw error;
 
-      if (result.success && result.data?.delivery_status) {
-        const courierStatus = result.data.delivery_status;
-        const mappedStatus = COURIER_STATUS_MAP[courierStatus] || order.status;
+      const deliveryStatus = order.courier_provider === 'pathao' 
+        ? result.data?.data?.order_status?.toLowerCase() 
+        : result.data?.delivery_status;
+
+      if (deliveryStatus) {
+        const mappedStatus = COURIER_STATUS_MAP[deliveryStatus] || order.status;
 
         if (mappedStatus !== order.status) {
           await updateOrder.mutateAsync({ id: order.id, status: mappedStatus });
           setSelectedOrder((prev: any) => prev ? { ...prev, status: mappedStatus } : null);
-          toast.success(`Status synced: ${courierStatus} → ${mappedStatus}`);
+          toast.success(`Status synced: ${deliveryStatus} → ${mappedStatus}`);
         } else {
-          toast.info(`Courier status: ${courierStatus} (no change)`);
+          toast.info(`Courier status: ${deliveryStatus} (no change)`);
         }
       } else {
         toast.error('Could not fetch courier status');
@@ -125,6 +195,8 @@ const AdminOrders = () => {
   // Create return request
   const createReturn = async (order: any) => {
     if (!order.consignment_id) { toast.error('No consignment ID for return'); return; }
+    if (order.courier_provider === 'pathao') { toast.error('Pathao direct return API not available'); return; }
+    
     setReturnLoading(order.id);
     try {
       const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
@@ -146,14 +218,21 @@ const AdminOrders = () => {
 
   const handleStatusChange = async (id: string, newStatus: string, order: any) => {
     try {
-      // Auto-send to courier when changing to Processing (if not already sent)
+      // Show courier selection when changing to Processing (if not already sent)
       if (newStatus === 'Processing' && !order.consignment_id) {
-        await sendToCourier({ ...order, status: newStatus });
+        setCourierModal({ open: true, order });
+        setSelectedCourier(order.courier_provider || 'steadfast');
       } else {
         await updateOrder.mutateAsync({ id, status: newStatus });
         toast.success(`Order status updated to ${newStatus}`);
       }
     } catch (err: any) { toast.error(err.message); }
+  };
+
+  const confirmCourierSend = () => {
+    if (courierModal.order) {
+      sendToCourier(courierModal.order, selectedCourier);
+    }
   };
 
   const openOrder = (order: any) => {
@@ -278,9 +357,68 @@ const AdminOrders = () => {
 
       <p className="text-xs text-muted-foreground">{filtered.length} order(s)</p>
 
+      {/* Courier Selection Modal */}
+      {courierModal.open && courierModal.order && (
+        <div className="fixed inset-0 bg-foreground/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background border border-border max-w-sm w-full p-6 space-y-4 shadow-lg animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-lg font-medium flex items-center gap-2">
+                <Truck size={18} className="text-primary" />
+                Select Courier
+              </h3>
+              <button onClick={() => setCourierModal({ open: false, order: null })} className="p-1.5 hover:bg-accent transition-colors rounded-full">
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Choose a courier provider for Order #{courierModal.order.id.slice(0, 8)}. The order will be created automatically.
+              </p>
+              
+              <div className="space-y-2">
+                {courierOptions.map((courier) => (
+                  <label key={courier.id} className={`flex items-center justify-between p-3 border cursor-pointer transition-colors ${selectedCourier === courier.id ? 'border-primary bg-primary/5' : 'border-border hover:bg-accent'}`}>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="radio" 
+                        name="courier" 
+                        value={courier.id}
+                        checked={selectedCourier === courier.id}
+                        onChange={() => setSelectedCourier(courier.id)}
+                        className="accent-primary"
+                      />
+                      <span className="text-sm font-medium">{courier.name}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <button 
+                onClick={() => setCourierModal({ open: false, order: null })} 
+                className="px-4 py-2 text-sm border border-border hover:bg-accent transition-colors"
+                disabled={courierSending !== null}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmCourierSend} 
+                disabled={courierSending !== null} 
+                className="luxury-button-primary text-sm py-2 px-4 inline-flex items-center gap-2"
+              >
+                {courierSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                Send to Courier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Order Detail Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-foreground/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedOrder(null)}>
+        <div className="fixed inset-0 bg-foreground/50 z-[40] flex items-center justify-center p-4" onClick={() => setSelectedOrder(null)}>
           <div className="bg-background border border-border max-w-2xl w-full max-h-[85vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Order #{selectedOrder.id.slice(0, 8)}</h3>
@@ -351,9 +489,9 @@ const AdminOrders = () => {
               ) : (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Not sent to courier yet</p>
-                  <button onClick={() => sendToCourier(selectedOrder)} disabled={courierSending === selectedOrder.id} className="luxury-button-primary text-[10px] py-2 px-4 inline-flex items-center gap-1.5">
+                  <button onClick={() => { setSelectedOrder(null); setCourierModal({ open: true, order: selectedOrder }); }} disabled={courierSending === selectedOrder.id} className="luxury-button-primary text-[10px] py-2 px-4 inline-flex items-center gap-1.5">
                     {courierSending === selectedOrder.id ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                    Send to Steadfast
+                    Send to Courier
                   </button>
                 </div>
               )}
