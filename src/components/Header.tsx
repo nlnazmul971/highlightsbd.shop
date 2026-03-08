@@ -55,7 +55,7 @@ const Header = () => {
             </div>
 
             {/* Center - Logo */}
-            <Link to="/" className="luxury-heading text-2xl sm:text-3xl tracking-[0.3em] font-light">
+            <Link to="/" className="luxury-heading text-lg sm:text-xl tracking-[0.3em] font-semibold">
               HIGHLIGHTS
             </Link>
 
