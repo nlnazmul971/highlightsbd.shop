@@ -20,6 +20,7 @@ const Header = () => {
   const { itemCount, setIsCartOpen } = useCart();
   const { items: wishlistItems } = useWishlist();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
