@@ -50,8 +50,8 @@ const Footer = () => {
         {/* Links + Newsletter */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-10">
           <div>
-            <h4 className="luxury-body text-[11px] mb-4 text-foreground">Information</h4>
-            <div className="space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
+            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Information</h4>
+            <div className="space-y-1.5 sm:space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
               <Link to="/" className="block hover:text-foreground transition-colors">Home</Link>
               <p className="hover:text-foreground cursor-pointer transition-colors">About Us</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Contact</p>
