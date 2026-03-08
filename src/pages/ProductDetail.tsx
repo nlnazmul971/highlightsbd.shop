@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw, Send } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -10,6 +10,10 @@ import { useProduct, useProductReviews, useRelatedProducts } from '@/hooks/useSu
 import ProductCard from '@/components/ProductCard';
 import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: string }) => {
   const images = [mainImage, mainImage, mainImage, mainImage];
@@ -248,23 +252,27 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Reviews */}
-            {reviews.length > 0 && (
-              <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
-                <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
-                <div className="space-y-3 sm:space-y-4">
+            {/* Review Form & Reviews */}
+            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
+              <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
+              
+              <ReviewForm productId={product.id} />
+
+              {reviews.length > 0 && (
+                <div className="space-y-3 sm:space-y-4 mt-6">
                   {reviews.map(r => (
                     <div key={r.id} className="pb-3 sm:pb-4 border-b border-border last:border-0">
                       <div className="flex items-center gap-2 mb-1">
                         <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} size={11} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />)}</div>
                         <span className="text-[11px] font-medium">{r.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
                       </div>
                       <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
@@ -284,6 +292,101 @@ const ProductDetail = () => {
 
       <Footer />
     </div>
+  );
+};
+
+const ReviewForm = ({ productId }: { productId: string }) => {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [name, setName] = useState('');
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rating === 0) { toast.error('Please select a rating'); return; }
+    if (!name.trim()) { toast.error('Please enter your name'); return; }
+    if (!comment.trim()) { toast.error('Please write a comment'); return; }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('reviews').insert({
+        product_id: productId,
+        user_id: user?.id || null,
+        name: name.trim(),
+        rating,
+        comment: comment.trim(),
+      });
+      if (error) throw error;
+      toast.success('Review submitted!');
+      setRating(0); setName(''); setComment('');
+      qc.invalidateQueries({ queryKey: ['reviews', productId] });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit review');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="border border-border p-4 mb-4 text-center">
+        <p className="text-xs text-muted-foreground">
+          <Link to="/admin" className="text-foreground underline">Sign in</Link> to leave a review
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="border border-border p-4 space-y-3 mb-4">
+      <p className="text-xs tracking-wider uppercase text-muted-foreground font-medium">Write a Review</p>
+      <div>
+        <div className="flex gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onMouseEnter={() => setHoverRating(i + 1)}
+              onMouseLeave={() => setHoverRating(0)}
+              onClick={() => setRating(i + 1)}
+            >
+              <Star
+                size={18}
+                fill={(hoverRating || rating) > i ? 'currentColor' : 'none'}
+                className={(hoverRating || rating) > i ? 'text-foreground' : 'text-muted-foreground/30'}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+      <input
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Your Name"
+        className="luxury-input text-xs"
+        maxLength={100}
+        required
+      />
+      <textarea
+        value={comment}
+        onChange={e => setComment(e.target.value)}
+        placeholder="Write your review..."
+        className="luxury-input text-xs min-h-[60px]"
+        maxLength={1000}
+        required
+      />
+      <button
+        type="submit"
+        disabled={submitting}
+        className="luxury-button-primary text-[10px] py-2 px-6 inline-flex items-center gap-1.5"
+      >
+        <Send size={12} />
+        {submitting ? 'Submitting...' : 'Submit Review'}
+      </button>
+    </form>
   );
 };
 
