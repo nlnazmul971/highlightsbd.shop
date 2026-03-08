@@ -8,7 +8,12 @@ export const useProducts = (category?: string, search?: string) => {
     queryKey: ['products', category, search],
     queryFn: async () => {
       let query = supabase.from('products').select('*').order('created_at', { ascending: false });
-      if (category && category !== 'All') query = query.eq('category', category);
+      if (category === 'New Dropped') {
+        // Show newest 10 products
+        query = query.limit(10);
+      } else if (category && category !== 'All') {
+        query = query.eq('category', category);
+      }
       if (search) query = query.ilike('name', `%${search}%`);
       const { data, error } = await query;
       if (error) throw error;
