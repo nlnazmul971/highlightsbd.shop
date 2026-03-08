@@ -6,6 +6,7 @@ import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateOrder } from '@/hooks/useSupabase';
+import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 
 const Checkout = () => {
