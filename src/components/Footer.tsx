@@ -3,7 +3,7 @@ const Footer = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 text-center sm:text-left">
         <div>
-          <h3 className="luxury-heading text-2xl tracking-[0.2em] mb-4">ARJO</h3>
+          <h3 className="luxury-heading text-2xl tracking-[0.2em] mb-4">HIGHLIGHTS</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">Premium men's fashion. Crafted with precision and designed for the modern gentleman.</p>
         </div>
         <div>
