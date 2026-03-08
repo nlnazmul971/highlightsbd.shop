@@ -327,11 +327,21 @@ const AdminOrders = () => {
             {/* Items */}
             <div className="border-t border-border pt-4">
               <h4 className="text-xs tracking-wider uppercase text-muted-foreground mb-3">Items</h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {(Array.isArray(selectedOrder.items) ? selectedOrder.items : []).map((item: any, i: number) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span>{item.name} × {item.quantity}</span>
-                    <span>৳{((item.price || 0) * (item.quantity || 1)).toLocaleString()}</span>
+                  <div key={i} className="flex items-center gap-3">
+                    {item.image && (
+                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover border border-border flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{item.name}</p>
+                      <div className="flex gap-2 text-xs text-muted-foreground">
+                        {item.size && <span>Size: {item.size}</span>}
+                        {item.color && <span>Color: {item.color}</span>}
+                        <span>Qty: {item.quantity}</span>
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium flex-shrink-0">৳{((item.price || 0) * (item.quantity || 1)).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
