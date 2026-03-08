@@ -55,12 +55,12 @@ const ProductCard = ({ product }: { product: Product }) => {
           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300" />
 
           {/* Wishlist + Quick view */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <button onClick={handleWishlist} className={`p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-              <Heart size={16} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+            <button onClick={handleWishlist} className={`p-1.5 sm:p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+              <Heart size={13} className="sm:w-4 sm:h-4" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
             </button>
-            <Link to={`/product/${product.id}`} onClick={e => e.stopPropagation()} className="p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors">
-              <Eye size={16} />
+            <Link to={`/product/${product.id}`} onClick={e => e.stopPropagation()} className="p-1.5 sm:p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors">
+              <Eye size={13} className="sm:w-4 sm:h-4" />
             </Link>
           </div>
 
@@ -91,9 +91,9 @@ const ProductCard = ({ product }: { product: Product }) => {
 
           {/* Add to cart button */}
           {!showSizes && (
-            <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-              <button onClick={handleOpenSizes} className="w-full luxury-button-primary py-3 text-[10px] flex items-center justify-center gap-2">
-                <ShoppingBag size={13} />
+            <div className="absolute bottom-0 left-0 right-0 sm:opacity-0 sm:group-hover:opacity-100 sm:translate-y-2 sm:group-hover:translate-y-0 transition-all duration-300">
+              <button onClick={handleOpenSizes} className="w-full py-2 sm:py-3 text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 sm:gap-2 bg-foreground/70 sm:bg-foreground text-background backdrop-blur-sm sm:backdrop-blur-none tracking-[0.15em] uppercase transition-colors hover:bg-foreground" style={{ fontFamily: 'var(--font-body)' }}>
+                <ShoppingBag size={11} className="sm:w-[13px] sm:h-[13px]" />
                 Add to Cart
               </button>
             </div>
