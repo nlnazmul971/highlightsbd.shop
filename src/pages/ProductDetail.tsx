@@ -14,15 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import CartDrawer from '@/components/CartDrawer';
-import { useCart } from '@/contexts/CartContext';
-import { useWishlist } from '@/contexts/WishlistContext';
-import { useProduct, useProductReviews, useRelatedProducts } from '@/hooks/useSupabase';
-import ProductCard from '@/components/ProductCard';
-import { getProductImage } from '@/data/products';
-import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: string }) => {
   const images = [mainImage, mainImage, mainImage, mainImage];
