@@ -18,6 +18,9 @@ type CartContextType = {
   itemCount: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
+  showPopup: boolean;
+  setShowPopup: (show: boolean) => void;
+  lastAddedItem: CartItem | null;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
