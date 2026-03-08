@@ -289,12 +289,12 @@ const ProductDetail = () => {
       </main>
 
       {/* Mobile sticky bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 flex gap-2">
-        <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-3 text-sm">Add to Cart</button>
-        <button onClick={handleBuyNow} className="flex-1 luxury-button-outline py-3 text-sm">Buy Now</button>
+      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background/95 backdrop-blur-sm border-t border-border px-3 py-2 flex gap-1.5">
+        <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-2 text-[11px]">Add to Cart</button>
+        <button onClick={handleBuyNow} className="flex-1 luxury-button-outline py-2 text-[11px]">Buy Now</button>
         <button onClick={() => product && toggleItem(product)}
-          className={`p-3 border border-border ${product && isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-          <Heart size={18} fill={product && isInWishlist(product.id) ? 'currentColor' : 'none'} />
+          className={`px-2.5 py-2 border border-border ${product && isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+          <Heart size={15} fill={product && isInWishlist(product.id) ? 'currentColor' : 'none'} />
         </button>
       </div>
 
