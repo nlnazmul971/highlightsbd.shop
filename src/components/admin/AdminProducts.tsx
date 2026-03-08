@@ -3,6 +3,7 @@ import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct } fro
 import { Product, getProductImage } from '@/data/products';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import ImageUpload from './ImageUpload';
 
 const AdminProducts = () => {
   const [search, setSearch] = useState('');
@@ -103,7 +104,11 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
           {['T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'].map(c => <option key={c}>{c}</option>)}
         </select>
       </div>
-      <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="Image URL" className="luxury-input" />
+      <div className="space-y-2">
+        <label className="text-xs text-muted-foreground tracking-wider uppercase">Product Image</label>
+        <ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
+        <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="Or paste image URL" className="luxury-input text-xs" />
+      </div>
       <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="luxury-input min-h-[80px]" />
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm">
