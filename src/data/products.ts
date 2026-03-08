@@ -27,7 +27,7 @@ export type Review = {
   created_at: string;
 };
 
-export const categories = ['All', 'T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'];
+export const categories = ['All', 'New Dropped', 'T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'];
 
 // Map local assets to DB image_url paths for fallback
 import tshirtBlack from '@/assets/products/tshirt-black.jpg';

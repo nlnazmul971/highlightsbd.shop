@@ -7,6 +7,8 @@ import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
 import { useProducts } from '@/hooks/useSupabase';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+import poster1 from '@/assets/poster-1.jpg';
+import poster2 from '@/assets/poster-2.jpg';
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,7 +23,6 @@ const Index = () => {
 
   const showProducts = activeCategory || searchQuery;
 
-  // Get recently viewed products in order
   const recentProducts = viewedIds
     .map(id => allProducts.find(p => p.id === id))
     .filter(Boolean)
@@ -73,6 +74,32 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {products.map(product => <ProductCard key={product.id} product={product} />)}
           </div>
+        )}
+
+        {/* Fancy Posters */}
+        {!showProducts && (
+          <section className="mt-20 sm:mt-28">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="relative group overflow-hidden cursor-pointer">
+                <img src={poster1} alt="HIGHLIGHTS Collection" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <p className="luxury-body text-[10px] text-background/70 mb-2">New Season</p>
+                  <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">The Art of Dressing</h3>
+                  <div className="w-8 h-px bg-background/50 mt-3" />
+                </div>
+              </div>
+              <div className="relative group overflow-hidden cursor-pointer">
+                <img src={poster2} alt="HIGHLIGHTS Campaign" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <p className="luxury-body text-[10px] text-background/70 mb-2">Campaign 2026</p>
+                  <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">Walk Together</h3>
+                  <div className="w-8 h-px bg-background/50 mt-3" />
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Recently Viewed */}
