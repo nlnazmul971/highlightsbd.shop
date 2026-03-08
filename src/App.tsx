@@ -14,6 +14,7 @@ import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AddToCartPopup from "./components/AddToCartPopup";
+import TrackingScripts from "./components/TrackingScripts";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <AddToCartPopup />
+              <TrackingScripts />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
