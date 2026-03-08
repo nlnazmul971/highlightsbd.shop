@@ -18,8 +18,8 @@ const Footer = () => {
     <footer className="border-t border-border mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-12">
         {/* Top section - Brand + Contact */}
-        <div className="mb-6 sm:mb-10">
-          <h3 className="luxury-heading text-xl tracking-[0.3em] font-semibold mb-2 sm:mb-4">HIGHLIGHTS</h3>
+        <div className="mb-4 sm:mb-10">
+          <h3 className="luxury-heading text-xl tracking-[0.3em] font-semibold mb-1.5 sm:mb-4">HIGHLIGHTS</h3>
           <div className="space-y-1 sm:space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
               <MapPin size={14} className="shrink-0" />
