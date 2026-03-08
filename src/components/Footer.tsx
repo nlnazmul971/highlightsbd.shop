@@ -67,8 +67,8 @@ const Footer = () => {
               <p className="hover:text-foreground cursor-pointer transition-colors">Guidelines</p>
             </div>
           </div>
-          <div>
-            <h4 className="luxury-body text-[11px] mb-4 text-foreground">Newsletter</h4>
+          <div className="col-span-2 sm:col-span-1">
+            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Newsletter</h4>
             <form onSubmit={handleNewsletter} className="flex">
               <input
                 type="email"
