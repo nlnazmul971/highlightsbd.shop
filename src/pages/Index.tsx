@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
