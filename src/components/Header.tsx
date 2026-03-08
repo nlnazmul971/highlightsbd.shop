@@ -98,12 +98,12 @@ const Header = () => {
           </div>
         )}
 
-        {/* Category nav - always visible on scroll for mobile, always visible on desktop */}
+        {/* Category nav */}
         <nav className="border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-start sm:justify-center gap-5 sm:gap-8 h-10 sm:h-12 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center justify-center gap-6 sm:gap-8 h-10 sm:h-12">
               {navCategories.map(cat => (
-                <Link key={cat.name} to={cat.path} className="luxury-body text-[11px] text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap shrink-0">
+                <Link key={cat.name} to={cat.path} className="luxury-body text-[11px] text-muted-foreground hover:text-foreground transition-colors">
                   {cat.name}
                 </Link>
               ))}
