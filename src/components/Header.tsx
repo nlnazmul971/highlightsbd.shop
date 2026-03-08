@@ -40,8 +40,8 @@ const Header = () => {
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background ${scrolled ? 'shadow-sm' : ''}`}>
-        {/* Top bar - hidden on mobile when scrolled */}
-        {!(scrolled && isMobile) && (
+        {/* Top bar - hidden on scroll for both mobile and desktop */}
+        {!scrolled && (
           <div className="border-b border-border">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16 sm:h-20">
