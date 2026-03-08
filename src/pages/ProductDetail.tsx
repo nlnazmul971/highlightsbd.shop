@@ -146,14 +146,24 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="flex gap-2 mb-2.5">
+            {/* Desktop CTA */}
+            <div className="hidden sm:flex gap-2 mb-2.5">
               <button onClick={handleAddToCart} className="flex-1 luxury-button-primary">Add to Cart</button>
               <button onClick={() => toggleItem(product)} className={`p-3 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
                 <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
               </button>
             </div>
-            <button onClick={handleBuyNow} className="w-full luxury-button-outline">Buy Now</button>
-            <p className="text-xs text-muted-foreground mt-2.5">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
+            <button onClick={handleBuyNow} className="hidden sm:block w-full luxury-button-outline">Buy Now</button>
+            <p className="text-xs text-muted-foreground mt-2.5 mb-20 sm:mb-0">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
+
+      {/* Mobile sticky bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background border-t border-border px-4 py-3 flex gap-2">
+        <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-3 text-sm">Add to Cart</button>
+        <button onClick={handleBuyNow} className="flex-1 luxury-button-outline py-3 text-sm">Buy Now</button>
+        <button onClick={() => toggleItem(product)} className={`p-3 border border-border ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+          <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+        </button>
+      </div>
 
             {reviews.length > 0 && (
               <div className="mt-12 pt-8 border-t border-border">
