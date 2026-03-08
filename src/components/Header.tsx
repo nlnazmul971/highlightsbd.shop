@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, ShoppingBag, Heart, Menu, X, MessageCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navCategories = [
   { name: 'Shirt', path: '/?category=Shirts' },
