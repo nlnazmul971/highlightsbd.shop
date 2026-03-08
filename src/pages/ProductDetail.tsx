@@ -6,7 +6,8 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useProduct, useProductReviews } from '@/hooks/useSupabase';
+import { useProduct, useProductReviews, useRelatedProducts } from '@/hooks/useSupabase';
+import ProductCard from '@/components/ProductCard';
 import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
