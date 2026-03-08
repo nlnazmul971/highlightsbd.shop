@@ -145,57 +145,57 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header /><CartDrawer />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 pb-20 sm:pb-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-4 sm:mb-6">
           <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
           <span>/</span>
           <Link to={`/?category=${product.category}`} className="hover:text-foreground transition-colors">{product.category}</Link>
           <span>/</span>
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground truncate">{product.name}</span>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-14">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-14">
           <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} />
 
-          <div className="py-2 lg:py-4">
+          <div className="py-0 lg:py-4">
             <p className="luxury-body text-[10px] text-muted-foreground mb-1 tracking-[0.15em]">{product.category}</p>
-            <h1 className="luxury-heading text-xl sm:text-3xl tracking-[0.08em] mb-2 sm:mb-3">{product.name}</h1>
+            <h1 className="luxury-heading text-lg sm:text-3xl tracking-[0.08em] mb-2 sm:mb-3">{product.name}</h1>
 
             {/* Rating */}
             {reviews.length > 0 && (
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="flex">
                   {Array.from({ length: 5 }).map((_, j) => (
-                    <Star key={j} size={13} fill={j < Math.round(avgRating) ? 'currentColor' : 'none'} className={j < Math.round(avgRating) ? 'text-foreground' : 'text-muted-foreground/30'} />
+                    <Star key={j} size={12} fill={j < Math.round(avgRating) ? 'currentColor' : 'none'} className={j < Math.round(avgRating) ? 'text-foreground' : 'text-muted-foreground/30'} />
                   ))}
                 </div>
-                <span className="text-xs text-muted-foreground">({reviews.length} reviews)</span>
+                <span className="text-[11px] text-muted-foreground">({reviews.length} reviews)</span>
               </div>
             )}
 
             {/* Price */}
-            <div className="flex items-baseline gap-3 mb-4 sm:mb-6">
-              <span className="text-xl sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
+            <div className="flex items-baseline gap-2 sm:gap-3 mb-3 sm:mb-6">
+              <span className="text-lg sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
               {product.original_price && (
                 <>
-                  <span className="text-sm text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>
-                  <span className="text-xs text-destructive font-medium">
+                  <span className="text-xs sm:text-sm text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>
+                  <span className="text-[10px] sm:text-xs text-destructive font-medium">
                     -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
                   </span>
                 </>
               )}
             </div>
 
-            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed mb-5 sm:mb-8">{product.description}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 sm:mb-8">{product.description}</p>
 
             {/* Size */}
-            <div className="mb-4 sm:mb-6">
-              <p className="luxury-body text-[10px] mb-2 tracking-[0.1em]">Size — <span className="text-muted-foreground">{size}</span></p>
-              <div className="flex flex-wrap gap-2">
+            <div className="mb-3 sm:mb-6">
+              <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Size — <span className="text-muted-foreground">{size}</span></p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {product.sizes.map(s => (
                   <button key={s} onClick={() => setSelectedSize(s)}
-                    className={`min-w-[40px] h-10 sm:h-11 px-3 text-xs tracking-wider border transition-all ${
+                    className={`min-w-[36px] h-9 sm:min-w-[40px] sm:h-11 px-2.5 sm:px-3 text-[11px] sm:text-xs tracking-wider border transition-all ${
                       size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
                     }`}>{s}</button>
                 ))}
@@ -204,12 +204,12 @@ const ProductDetail = () => {
 
             {/* Color */}
             {product.colors.length > 0 && (
-              <div className="mb-4 sm:mb-6">
-                <p className="luxury-body text-[10px] mb-2 tracking-[0.1em]">Color — <span className="text-muted-foreground">{color}</span></p>
-                <div className="flex gap-2">
+              <div className="mb-3 sm:mb-6">
+                <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Color — <span className="text-muted-foreground">{color}</span></p>
+                <div className="flex gap-1.5 sm:gap-2">
                   {product.colors.map(c => (
                     <button key={c.name} onClick={() => setSelectedColor(c.name)}
-                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${
+                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${
                         color === c.name ? 'border-foreground ring-2 ring-foreground/20' : 'border-border hover:border-foreground/50'
                       }`} style={{ backgroundColor: c.hex }} title={c.name} />
                   ))}
@@ -218,54 +218,54 @@ const ProductDetail = () => {
             )}
 
             {/* Quantity */}
-            <div className="mb-5 sm:mb-8">
-              <p className="luxury-body text-[10px] mb-2 tracking-[0.1em]">Quantity</p>
+            <div className="mb-4 sm:mb-8">
+              <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Quantity</p>
               <div className="inline-flex items-center border border-border">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Minus size={14} /></button>
-                <span className="w-10 sm:w-12 text-center text-sm">{quantity}</span>
-                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Plus size={14} /></button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Minus size={13} /></button>
+                <span className="w-9 sm:w-12 text-center text-xs sm:text-sm">{quantity}</span>
+                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Plus size={13} /></button>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-1.5">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
             </div>
 
-            {/* Desktop CTA */}
-            <div className="hidden sm:flex gap-3 mb-3">
-              <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-3.5">Add to Cart</button>
+            {/* CTA - visible on both mobile & desktop */}
+            <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
+              <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Add to Cart</button>
               <button onClick={() => toggleItem(product)}
-                className={`p-3.5 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-                <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                className={`p-2.5 sm:p-3.5 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+                <Heart size={16} className="sm:w-[18px] sm:h-[18px]" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
               </button>
             </div>
-            <button onClick={handleBuyNow} className="hidden sm:block w-full luxury-button-outline py-3.5">Buy Now</button>
+            <button onClick={handleBuyNow} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Buy Now</button>
 
             {/* Trust badges */}
-            <div className="hidden sm:flex items-center gap-6 mt-6 pt-6 border-t border-border">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Truck size={16} />
-                <span className="text-[11px]">Free Delivery</span>
+            <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Truck size={14} className="sm:w-4 sm:h-4" />
+                <span className="text-[10px] sm:text-[11px]">Free Delivery</span>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Shield size={16} />
-                <span className="text-[11px]">Secure Payment</span>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Shield size={14} className="sm:w-4 sm:h-4" />
+                <span className="text-[10px] sm:text-[11px]">Secure Payment</span>
               </div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <RotateCcw size={16} />
-                <span className="text-[11px]">Easy Returns</span>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <RotateCcw size={14} className="sm:w-4 sm:h-4" />
+                <span className="text-[10px] sm:text-[11px]">Easy Returns</span>
               </div>
             </div>
 
             {/* Reviews */}
             {reviews.length > 0 && (
-              <div className="mt-10 pt-8 border-t border-border">
-                <h3 className="luxury-heading text-lg tracking-[0.1em] mb-6">Reviews ({reviews.length})</h3>
-                <div className="space-y-4">
+              <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
+                <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
+                <div className="space-y-3 sm:space-y-4">
                   {reviews.map(r => (
-                    <div key={r.id} className="pb-4 border-b border-border last:border-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} size={12} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />)}</div>
-                        <span className="text-xs font-medium">{r.name}</span>
+                    <div key={r.id} className="pb-3 sm:pb-4 border-b border-border last:border-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} size={11} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />)}</div>
+                        <span className="text-[11px] font-medium">{r.name}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
                     </div>
                   ))}
                 </div>
@@ -276,27 +276,17 @@ const ProductDetail = () => {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <section className="mt-16 sm:mt-20 mb-12">
-            <div className="text-center mb-10">
-              <h2 className="luxury-heading text-2xl sm:text-3xl tracking-[0.15em]">You May Also Like</h2>
+          <section className="mt-12 sm:mt-20 mb-8 sm:mb-12">
+            <div className="text-center mb-8 sm:mb-10">
+              <h2 className="luxury-heading text-xl sm:text-3xl tracking-[0.15em]">You May Also Like</h2>
               <div className="w-12 h-px bg-foreground mx-auto mt-4" />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
               {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           </section>
         )}
       </main>
-
-      {/* Mobile sticky bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background/95 backdrop-blur-sm border-t border-border px-3 py-2 flex gap-1.5">
-        <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-2 text-[11px]">Add to Cart</button>
-        <button onClick={handleBuyNow} className="flex-1 luxury-button-outline py-2 text-[11px]">Buy Now</button>
-        <button onClick={() => product && toggleItem(product)}
-          className={`px-2.5 py-2 border border-border ${product && isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-          <Heart size={15} fill={product && isInWishlist(product.id) ? 'currentColor' : 'none'} />
-        </button>
-      </div>
 
       <Footer />
     </div>
