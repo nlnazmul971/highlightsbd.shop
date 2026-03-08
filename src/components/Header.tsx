@@ -12,6 +12,18 @@ const navCategories = [
   { name: 'Pant', path: '/?category=Pant' },
 ];
 
+const allCategories = [
+  { name: 'All', path: '/' },
+  { name: 'New Dropped', path: '/?category=New+Dropped' },
+  { name: 'T-Shirt', path: '/?category=T-Shirt' },
+  { name: 'Winter', path: '/?category=Winter' },
+  { name: 'Shirts', path: '/?category=Shirts' },
+  { name: 'Knit Polos', path: '/?category=Knit+Polos' },
+  { name: 'Pant', path: '/?category=Pant' },
+  { name: 'Panjabi', path: '/?category=Panjabi' },
+  { name: 'Kafsu', path: '/?category=Kafsu' },
+];
+
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
