@@ -25,7 +25,7 @@ const Footer = () => {
               <MapPin size={14} className="shrink-0" />
               HOUSE 12, ROAD 5, SECTOR 3, UTTARA, DHAKA
             </p>
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
               <p className="flex items-center gap-2">
                 <Phone size={14} />
                 +880 1234 567890
