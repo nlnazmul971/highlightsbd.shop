@@ -46,7 +46,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header /><CartDrawer />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-40">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
           <ArrowLeft size={16} /> Back
         </Link>
