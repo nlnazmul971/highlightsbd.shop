@@ -29,6 +29,7 @@ const App = () => (
             <BrowserRouter>
               <ScrollToTop />
               <AddToCartPopup />
+              <TrackingScripts />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
