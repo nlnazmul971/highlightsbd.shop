@@ -123,7 +123,7 @@ const AdminOrders = () => {
                     <Pencil size={14} />
                   </button>
                 ) : (
-                  <button onClick={saveEdit} disabled={updateOrder.isPending} className="p-1.5 hover:bg-accent transition-colors text-green-600" title="Save changes">
+                  <button onClick={saveEdit} disabled={updateOrder.isPending} className="p-1.5 hover:bg-accent transition-colors text-primary" title="Save changes">
                     {updateOrder.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                   </button>
                 )}
