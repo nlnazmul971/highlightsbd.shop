@@ -89,6 +89,7 @@ const Admin = () => {
             {activeTab === 'reviews' && <AdminReviews />}
             {activeTab === 'users' && <AdminUsers />}
             {activeTab === 'settings' && <AdminSettings />}
+            {activeTab === 'api' && <AdminAPI />}
           </main>
         </div>
       </div>
