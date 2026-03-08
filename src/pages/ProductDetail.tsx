@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Heart, Minus, Plus, Star } from 'lucide-react';
 import Header from '@/components/Header';
@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 import { useProduct, useProductReviews } from '@/hooks/useSupabase';
 import { getProductImage } from '@/data/products';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -15,9 +16,14 @@ const ProductDetail = () => {
   const { data: reviews = [] } = useProductReviews(id || '');
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
+  const { addView } = useRecentlyViewed();
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (product?.id) addView(product.id);
+  }, [product?.id, addView]);
 
   if (isLoading) return (
     <div className="min-h-screen bg-background"><Header /><CartDrawer />
