@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
 import { useProducts } from '@/hooks/useSupabase';
+import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,8 +16,16 @@ const Index = () => {
     activeCategory || undefined,
     searchQuery || undefined
   );
+  const { data: allProducts = [] } = useProducts();
+  const { viewedIds } = useRecentlyViewed();
 
   const showProducts = activeCategory || searchQuery;
+
+  // Get recently viewed products in order
+  const recentProducts = viewedIds
+    .map(id => allProducts.find(p => p.id === id))
+    .filter(Boolean)
+    .slice(0, 6);
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,6 +73,19 @@ const Index = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {products.map(product => <ProductCard key={product.id} product={product} />)}
           </div>
+        )}
+
+        {/* Recently Viewed */}
+        {recentProducts.length > 0 && (
+          <section className="mt-20">
+            <div className="text-center mb-10">
+              <h2 className="luxury-heading text-2xl sm:text-3xl tracking-[0.15em]">Recently Viewed</h2>
+              <div className="w-12 h-px bg-foreground mx-auto mt-4" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {recentProducts.map(product => product && <ProductCard key={product.id} product={product} />)}
+            </div>
+          </section>
         )}
       </main>
       <Footer />
