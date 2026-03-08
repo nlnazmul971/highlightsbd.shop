@@ -13,6 +13,8 @@ export type Product = {
   colors: ProductColor[];
   stock: number;
   featured: boolean;
+  brand: string;
+  sku: string;
   created_at: string;
   updated_at: string;
 };

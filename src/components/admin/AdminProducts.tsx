@@ -95,8 +95,25 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
   return (
     <div className="border border-border p-6 space-y-4 bg-muted/10">
       <h3 className="text-sm font-medium tracking-wider uppercase">{isNew ? 'Add Product' : 'Edit Product'}</h3>
-      <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Product Name" className="luxury-input" />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Product Name</label>
+          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Product Name" className="luxury-input" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Brand Name</label>
+          <input value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} placeholder="Brand Name" className="luxury-input" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">SKU</label>
+          <input value={form.sku} onChange={e => setForm({ ...form, sku: e.target.value })} placeholder="e.g. TSH-BLK-001" className="luxury-input" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Category</label>
+          <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="luxury-input">
+            {['T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'].map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
         <div className="space-y-1">
           <label className="text-xs text-muted-foreground tracking-wider uppercase">Price (৳)</label>
           <input type="number" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} placeholder="Price" className="luxury-input" />
@@ -109,11 +126,25 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
           <label className="text-xs text-muted-foreground tracking-wider uppercase">Stock</label>
           <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} placeholder="Stock" className="luxury-input" />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground tracking-wider uppercase">Category</label>
-          <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="luxury-input">
-            {['T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'].map(c => <option key={c}>{c}</option>)}
-          </select>
+      </div>
+      <div className="space-y-2">
+        <label className="text-xs text-muted-foreground tracking-wider uppercase">Sizes</label>
+        <div className="flex flex-wrap gap-2">
+          {['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'].map(size => (
+            <button
+              key={size}
+              type="button"
+              onClick={() => {
+                const sizes = form.sizes.includes(size)
+                  ? form.sizes.filter(s => s !== size)
+                  : [...form.sizes, size];
+                setForm({ ...form, sizes });
+              }}
+              className={`px-3 py-1.5 text-xs border transition-colors ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}
+            >
+              {size}
+            </button>
+          ))}
         </div>
       </div>
       <div className="space-y-2">
@@ -121,7 +152,10 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
         <ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
         <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="Or paste image URL" className="luxury-input text-xs" />
       </div>
-      <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="luxury-input min-h-[80px]" />
+      <div className="space-y-1">
+        <label className="text-xs text-muted-foreground tracking-wider uppercase">Description</label>
+        <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="luxury-input min-h-[80px]" />
+      </div>
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} className="accent-primary" />
