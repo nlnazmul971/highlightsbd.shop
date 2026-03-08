@@ -18,7 +18,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   });
 
   useEffect(() => {
-    localStorage.setItem('arjo-wishlist', JSON.stringify(items));
+    localStorage.setItem('highlights-wishlist', JSON.stringify(items));
   }, [items]);
 
   const addItem = useCallback((product: Product) => {

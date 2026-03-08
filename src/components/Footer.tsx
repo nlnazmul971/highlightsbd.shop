@@ -25,7 +25,7 @@ const Footer = () => (
         </div>
       </div>
       <div className="luxury-divider mt-12 mb-6" />
-      <p className="text-center text-xs text-muted-foreground tracking-wider">© 2026 ARJO. All rights reserved.</p>
+      <p className="text-center text-xs text-muted-foreground tracking-wider">© 2026 HIGHLIGHTS. All rights reserved.</p>
     </div>
   </footer>
 );

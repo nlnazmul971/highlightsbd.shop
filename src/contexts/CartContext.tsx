@@ -30,7 +30,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('arjo-cart', JSON.stringify(items));
+    localStorage.setItem('highlights-cart', JSON.stringify(items));
   }, [items]);
 
   const addItem = useCallback((product: Product, size: string, color: string, quantity = 1) => {
