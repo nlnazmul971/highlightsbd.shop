@@ -13,12 +13,12 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('arjo-wishlist');
+    const saved = localStorage.getItem('highlights-wishlist');
     return saved ? JSON.parse(saved) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem('arjo-wishlist', JSON.stringify(items));
+    localStorage.setItem('highlights-wishlist', JSON.stringify(items));
   }, [items]);
 
   const addItem = useCallback((product: Product) => {
