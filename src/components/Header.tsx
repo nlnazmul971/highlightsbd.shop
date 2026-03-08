@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, ShoppingBag, Heart, Menu, X, MessageCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navCategories = [
   { name: 'Shirt', path: '/?category=Shirts' },
@@ -19,6 +20,7 @@ const Header = () => {
   const { itemCount, setIsCartOpen } = useCart();
   const { items: wishlistItems } = useWishlist();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -38,50 +40,47 @@ const Header = () => {
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background ${scrolled ? 'shadow-sm' : ''}`}>
-        {/* Top bar - completely hidden on mobile scroll, always visible on desktop */}
-        <div className={`border-b border-border overflow-hidden transition-all duration-300 ${scrolled ? 'max-h-0 border-b-0 sm:max-h-20 sm:border-b' : 'max-h-20'}`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 sm:h-20">
-              {/* Left - Search + Mobile Menu */}
-              <div className="flex items-center gap-3">
-                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden p-2 hover:opacity-60 transition-opacity">
-                  {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-                </button>
-                <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:opacity-60 transition-opacity">
-                  <Search size={20} />
-                </button>
-              </div>
-
-              {/* Center - Logo */}
-              <Link to="/" className="absolute left-1/2 -translate-x-1/2 luxury-heading text-sm sm:text-2xl tracking-[0.3em] sm:tracking-[0.35em] font-semibold">
-                HIGHLIGHTS
-              </Link>
-
-              {/* Right - Icons */}
-              <div className="flex items-center gap-0.5 sm:gap-3">
-                <Link to="/wishlist" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
-                  <Heart size={18} className="sm:w-5 sm:h-5" />
-                  {wishlistItems.length > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
-                      {wishlistItems.length}
-                    </span>
-                  )}
+        {/* Top bar - hidden on mobile when scrolled */}
+        {!(scrolled && isMobile) && (
+          <div className="border-b border-border">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16 sm:h-20">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden p-2 hover:opacity-60 transition-opacity">
+                    {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                  </button>
+                  <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:opacity-60 transition-opacity">
+                    <Search size={20} />
+                  </button>
+                </div>
+                <Link to="/" className="absolute left-1/2 -translate-x-1/2 luxury-heading text-sm sm:text-2xl tracking-[0.3em] sm:tracking-[0.35em] font-semibold">
+                  HIGHLIGHTS
                 </Link>
-                <Link to="/admin" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity">
-                  <User size={18} className="sm:w-5 sm:h-5" />
-                </Link>
-                <button onClick={() => setIsCartOpen(true)} className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
-                  <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
-                  {itemCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
-                      {itemCount}
-                    </span>
-                  )}
-                </button>
+                <div className="flex items-center gap-0.5 sm:gap-3">
+                  <Link to="/wishlist" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
+                    <Heart size={18} className="sm:w-5 sm:h-5" />
+                    {wishlistItems.length > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
+                        {wishlistItems.length}
+                      </span>
+                    )}
+                  </Link>
+                  <Link to="/admin" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity">
+                    <User size={18} className="sm:w-5 sm:h-5" />
+                  </Link>
+                  <button onClick={() => setIsCartOpen(true)} className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
+                    <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
+                    {itemCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
+                        {itemCount}
+                      </span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Search overlay */}
         {searchOpen && (
