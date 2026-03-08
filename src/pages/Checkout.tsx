@@ -34,7 +34,7 @@ const Checkout = () => {
     try {
       await createOrder.mutateAsync({
         user_id: user.id,
-        items: items.map(i => ({ product_id: i.product.id, name: i.product.name, quantity: i.quantity, price: i.product.price, size: i.size, color: i.color })),
+        items: items.map(i => ({ product_id: i.product.id, name: i.product.name, quantity: i.quantity, price: i.product.price, size: i.size, color: i.color })) as unknown as Json,
         total: total + deliveryFee,
         customer_name: form.name,
         customer_phone: form.phone,
