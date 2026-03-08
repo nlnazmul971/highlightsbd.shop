@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, ProductColor, Review } from '@/data/products';
+import type { Json } from '@/integrations/supabase/types';
 
 export const useProducts = (category?: string, search?: string) => {
   return useQuery({
@@ -44,7 +45,8 @@ export const useCreateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
-      const { data, error } = await supabase.from('products').insert({ ...product, colors: product.colors as unknown as Record<string, unknown>[] }).select().single();
+      const { colors, ...rest } = product;
+      const { data, error } = await supabase.from('products').insert({ ...rest, colors: colors as unknown as Json }).select().single();
       if (error) throw error;
       return data;
     },
@@ -56,8 +58,10 @@ export const useUpdateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
-      const payload = updates.colors ? { ...updates, colors: updates.colors as unknown as Record<string, unknown>[] } : updates;
-      const { error } = await supabase.from('products').update(payload).eq('id', id);
+      const payload: Record<string, unknown> = { ...updates };
+      if (updates.colors) payload.colors = updates.colors as unknown as Json;
+      delete payload.id;
+      const { error } = await supabase.from('products').update(payload as any).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
@@ -80,7 +84,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: async (order: {
       user_id: string;
-      items: unknown;
+      items: Json;
       total: number;
       customer_name: string;
       customer_phone: string;
