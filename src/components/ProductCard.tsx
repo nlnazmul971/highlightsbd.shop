@@ -55,7 +55,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300" />
 
           {/* Wishlist + Quick view */}
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <button onClick={handleWishlist} className={`p-1.5 sm:p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
               <Heart size={13} className="sm:w-4 sm:h-4" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
             </button>
