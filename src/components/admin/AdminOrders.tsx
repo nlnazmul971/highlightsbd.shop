@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 const statusOptions = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+
+const COURIER_STATUS_MAP: Record<string, string> = {
+  in_review: 'Processing',
+  pending: 'Processing',
+  delivered: 'Delivered',
+  partial_delivered: 'Delivered',
+  delivered_approval_pending: 'Shipped',
+  cancelled: 'Cancelled',
+  cancelled_approval_pending: 'Cancelled',
+  hold: 'Processing',
+  unknown: 'Processing',
+};
 
 const FRAUD_COLORS: Record<string, string> = {
   Delivered: 'hsl(142, 71%, 45%)',
@@ -25,17 +37,122 @@ const AdminOrders = () => {
     customer_name: '', customer_phone: '', customer_address: '',
     customer_city: '', delivery_method: '', payment_method: '',
   });
-
-  // Fraud check state
   const [fraudData, setFraudData] = useState<any>(null);
   const [fraudLoading, setFraudLoading] = useState(false);
+  const [courierSending, setCourierSending] = useState<string | null>(null);
+  const [syncingStatus, setSyncingStatus] = useState<string | null>(null);
+  const [returnLoading, setReturnLoading] = useState<string | null>(null);
 
   const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
 
-  const handleStatusChange = async (id: string, status: string) => {
+  // Send order to Steadfast courier
+  const sendToCourier = async (order: any) => {
+    setCourierSending(order.id);
     try {
-      await updateOrder.mutateAsync({ id, status });
-      toast.success(`Order status updated to ${status}`);
+      const items = Array.isArray(order.items) ? order.items : [];
+      const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
+
+      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
+        body: {
+          action: 'create_order',
+          data: {
+            invoice: order.id.slice(0, 8),
+            recipient_name: order.customer_name,
+            recipient_phone: order.customer_phone,
+            recipient_address: `${order.customer_address}, ${order.customer_city}`,
+            cod_amount: order.payment_method === 'cod' ? order.total : 0,
+            note: `Order #${order.id.slice(0, 8)}`,
+            item_description: itemDesc,
+            delivery_type: 0,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (result.success && result.data?.consignment) {
+        const c = result.data.consignment;
+        await updateOrder.mutateAsync({
+          id: order.id,
+          status: 'Processing',
+          consignment_id: c.consignment_id?.toString(),
+          tracking_code: c.tracking_code,
+          courier_provider: 'steadfast',
+        });
+        setSelectedOrder((prev: any) => prev ? { ...prev, status: 'Processing', consignment_id: c.consignment_id?.toString(), tracking_code: c.tracking_code, courier_provider: 'steadfast' } : null);
+        toast.success(`Courier order created! Tracking: ${c.tracking_code}`);
+      } else {
+        toast.error('Courier error: ' + (result.error || result.data?.message || 'Failed'));
+      }
+    } catch (err: any) {
+      toast.error('Failed to send to courier: ' + err.message);
+    } finally {
+      setCourierSending(null);
+    }
+  };
+
+  // Sync courier status
+  const syncCourierStatus = async (order: any) => {
+    if (!order.consignment_id) { toast.error('No consignment ID'); return; }
+    setSyncingStatus(order.id);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
+        body: { action: 'check_status', data: { consignment_id: order.consignment_id } },
+      });
+      if (error) throw error;
+
+      if (result.success && result.data?.delivery_status) {
+        const courierStatus = result.data.delivery_status;
+        const mappedStatus = COURIER_STATUS_MAP[courierStatus] || order.status;
+
+        if (mappedStatus !== order.status) {
+          await updateOrder.mutateAsync({ id: order.id, status: mappedStatus });
+          setSelectedOrder((prev: any) => prev ? { ...prev, status: mappedStatus } : null);
+          toast.success(`Status synced: ${courierStatus} → ${mappedStatus}`);
+        } else {
+          toast.info(`Courier status: ${courierStatus} (no change)`);
+        }
+      } else {
+        toast.error('Could not fetch courier status');
+      }
+    } catch (err: any) {
+      toast.error('Sync failed: ' + err.message);
+    } finally {
+      setSyncingStatus(null);
+    }
+  };
+
+  // Create return request
+  const createReturn = async (order: any) => {
+    if (!order.consignment_id) { toast.error('No consignment ID for return'); return; }
+    setReturnLoading(order.id);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
+        body: { action: 'create_return_request', data: { consignment_id: order.consignment_id, reason: 'Customer requested return' } },
+      });
+      if (error) throw error;
+
+      if (result.success) {
+        toast.success('Return request created successfully!');
+      } else {
+        toast.error('Return failed: ' + (result.error || result.data?.message || 'Unknown error'));
+      }
+    } catch (err: any) {
+      toast.error('Return failed: ' + err.message);
+    } finally {
+      setReturnLoading(null);
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string, order: any) => {
+    try {
+      // Auto-send to courier when changing to Processing (if not already sent)
+      if (newStatus === 'Processing' && !order.consignment_id) {
+        await sendToCourier({ ...order, status: newStatus });
+      } else {
+        await updateOrder.mutateAsync({ id, status: newStatus });
+        toast.success(`Order status updated to ${newStatus}`);
+      }
     } catch (err: any) { toast.error(err.message); }
   };
 
@@ -64,18 +181,10 @@ const AdminOrders = () => {
     setFraudLoading(true);
     setFraudData(null);
     try {
-      // 1. Check our own database by phone
-      const { data: dbOrders } = await supabase
-        .from('orders')
-        .select('status, total, created_at')
-        .eq('customer_phone', phone);
-
+      const { data: dbOrders } = await supabase.from('orders').select('status, total, created_at').eq('customer_phone', phone);
       const localOrders = dbOrders || [];
       const statusCounts: Record<string, number> = {};
-      localOrders.forEach(o => {
-        statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
-      });
-
+      localOrders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1; });
       const pieData = Object.entries(statusCounts).map(([name, value]) => ({ name, value }));
       const totalOrders = localOrders.length;
       const cancelledCount = statusCounts['Cancelled'] || 0;
@@ -83,47 +192,18 @@ const AdminOrders = () => {
       const cancelRate = totalOrders > 0 ? Math.round((cancelledCount / totalOrders) * 100) : 0;
       const totalSpent = localOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
-      // 2. Check Steadfast for this phone (optional - won't fail if no connection)
       let steadfastInfo = null;
-      try {
-        const { data: sfResult } = await supabase.functions.invoke('steadfast-courier', {
-          body: { action: 'check_status', data: { consignment_id: phone } },
-        });
-        if (sfResult?.success) steadfastInfo = sfResult.data;
-      } catch { /* ignore */ }
-
-      // 3. Check Pathao (optional)
+      try { const { data: sfResult } = await supabase.functions.invoke('steadfast-courier', { body: { action: 'check_status', data: { consignment_id: phone } } }); if (sfResult?.success) steadfastInfo = sfResult.data; } catch {}
       let pathaoInfo = null;
-      try {
-        const { data: ptResult } = await supabase.functions.invoke('pathao-courier', {
-          body: { action: 'view_order', data: { consignment_id: phone } },
-        });
-        if (ptResult?.success) pathaoInfo = ptResult.data;
-      } catch { /* ignore */ }
+      try { const { data: ptResult } = await supabase.functions.invoke('pathao-courier', { body: { action: 'view_order', data: { consignment_id: phone } } }); if (ptResult?.success) pathaoInfo = ptResult.data; } catch {}
 
-      // Risk score
       let riskLevel: 'low' | 'medium' | 'high' = 'low';
       if (cancelRate > 50 || (totalOrders >= 3 && cancelRate > 40)) riskLevel = 'high';
       else if (cancelRate > 25 || (totalOrders >= 2 && cancelledCount > 0)) riskLevel = 'medium';
 
-      setFraudData({
-        pieData,
-        totalOrders,
-        cancelledCount,
-        deliveredCount,
-        cancelRate,
-        totalSpent,
-        riskLevel,
-        steadfastInfo,
-        pathaoInfo,
-        customerName: name,
-        customerPhone: phone,
-      });
-    } catch (err: any) {
-      toast.error('Fraud check failed: ' + err.message);
-    } finally {
-      setFraudLoading(false);
-    }
+      setFraudData({ pieData, totalOrders, cancelledCount, deliveredCount, cancelRate, totalSpent, riskLevel, steadfastInfo, pathaoInfo, customerName: name, customerPhone: phone });
+    } catch (err: any) { toast.error('Fraud check failed: ' + err.message); }
+    finally { setFraudLoading(false); }
   };
 
   return (
@@ -152,7 +232,7 @@ const AdminOrders = () => {
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">City</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Total</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Status</th>
-                  <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden lg:table-cell">Date</th>
+                  <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden lg:table-cell">Courier</th>
                   <th className="text-right p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Actions</th>
                 </tr>
               </thead>
@@ -161,10 +241,7 @@ const AdminOrders = () => {
                   <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                     <td className="p-3 font-mono text-xs">#{order.id.slice(0, 8)}</td>
                     <td className="p-3 hidden sm:table-cell">
-                      <button
-                        onClick={() => { openOrder(order); runFraudCheck(order.customer_phone, order.customer_name); }}
-                        className="text-left hover:underline underline-offset-2 decoration-primary/50"
-                      >
+                      <button onClick={() => { openOrder(order); runFraudCheck(order.customer_phone, order.customer_name); }} className="text-left hover:underline underline-offset-2 decoration-primary/50">
                         <p className="font-medium">{order.customer_name}</p>
                         <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
                       </button>
@@ -172,13 +249,24 @@ const AdminOrders = () => {
                     <td className="p-3 text-muted-foreground hidden md:table-cell">{order.customer_city}</td>
                     <td className="p-3 font-medium">৳{order.total.toLocaleString()}</td>
                     <td className="p-3">
-                      <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value)} className="text-xs border border-border bg-background px-2 py-1 focus:outline-none">
+                      <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value, order)} className="text-xs border border-border bg-background px-2 py-1 focus:outline-none">
                         {statusOptions.map(s => <option key={s}>{s}</option>)}
                       </select>
                     </td>
-                    <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{new Date(order.created_at).toLocaleDateString()}</td>
-                    <td className="p-3 text-right">
-                      <button onClick={() => openOrder(order)} className="p-2 hover:bg-accent transition-colors"><Eye size={14} /></button>
+                    <td className="p-3 hidden lg:table-cell">
+                      {(order as any).tracking_code ? (
+                        <span className="text-xs font-mono text-muted-foreground">{(order as any).tracking_code}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right flex items-center justify-end gap-1">
+                      {(order as any).consignment_id && (
+                        <button onClick={() => syncCourierStatus(order)} disabled={syncingStatus === order.id} className="p-1.5 hover:bg-accent transition-colors" title="Sync courier status">
+                          {syncingStatus === order.id ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+                        </button>
+                      )}
+                      <button onClick={() => openOrder(order)} className="p-1.5 hover:bg-accent transition-colors"><Eye size={14} /></button>
                     </td>
                   </tr>
                 ))}
@@ -190,7 +278,7 @@ const AdminOrders = () => {
 
       <p className="text-xs text-muted-foreground">{filtered.length} order(s)</p>
 
-      {/* Order Detail / Fraud Check Modal */}
+      {/* Order Detail Modal */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-foreground/50 z-50 flex items-center justify-center p-4" onClick={() => setSelectedOrder(null)}>
           <div className="bg-background border border-border max-w-2xl w-full max-h-[85vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
@@ -225,15 +313,10 @@ const AdminOrders = () => {
                 <>
                   <p>
                     <span className="text-muted-foreground">Customer:</span>{' '}
-                    <button
-                      onClick={() => runFraudCheck(selectedOrder.customer_phone, selectedOrder.customer_name)}
-                      className="hover:underline underline-offset-2 decoration-primary/50 font-medium"
-                    >
+                    <button onClick={() => runFraudCheck(selectedOrder.customer_phone, selectedOrder.customer_name)} className="hover:underline underline-offset-2 decoration-primary/50 font-medium">
                       {selectedOrder.customer_name}
                     </button>
-                    {!fraudData && !fraudLoading && (
-                      <span className="text-[10px] text-muted-foreground ml-2">(click name for fraud check)</span>
-                    )}
+                    {!fraudData && !fraudLoading && <span className="text-[10px] text-muted-foreground ml-2">(click for fraud check)</span>}
                   </p>
                   <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.customer_phone}</p>
                   <p><span className="text-muted-foreground">Address:</span> {selectedOrder.customer_address}</p>
@@ -246,11 +329,41 @@ const AdminOrders = () => {
               <p><span className="text-muted-foreground">Date:</span> {new Date(selectedOrder.created_at).toLocaleString()}</p>
             </div>
 
-            {/* Fraud Check Section */}
+            {/* Courier Info & Actions */}
+            <div className="border border-border p-4 space-y-3">
+              <h4 className="text-xs tracking-wider uppercase text-muted-foreground">Courier</h4>
+              {selectedOrder.consignment_id ? (
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Provider</span><span className="uppercase text-xs">{selectedOrder.courier_provider || 'Steadfast'}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Consignment ID</span><span className="font-mono">{selectedOrder.consignment_id}</span></div>
+                  {selectedOrder.tracking_code && <div className="flex justify-between"><span className="text-muted-foreground">Tracking Code</span><span className="font-mono">{selectedOrder.tracking_code}</span></div>}
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={() => syncCourierStatus(selectedOrder)} disabled={syncingStatus === selectedOrder.id} className="luxury-button-primary text-[10px] py-2 px-3 inline-flex items-center gap-1.5">
+                      {syncingStatus === selectedOrder.id ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+                      Sync Status
+                    </button>
+                    <button onClick={() => createReturn(selectedOrder)} disabled={returnLoading === selectedOrder.id} className="text-[10px] py-2 px-3 border border-border inline-flex items-center gap-1.5 hover:bg-accent transition-colors">
+                      {returnLoading === selectedOrder.id ? <Loader2 size={11} className="animate-spin" /> : <RotateCcw size={11} />}
+                      Return Request
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Not sent to courier yet</p>
+                  <button onClick={() => sendToCourier(selectedOrder)} disabled={courierSending === selectedOrder.id} className="luxury-button-primary text-[10px] py-2 px-4 inline-flex items-center gap-1.5">
+                    {courierSending === selectedOrder.id ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                    Send to Steadfast
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Fraud Check */}
             {fraudLoading && (
               <div className="border border-border p-6 flex items-center justify-center gap-2 text-muted-foreground">
                 <Loader2 size={16} className="animate-spin" />
-                <span className="text-xs">Checking fraud risk across couriers...</span>
+                <span className="text-xs">Checking fraud risk...</span>
               </div>
             )}
 
@@ -267,9 +380,7 @@ const AdminOrders = () => {
                     {fraudData.riskLevel} risk
                   </span>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Pie Chart */}
                   <div>
                     {fraudData.pieData.length > 0 ? (
                       <ResponsiveContainer width="100%" height={180}>
@@ -287,39 +398,18 @@ const AdminOrders = () => {
                       <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">No order history</div>
                     )}
                   </div>
-
-                  {/* Stats */}
                   <div className="space-y-2.5 text-xs">
-                    <div className="flex justify-between border-b border-border pb-2">
-                      <span className="text-muted-foreground">Total Orders</span>
-                      <span className="font-medium">{fraudData.totalOrders}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-border pb-2">
-                      <span className="text-muted-foreground">Delivered</span>
-                      <span className="font-medium">{fraudData.deliveredCount}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-border pb-2">
-                      <span className="text-muted-foreground">Cancelled</span>
-                      <span className="font-medium">{fraudData.cancelledCount}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-border pb-2">
-                      <span className="text-muted-foreground">Cancel Rate</span>
-                      <span className={`font-medium ${fraudData.cancelRate > 40 ? 'text-destructive' : fraudData.cancelRate > 20 ? 'text-yellow-600' : ''}`}>
-                        {fraudData.cancelRate}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Spent</span>
-                      <span className="font-medium">৳{fraudData.totalSpent.toLocaleString()}</span>
-                    </div>
+                    <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Total Orders</span><span className="font-medium">{fraudData.totalOrders}</span></div>
+                    <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Delivered</span><span className="font-medium">{fraudData.deliveredCount}</span></div>
+                    <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Cancelled</span><span className="font-medium">{fraudData.cancelledCount}</span></div>
+                    <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Cancel Rate</span><span className={`font-medium ${fraudData.cancelRate > 40 ? 'text-destructive' : ''}`}>{fraudData.cancelRate}%</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Total Spent</span><span className="font-medium">৳{fraudData.totalSpent.toLocaleString()}</span></div>
                   </div>
                 </div>
-
-                {/* Courier checks info */}
                 <div className="text-[10px] text-muted-foreground border-t border-border pt-3 space-y-0.5">
-                  <p>✓ Local database checked ({fraudData.totalOrders} orders found)</p>
-                  <p>{fraudData.steadfastInfo ? '✓' : '○'} Steadfast courier {fraudData.steadfastInfo ? 'data found' : 'checked (no match)'}</p>
-                  <p>{fraudData.pathaoInfo ? '✓' : '○'} Pathao courier {fraudData.pathaoInfo ? 'data found' : 'checked (no match)'}</p>
+                  <p>✓ Local database ({fraudData.totalOrders} orders)</p>
+                  <p>{fraudData.steadfastInfo ? '✓' : '○'} Steadfast {fraudData.steadfastInfo ? 'data found' : 'checked'}</p>
+                  <p>{fraudData.pathaoInfo ? '✓' : '○'} Pathao {fraudData.pathaoInfo ? 'data found' : 'checked'}</p>
                 </div>
               </div>
             )}
@@ -330,9 +420,7 @@ const AdminOrders = () => {
               <div className="space-y-3">
                 {(Array.isArray(selectedOrder.items) ? selectedOrder.items : []).map((item: any, i: number) => (
                   <div key={i} className="flex items-center gap-3">
-                    {item.image && (
-                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover border border-border flex-shrink-0" />
-                    )}
+                    {item.image && <img src={item.image} alt={item.name} className="w-12 h-12 object-cover border border-border flex-shrink-0" />}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.name}</p>
                       <div className="flex gap-2 text-xs text-muted-foreground">
