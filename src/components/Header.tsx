@@ -45,33 +45,33 @@ const Header = () => {
           <div className="border-b border-border">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between h-16 sm:h-20">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden p-2 hover:opacity-60 transition-opacity">
-                    {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="sm:hidden p-1.5 hover:opacity-60 transition-opacity">
+                    {mobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
                   </button>
-                  <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:opacity-60 transition-opacity">
-                    <Search size={20} />
+                  <button onClick={() => setSearchOpen(!searchOpen)} className="p-1.5 hover:opacity-60 transition-opacity">
+                    <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
                   </button>
                 </div>
-                <Link to="/" className="absolute left-1/2 -translate-x-1/2 luxury-heading text-sm sm:text-2xl tracking-[0.3em] sm:tracking-[0.35em] font-semibold">
+                <Link to="/" className="absolute left-1/2 -translate-x-1/2 text-base sm:text-3xl tracking-[0.35em] sm:tracking-[0.4em] font-bold" style={{ fontFamily: "'Playfair Display', serif" }}>
                   HIGHLIGHTS
                 </Link>
-                <div className="flex items-center gap-0.5 sm:gap-3">
-                  <Link to="/wishlist" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
-                    <Heart size={18} className="sm:w-5 sm:h-5" />
+                <div className="flex items-center gap-0 sm:gap-2">
+                  <Link to="/wishlist" className="p-1.5 hover:opacity-60 transition-opacity relative">
+                    <Heart size={15} className="sm:w-[18px] sm:h-[18px]" />
                     {wishlistItems.length > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-foreground text-background text-[8px] rounded-full flex items-center justify-center">
                         {wishlistItems.length}
                       </span>
                     )}
                   </Link>
-                  <Link to="/admin" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity">
-                    <User size={18} className="sm:w-5 sm:h-5" />
+                  <Link to="/admin" className="p-1.5 hover:opacity-60 transition-opacity">
+                    <User size={15} className="sm:w-[18px] sm:h-[18px]" />
                   </Link>
-                  <button onClick={() => setIsCartOpen(true)} className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
-                    <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
+                  <button onClick={() => setIsCartOpen(true)} className="p-1.5 hover:opacity-60 transition-opacity relative">
+                    <ShoppingBag size={15} className="sm:w-[18px] sm:h-[18px]" />
                     {itemCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-foreground text-background text-[8px] rounded-full flex items-center justify-center">
                         {itemCount}
                       </span>
                     )}
