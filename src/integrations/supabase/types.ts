@@ -64,6 +64,7 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string
           category: string
           colors: Json
           created_at: string
@@ -75,10 +76,12 @@ export type Database = {
           original_price: number | null
           price: number
           sizes: string[]
+          sku: string
           stock: number
           updated_at: string
         }
         Insert: {
+          brand?: string
           category: string
           colors?: Json
           created_at?: string
@@ -90,10 +93,12 @@ export type Database = {
           original_price?: number | null
           price: number
           sizes?: string[]
+          sku?: string
           stock?: number
           updated_at?: string
         }
         Update: {
+          brand?: string
           category?: string
           colors?: Json
           created_at?: string
@@ -105,6 +110,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           sizes?: string[]
+          sku?: string
           stock?: number
           updated_at?: string
         }
