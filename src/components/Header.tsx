@@ -5,13 +5,10 @@ import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
 
 const navCategories = [
+  { name: 'Shirt', path: '/?category=Shirts' },
   { name: 'T-Shirt', path: '/?category=T-Shirt' },
-  { name: 'Winter', path: '/?category=Winter' },
-  { name: 'Shirts', path: '/?category=Shirts' },
-  { name: 'Knit Polos', path: '/?category=Knit Polos' },
-  { name: 'Pant', path: '/?category=Pant' },
   { name: 'Panjabi', path: '/?category=Panjabi' },
-  { name: 'Kafsu', path: '/?category=Kafsu' },
+  { name: 'Pant', path: '/?category=Pant' },
 ];
 
 const Header = () => {
