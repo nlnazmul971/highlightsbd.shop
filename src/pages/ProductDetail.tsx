@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Minus, Plus, Star } from 'lucide-react';
+import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -12,7 +12,6 @@ import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: string }) => {
-  // Generate multiple views from the same image (simulating angles)
   const images = [mainImage, mainImage, mainImage, mainImage];
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
@@ -27,16 +26,27 @@ const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: str
     setZoomPos({ x, y });
   }, []);
 
+  // Mobile swipe
+  const touchStart = useRef(0);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStart.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStart.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0 && activeIndex < images.length - 1) setActiveIndex(activeIndex + 1);
+      if (diff < 0 && activeIndex > 0) setActiveIndex(activeIndex - 1);
+    }
+  };
+
   return (
-    <div className="flex flex-col-reverse sm:flex-row gap-3">
-      {/* Thumbnails */}
-      <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[600px]">
+    <div className="flex flex-col sm:flex-row gap-3">
+      {/* Thumbnails - side on desktop, bottom on mobile */}
+      <div className="hidden sm:flex sm:flex-col gap-2 sm:max-h-[600px]">
         {images.map((img, i) => (
           <button
             key={i}
             onClick={() => setActiveIndex(i)}
-            className={`shrink-0 w-16 h-20 sm:w-18 sm:h-22 overflow-hidden border-2 transition-all ${
-              i === activeIndex ? 'border-foreground' : 'border-transparent opacity-60 hover:opacity-100'
+            className={`shrink-0 w-16 h-20 overflow-hidden border-2 transition-all ${
+              i === activeIndex ? 'border-foreground' : 'border-transparent opacity-50 hover:opacity-100'
             }`}
           >
             <img src={img} alt={`${name} view ${i + 1}`} className="w-full h-full object-cover" />
@@ -44,24 +54,34 @@ const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: str
         ))}
       </div>
 
-      {/* Main image with zoom */}
+      {/* Main image */}
       <div
         ref={imgRef}
         className="flex-1 aspect-[3/4] overflow-hidden bg-secondary cursor-crosshair relative"
         onMouseEnter={() => setZoomed(true)}
         onMouseLeave={() => setZoomed(false)}
         onMouseMove={handleMouseMove}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         <img
           src={images[activeIndex]}
           alt={name}
           className="w-full h-full object-cover transition-transform duration-200"
-          style={zoomed ? {
-            transform: 'scale(3)',
-            transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-          } : undefined}
+          style={zoomed ? { transform: 'scale(2.5)', transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
           draggable={false}
         />
+      </div>
+
+      {/* Mobile dot indicators */}
+      <div className="flex sm:hidden items-center justify-center gap-1.5">
+        {images.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveIndex(i)}
+            className={`w-2 h-2 rounded-full transition-all ${i === activeIndex ? 'bg-foreground w-5' : 'bg-muted-foreground/30'}`}
+          />
+        ))}
       </div>
     </div>
   );
@@ -83,20 +103,41 @@ const ProductDetail = () => {
     if (product?.id) addView(product.id);
   }, [product?.id, addView]);
 
+  // Scroll to top on product change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
   if (isLoading) return (
-    <div className="min-h-screen bg-background"><Header /><CartDrawer />
-      <div className="pt-40 text-center text-muted-foreground">Loading...</div>
+    <div className="min-h-screen bg-background">
+      <Header /><CartDrawer />
+      <div className="pt-36 sm:pt-44 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
+          <div className="aspect-[3/4] bg-muted animate-pulse" />
+          <div className="space-y-4 py-4">
+            <div className="h-4 bg-muted rounded w-20 animate-pulse" />
+            <div className="h-8 bg-muted rounded w-3/4 animate-pulse" />
+            <div className="h-6 bg-muted rounded w-1/3 animate-pulse" />
+            <div className="h-20 bg-muted rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   if (!product) return (
-    <div className="min-h-screen bg-background"><Header /><CartDrawer />
-      <div className="pt-40 text-center"><p className="text-muted-foreground">Product not found.</p><Link to="/" className="luxury-button-outline mt-6 inline-block">Back to Shop</Link></div>
+    <div className="min-h-screen bg-background">
+      <Header /><CartDrawer />
+      <div className="pt-36 sm:pt-44 text-center">
+        <p className="text-muted-foreground mb-4">Product not found.</p>
+        <Link to="/" className="luxury-button-outline inline-block">Back to Shop</Link>
+      </div>
     </div>
   );
 
   const size = selectedSize || product.sizes[0];
   const color = selectedColor || product.colors[0]?.name || '';
+  const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
   const handleAddToCart = () => addItem(product, size, color, quantity);
   const handleBuyNow = () => { addItem(product, size, color, quantity); window.location.href = '/checkout'; };
@@ -104,78 +145,127 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header /><CartDrawer />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-24">
-        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2">
-          <ArrowLeft size={16} /> Back
-        </Link>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-4 sm:mb-6">
+          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+          <span>/</span>
+          <Link to={`/?category=${product.category}`} className="hover:text-foreground transition-colors">{product.category}</Link>
+          <span>/</span>
+          <span className="text-foreground">{product.name}</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-14">
           <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} />
-          <div className="py-0 lg:py-4">
-            <p className="luxury-body text-[10px] text-muted-foreground mb-0.5">{product.category}</p>
-            <h1 className="luxury-heading text-[22px] sm:text-4xl tracking-[0.08em] mb-1.5 sm:mb-4">{product.name}</h1>
-            <div className="flex items-center gap-2 mb-2 sm:mb-6">
-              <span className="text-lg sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
-              {product.original_price && <span className="text-sm sm:text-lg text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
-            </div>
-            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-8">{product.description}</p>
 
-            <div className="mb-3 sm:mb-6">
-              <p className="luxury-body text-[10px] mb-1.5">Size</p>
-              <div className="flex gap-1.5">
+          <div className="py-2 lg:py-4">
+            <p className="luxury-body text-[10px] text-muted-foreground mb-1 tracking-[0.15em]">{product.category}</p>
+            <h1 className="luxury-heading text-xl sm:text-3xl tracking-[0.08em] mb-2 sm:mb-3">{product.name}</h1>
+
+            {/* Rating */}
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <Star key={j} size={13} fill={j < Math.round(avgRating) ? 'currentColor' : 'none'} className={j < Math.round(avgRating) ? 'text-foreground' : 'text-muted-foreground/30'} />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">({reviews.length} reviews)</span>
+              </div>
+            )}
+
+            {/* Price */}
+            <div className="flex items-baseline gap-3 mb-4 sm:mb-6">
+              <span className="text-xl sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
+              {product.original_price && (
+                <>
+                  <span className="text-sm text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>
+                  <span className="text-xs text-destructive font-medium">
+                    -{Math.round(((product.original_price - product.price) / product.original_price) * 100)}%
+                  </span>
+                </>
+              )}
+            </div>
+
+            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed mb-5 sm:mb-8">{product.description}</p>
+
+            {/* Size */}
+            <div className="mb-4 sm:mb-6">
+              <p className="luxury-body text-[10px] mb-2 tracking-[0.1em]">Size — <span className="text-muted-foreground">{size}</span></p>
+              <div className="flex flex-wrap gap-2">
                 {product.sizes.map(s => (
-                  <button key={s} onClick={() => setSelectedSize(s)} className={`w-9 h-9 sm:w-12 sm:h-12 text-xs tracking-wider border transition-colors ${size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}>{s}</button>
+                  <button key={s} onClick={() => setSelectedSize(s)}
+                    className={`min-w-[40px] h-10 sm:h-11 px-3 text-xs tracking-wider border transition-all ${
+                      size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
+                    }`}>{s}</button>
                 ))}
               </div>
             </div>
 
-            <div className="mb-3 sm:mb-6">
-              <p className="luxury-body text-[10px] mb-1.5">Color — {color}</p>
-              <div className="flex gap-1.5">
-                {product.colors.map(c => (
-                  <button key={c.name} onClick={() => setSelectedColor(c.name)} className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${color === c.name ? 'border-foreground scale-110' : 'border-border'}`} style={{ backgroundColor: c.hex }} />
-                ))}
+            {/* Color */}
+            {product.colors.length > 0 && (
+              <div className="mb-4 sm:mb-6">
+                <p className="luxury-body text-[10px] mb-2 tracking-[0.1em]">Color — <span className="text-muted-foreground">{color}</span></p>
+                <div className="flex gap-2">
+                  {product.colors.map(c => (
+                    <button key={c.name} onClick={() => setSelectedColor(c.name)}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${
+                        color === c.name ? 'border-foreground ring-2 ring-foreground/20' : 'border-border hover:border-foreground/50'
+                      }`} style={{ backgroundColor: c.hex }} title={c.name} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="mb-4 sm:mb-8">
-              <p className="luxury-body text-[10px] mb-1.5">Quantity</p>
+            {/* Quantity */}
+            <div className="mb-5 sm:mb-8">
+              <p className="luxury-body text-[10px] mb-2 tracking-[0.1em]">Quantity</p>
               <div className="inline-flex items-center border border-border">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Minus size={13} /></button>
-                <span className="w-9 sm:w-12 text-center text-sm">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Plus size={13} /></button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Minus size={14} /></button>
+                <span className="w-10 sm:w-12 text-center text-sm">{quantity}</span>
+                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Plus size={14} /></button>
               </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
             </div>
 
             {/* Desktop CTA */}
-            <div className="hidden sm:flex gap-2 mb-2.5">
-              <button onClick={handleAddToCart} className="flex-1 luxury-button-primary">Add to Cart</button>
-              <button onClick={() => toggleItem(product)} className={`p-3 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+            <div className="hidden sm:flex gap-3 mb-3">
+              <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-3.5">Add to Cart</button>
+              <button onClick={() => toggleItem(product)}
+                className={`p-3.5 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
                 <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
               </button>
             </div>
-            <button onClick={handleBuyNow} className="hidden sm:block w-full luxury-button-outline">Buy Now</button>
-            <p className="text-xs text-muted-foreground mt-2.5 mb-20 sm:mb-0">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
+            <button onClick={handleBuyNow} className="hidden sm:block w-full luxury-button-outline py-3.5">Buy Now</button>
 
-      {/* Mobile sticky bottom CTA */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background border-t border-border px-4 py-3 flex gap-2">
-        <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-3 text-sm">Add to Cart</button>
-        <button onClick={handleBuyNow} className="flex-1 luxury-button-outline py-3 text-sm">Buy Now</button>
-        <button onClick={() => toggleItem(product)} className={`p-3 border border-border ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-          <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
-        </button>
-      </div>
+            {/* Trust badges */}
+            <div className="hidden sm:flex items-center gap-6 mt-6 pt-6 border-t border-border">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Truck size={16} />
+                <span className="text-[11px]">Free Delivery</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Shield size={16} />
+                <span className="text-[11px]">Secure Payment</span>
+              </div>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <RotateCcw size={16} />
+                <span className="text-[11px]">Easy Returns</span>
+              </div>
+            </div>
 
+            {/* Reviews */}
             {reviews.length > 0 && (
-              <div className="mt-12 pt-8 border-t border-border">
-                <h3 className="luxury-heading text-xl tracking-[0.1em] mb-6">Reviews</h3>
+              <div className="mt-10 pt-8 border-t border-border">
+                <h3 className="luxury-heading text-lg tracking-[0.1em] mb-6">Reviews ({reviews.length})</h3>
                 <div className="space-y-4">
                   {reviews.map(r => (
                     <div key={r.id} className="pb-4 border-b border-border last:border-0">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1.5">
                         <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} size={12} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />)}</div>
-                        <span className="text-xs text-muted-foreground">{r.name}</span>
+                        <span className="text-xs font-medium">{r.name}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">{r.comment}</p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
                     </div>
                   ))}
                 </div>
@@ -186,7 +276,7 @@ const ProductDetail = () => {
 
         {/* Related Products */}
         {relatedProducts.length > 0 && (
-          <section className="mt-16 mb-12">
+          <section className="mt-16 sm:mt-20 mb-12">
             <div className="text-center mb-10">
               <h2 className="luxury-heading text-2xl sm:text-3xl tracking-[0.15em]">You May Also Like</h2>
               <div className="w-12 h-px bg-foreground mx-auto mt-4" />
@@ -197,6 +287,17 @@ const ProductDetail = () => {
           </section>
         )}
       </main>
+
+      {/* Mobile sticky bottom CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 sm:hidden bg-background/95 backdrop-blur-sm border-t border-border px-4 py-3 flex gap-2">
+        <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-3 text-sm">Add to Cart</button>
+        <button onClick={handleBuyNow} className="flex-1 luxury-button-outline py-3 text-sm">Buy Now</button>
+        <button onClick={() => product && toggleItem(product)}
+          className={`p-3 border border-border ${product && isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+          <Heart size={18} fill={product && isInWishlist(product.id) ? 'currentColor' : 'none'} />
+        </button>
+      </div>
+
       <Footer />
     </div>
   );
