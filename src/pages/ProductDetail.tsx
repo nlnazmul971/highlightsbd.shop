@@ -104,45 +104,45 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header /><CartDrawer />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
           <ArrowLeft size={16} /> Back
         </Link>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-12">
           <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} />
-          <div className="py-2 lg:py-4">
-            <p className="luxury-body text-[11px] text-muted-foreground mb-2">{product.category}</p>
-            <h1 className="luxury-heading text-3xl sm:text-4xl tracking-[0.1em] mb-4">{product.name}</h1>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-2xl font-light">৳{product.price.toLocaleString()}</span>
-              {product.original_price && <span className="text-lg text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
+          <div className="py-1 lg:py-4">
+            <p className="luxury-body text-[11px] text-muted-foreground mb-1">{product.category}</p>
+            <h1 className="luxury-heading text-2xl sm:text-4xl tracking-[0.1em] mb-2 sm:mb-4">{product.name}</h1>
+            <div className="flex items-center gap-3 mb-3 sm:mb-6">
+              <span className="text-xl sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
+              {product.original_price && <span className="text-base sm:text-lg text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-8">{product.description}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4 sm:mb-8">{product.description}</p>
 
-            <div className="mb-6">
-              <p className="luxury-body text-[11px] mb-3">Size</p>
+            <div className="mb-4 sm:mb-6">
+              <p className="luxury-body text-[11px] mb-2">Size</p>
               <div className="flex gap-2">
                 {product.sizes.map(s => (
-                  <button key={s} onClick={() => setSelectedSize(s)} className={`w-12 h-12 text-xs tracking-wider border transition-colors ${size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}>{s}</button>
+                  <button key={s} onClick={() => setSelectedSize(s)} className={`w-10 h-10 sm:w-12 sm:h-12 text-xs tracking-wider border transition-colors ${size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}>{s}</button>
                 ))}
               </div>
             </div>
 
-            <div className="mb-6">
-              <p className="luxury-body text-[11px] mb-3">Color — {color}</p>
+            <div className="mb-4 sm:mb-6">
+              <p className="luxury-body text-[11px] mb-2">Color — {color}</p>
               <div className="flex gap-2">
                 {product.colors.map(c => (
-                  <button key={c.name} onClick={() => setSelectedColor(c.name)} className={`w-8 h-8 rounded-full border-2 transition-all ${color === c.name ? 'border-foreground scale-110' : 'border-border'}`} style={{ backgroundColor: c.hex }} />
+                  <button key={c.name} onClick={() => setSelectedColor(c.name)} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${color === c.name ? 'border-foreground scale-110' : 'border-border'}`} style={{ backgroundColor: c.hex }} />
                 ))}
               </div>
             </div>
 
-            <div className="mb-8">
-              <p className="luxury-body text-[11px] mb-3">Quantity</p>
+            <div className="mb-5 sm:mb-8">
+              <p className="luxury-body text-[11px] mb-2">Quantity</p>
               <div className="inline-flex items-center border border-border">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-3 hover:bg-accent transition-colors"><Minus size={14} /></button>
-                <span className="w-12 text-center text-sm">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="p-3 hover:bg-accent transition-colors"><Plus size={14} /></button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Minus size={14} /></button>
+                <span className="w-10 sm:w-12 text-center text-sm">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Plus size={14} /></button>
               </div>
             </div>
 
