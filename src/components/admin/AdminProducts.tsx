@@ -3,6 +3,7 @@ import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct } fro
 import { Product, getProductImage } from '@/data/products';
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import ImageUpload from './ImageUpload';
 
 const AdminProducts = () => {
   const [search, setSearch] = useState('');
