@@ -79,7 +79,7 @@
     @apply luxury-button border border-primary text-primary hover:bg-primary hover:text-primary-foreground;
   }
   .luxury-card {
-    @apply bg-card overflow-hidden group cursor-pointer;
+    @apply bg-card overflow-hidden cursor-pointer;
   }
   .luxury-badge {
     @apply text-[10px] tracking-[0.2em] uppercase font-medium px-3 py-1;
