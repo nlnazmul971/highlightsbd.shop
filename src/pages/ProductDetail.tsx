@@ -208,20 +208,8 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Color */}
-            {product.colors.length > 0 && (
-              <div className="mb-3 sm:mb-6">
-                <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Color — <span className="text-muted-foreground">{color}</span></p>
-                <div className="flex gap-1.5 sm:gap-2">
-                  {product.colors.map(c => (
-                    <button key={c.name} onClick={() => setSelectedColor(c.name)}
-                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${
-                        color === c.name ? 'border-foreground ring-2 ring-foreground/20' : 'border-border hover:border-foreground/50'
-                      }`} style={{ backgroundColor: c.hex }} title={c.name} />
-                  ))}
-                </div>
-              </div>
-            )}
+
+
 
             {/* Quantity */}
             <div className="mb-4 sm:mb-8">
