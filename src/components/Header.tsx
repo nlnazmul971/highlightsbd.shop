@@ -39,7 +39,7 @@ const Header = () => {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background ${scrolled ? 'shadow-sm' : ''}`}>
+      <header className={`fixed left-0 right-0 z-50 transition-all duration-300 bg-background ${scrolled ? 'shadow-sm -top-20 sm:-top-20' : 'top-0'}`} style={{ top: scrolled ? undefined : 0 }}>
         {/* Top bar - hidden on mobile when scrolled */}
         {!(scrolled && isMobile) && (
           <div className="border-b border-border">
