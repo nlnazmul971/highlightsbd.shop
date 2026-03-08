@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Heart, Minus, Plus, Star } from 'lucide-react';
 import Header from '@/components/Header';
@@ -9,6 +9,62 @@ import { useWishlist } from '@/contexts/WishlistContext';
 import { useProduct, useProductReviews } from '@/hooks/useSupabase';
 import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
+
+const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: string }) => {
+  // Generate multiple views from the same image (simulating angles)
+  const images = [mainImage, mainImage, mainImage, mainImage];
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const imgRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!imgRef.current) return;
+    const rect = imgRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
+  }, []);
+
+  return (
+    <div className="flex flex-col-reverse sm:flex-row gap-3">
+      {/* Thumbnails */}
+      <div className="flex sm:flex-col gap-2 overflow-x-auto sm:overflow-y-auto sm:max-h-[600px]">
+        {images.map((img, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveIndex(i)}
+            className={`shrink-0 w-16 h-20 sm:w-18 sm:h-22 overflow-hidden border-2 transition-all ${
+              i === activeIndex ? 'border-foreground' : 'border-transparent opacity-60 hover:opacity-100'
+            }`}
+          >
+            <img src={img} alt={`${name} view ${i + 1}`} className="w-full h-full object-cover" />
+          </button>
+        ))}
+      </div>
+
+      {/* Main image with zoom */}
+      <div
+        ref={imgRef}
+        className="flex-1 aspect-[3/4] overflow-hidden bg-secondary cursor-crosshair relative"
+        onMouseEnter={() => setZoomed(true)}
+        onMouseLeave={() => setZoomed(false)}
+        onMouseMove={handleMouseMove}
+      >
+        <img
+          src={images[activeIndex]}
+          alt={name}
+          className="w-full h-full object-cover transition-transform duration-200"
+          style={zoomed ? {
+            transform: 'scale(3)',
+            transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+          } : undefined}
+          draggable={false}
+        />
+      </div>
+    </div>
+  );
+};
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -46,15 +102,13 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header /><CartDrawer />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24">
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
           <ArrowLeft size={16} /> Back
         </Link>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16">
-          <div className="aspect-[3/4] overflow-hidden bg-secondary">
-            <img src={getProductImage(product.image_url)} alt={product.name} className="w-full h-full object-cover" />
-          </div>
-          <div className="py-4 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
+          <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} />
+          <div className="py-2 lg:py-4">
             <p className="luxury-body text-[11px] text-muted-foreground mb-2">{product.category}</p>
             <h1 className="luxury-heading text-3xl sm:text-4xl tracking-[0.1em] mb-4">{product.name}</h1>
             <div className="flex items-center gap-3 mb-6">
