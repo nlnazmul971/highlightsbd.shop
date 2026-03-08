@@ -160,7 +160,13 @@ const ProductDetail = () => {
 
           <div className="py-0 lg:py-4">
             <p className="luxury-body text-[10px] text-muted-foreground mb-1 tracking-[0.15em]">{product.category}</p>
-            <h1 className="luxury-heading text-lg sm:text-3xl tracking-[0.08em] mb-2 sm:mb-3">{product.name}</h1>
+            <h1 className="luxury-heading text-lg sm:text-3xl tracking-[0.08em] mb-1 sm:mb-2">{product.name}</h1>
+            {(product.brand || product.sku) && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 sm:mb-3">
+                {product.brand && <span className="text-[11px] text-muted-foreground">Brand: <span className="text-foreground font-medium">{product.brand}</span></span>}
+                {product.sku && <span className="text-[11px] text-muted-foreground">SKU: <span className="text-foreground font-medium">{product.sku}</span></span>}
+              </div>
+            )}
 
             {/* Rating */}
             {reviews.length > 0 && (
