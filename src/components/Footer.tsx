@@ -59,8 +59,8 @@ const Footer = () => {
             </div>
           </div>
           <div>
-            <h4 className="luxury-body text-[11px] mb-4 text-foreground">Policies</h4>
-            <div className="space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
+            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Policies</h4>
+            <div className="space-y-1.5 sm:space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
               <p className="hover:text-foreground cursor-pointer transition-colors">Privacy Policy</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Terms & Conditions</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Refund Policy</p>
