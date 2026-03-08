@@ -91,21 +91,7 @@ const Hero = () => {
         </p>
       </div>
 
-      {/* Navigation arrows */}
-      <button
-        onClick={prev}
-        className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center hover:bg-background/40 transition-colors"
-        aria-label="Previous slide"
-      >
-        <ChevronLeft size={22} className="text-background" />
-      </button>
-      <button
-        onClick={next}
-        className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center hover:bg-background/40 transition-colors"
-        aria-label="Next slide"
-      >
-        <ChevronRight size={22} className="text-background" />
-      </button>
+      {/* Navigation arrows removed */}
 
       {/* Dots indicator */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
