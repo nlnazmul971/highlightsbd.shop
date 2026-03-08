@@ -20,7 +20,7 @@ const Footer = () => {
         {/* Top section - Brand + Contact */}
         <div className="mb-4 sm:mb-10">
           <h3 className="luxury-heading text-xl tracking-[0.3em] font-semibold mb-1.5 sm:mb-4">HIGHLIGHTS</h3>
-          <div className="space-y-1 sm:space-y-2 text-sm text-muted-foreground">
+          <div className="space-y-0.5 sm:space-y-2 text-xs sm:text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
               <MapPin size={14} className="shrink-0" />
               HOUSE 12, ROAD 5, SECTOR 3, UTTARA, DHAKA
