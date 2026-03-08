@@ -1,60 +1,113 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Plug, CheckCircle, XCircle, Loader2, Wallet, Send, Search } from 'lucide-react';
+import { Plug, CheckCircle, XCircle, Loader2, Wallet, Search, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 
+type ConnectionStatus = 'idle' | 'checking' | 'connected' | 'error';
+
+const StatusBadge = ({ status }: { status: ConnectionStatus }) => (
+  <div className={`flex items-center gap-2 px-3 py-2 border text-xs ${
+    status === 'connected' ? 'border-green-500/30 bg-green-500/5 text-green-700' :
+    status === 'error' ? 'border-destructive/30 bg-destructive/5 text-destructive' :
+    'border-border text-muted-foreground'
+  }`}>
+    {status === 'checking' && <Loader2 size={14} className="animate-spin" />}
+    {status === 'connected' && <CheckCircle size={14} />}
+    {status === 'error' && <XCircle size={14} />}
+    {status === 'idle' && <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />}
+    <span>
+      {status === 'idle' && 'Not checked'}
+      {status === 'checking' && 'Checking...'}
+      {status === 'connected' && 'Connected'}
+      {status === 'error' && 'Connection Failed'}
+    </span>
+  </div>
+);
+
 const AdminAPI = () => {
-  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'checking' | 'connected' | 'error'>('idle');
-  const [balance, setBalance] = useState<string | null>(null);
+  // Steadfast state
+  const [sfStatus, setSfStatus] = useState<ConnectionStatus>('idle');
+  const [sfBalance, setSfBalance] = useState<string | null>(null);
+
+  // Pathao state
+  const [ptStatus, setPtStatus] = useState<ConnectionStatus>('idle');
+
+  // Tracking state
   const [trackingId, setTrackingId] = useState('');
   const [trackingResult, setTrackingResult] = useState<any>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingProvider, setTrackingProvider] = useState<'steadfast' | 'pathao'>('steadfast');
 
   const callSteadfast = async (action: string, data?: any) => {
-    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-      body: { action, data },
-    });
+    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', { body: { action, data } });
     if (error) throw error;
     return result;
   };
 
-  const checkConnection = async () => {
-    setConnectionStatus('checking');
+  const callPathao = async (action: string, data?: any) => {
+    const { data: result, error } = await supabase.functions.invoke('pathao-courier', { body: { action, data } });
+    if (error) throw error;
+    return result;
+  };
+
+  // Steadfast
+  const checkSteadfast = async () => {
+    setSfStatus('checking');
     try {
       const result = await callSteadfast('check_connection');
       if (result.success) {
-        setConnectionStatus('connected');
-        setBalance(result.data?.current_balance?.toString() || '0');
-        toast.success('Steadfast API connected successfully!');
+        setSfStatus('connected');
+        setSfBalance(result.data?.current_balance?.toString() || '0');
+        toast.success('Steadfast API connected!');
       } else {
-        setConnectionStatus('error');
-        toast.error('Connection failed: ' + (result.data?.message || 'Invalid credentials'));
+        setSfStatus('error');
+        toast.error('Steadfast: ' + (result.error || result.data?.message || 'Invalid credentials'));
       }
     } catch (err: any) {
-      setConnectionStatus('error');
-      toast.error('Connection failed: ' + err.message);
+      setSfStatus('error');
+      toast.error('Steadfast: ' + err.message);
     }
   };
 
-  const checkBalance = async () => {
+  const refreshBalance = async () => {
     try {
       const result = await callSteadfast('check_balance');
       if (result.success) {
-        setBalance(result.data?.current_balance?.toString() || '0');
+        setSfBalance(result.data?.current_balance?.toString() || '0');
         toast.success('Balance updated');
+      }
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  // Pathao
+  const checkPathao = async () => {
+    setPtStatus('checking');
+    try {
+      const result = await callPathao('check_connection');
+      if (result.success) {
+        setPtStatus('connected');
+        toast.success('Pathao API connected!');
       } else {
-        toast.error('Failed to fetch balance');
+        setPtStatus('error');
+        toast.error('Pathao: ' + (result.error || 'Connection failed'));
       }
     } catch (err: any) {
-      toast.error(err.message);
+      setPtStatus('error');
+      toast.error('Pathao: ' + err.message);
     }
   };
 
+  // Tracking
   const trackOrder = async () => {
     if (!trackingId.trim()) { toast.error('Enter a consignment ID'); return; }
     setTrackingLoading(true);
     try {
-      const result = await callSteadfast('check_status', { consignment_id: trackingId.trim() });
+      let result;
+      if (trackingProvider === 'steadfast') {
+        result = await callSteadfast('check_status', { consignment_id: trackingId.trim() });
+      } else {
+        result = await callPathao('view_order', { consignment_id: trackingId.trim() });
+      }
       if (result.success) {
         setTrackingResult(result.data);
       } else {
@@ -70,7 +123,7 @@ const AdminAPI = () => {
 
   return (
     <div className="space-y-8 max-w-3xl">
-      {/* Steadfast Courier Integration */}
+      {/* Steadfast Courier */}
       <div className="border border-border p-6 space-y-5">
         <div className="flex items-center gap-3">
           <Plug size={20} />
@@ -79,43 +132,39 @@ const AdminAPI = () => {
             <p className="text-xs text-muted-foreground">Courier delivery integration for Bangladesh</p>
           </div>
         </div>
-
-        {/* Connection Status */}
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-2 px-3 py-2 border text-xs ${
-            connectionStatus === 'connected' ? 'border-green-500/30 bg-green-500/5 text-green-700' :
-            connectionStatus === 'error' ? 'border-destructive/30 bg-destructive/5 text-destructive' :
-            'border-border text-muted-foreground'
-          }`}>
-            {connectionStatus === 'checking' && <Loader2 size={14} className="animate-spin" />}
-            {connectionStatus === 'connected' && <CheckCircle size={14} />}
-            {connectionStatus === 'error' && <XCircle size={14} />}
-            {connectionStatus === 'idle' && <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />}
-            <span>
-              {connectionStatus === 'idle' && 'Not checked'}
-              {connectionStatus === 'checking' && 'Checking...'}
-              {connectionStatus === 'connected' && 'Connected'}
-              {connectionStatus === 'error' && 'Connection Failed'}
-            </span>
-          </div>
-          <button onClick={checkConnection} disabled={connectionStatus === 'checking'} className="luxury-button-primary text-[10px] py-2 px-4">
-            {connectionStatus === 'checking' ? 'Checking...' : 'Check Connection'}
+          <StatusBadge status={sfStatus} />
+          <button onClick={checkSteadfast} disabled={sfStatus === 'checking'} className="luxury-button-primary text-[10px] py-2 px-4">
+            {sfStatus === 'checking' ? 'Checking...' : 'Check Connection'}
           </button>
         </div>
-
-        {/* Balance */}
-        {connectionStatus === 'connected' && balance !== null && (
+        {sfStatus === 'connected' && sfBalance !== null && (
           <div className="flex items-center gap-3 p-4 bg-muted/30 border border-border">
             <Wallet size={16} className="text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground tracking-wider uppercase">Current Balance</p>
-              <p className="text-lg font-light" style={{ fontFamily: 'var(--font-display)' }}>৳{Number(balance).toLocaleString()}</p>
+              <p className="text-lg font-light" style={{ fontFamily: 'var(--font-display)' }}>৳{Number(sfBalance).toLocaleString()}</p>
             </div>
-            <button onClick={checkBalance} className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors underline">
-              Refresh
-            </button>
+            <button onClick={refreshBalance} className="ml-auto text-xs text-muted-foreground hover:text-foreground transition-colors underline">Refresh</button>
           </div>
         )}
+      </div>
+
+      {/* Pathao Courier */}
+      <div className="border border-border p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <Truck size={20} />
+          <div>
+            <h3 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Pathao Courier API</h3>
+            <p className="text-xs text-muted-foreground">Pathao Merchant delivery integration</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <StatusBadge status={ptStatus} />
+          <button onClick={checkPathao} disabled={ptStatus === 'checking'} className="luxury-button-primary text-[10px] py-2 px-4">
+            {ptStatus === 'checking' ? 'Checking...' : 'Check Connection'}
+          </button>
+        </div>
       </div>
 
       {/* Order Tracking */}
@@ -127,8 +176,15 @@ const AdminAPI = () => {
             <p className="text-xs text-muted-foreground">Track delivery status by consignment ID</p>
           </div>
         </div>
-
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <select
+            value={trackingProvider}
+            onChange={e => setTrackingProvider(e.target.value as 'steadfast' | 'pathao')}
+            className="luxury-input text-xs w-32"
+          >
+            <option value="steadfast">Steadfast</option>
+            <option value="pathao">Pathao</option>
+          </select>
           <input
             value={trackingId}
             onChange={e => setTrackingId(e.target.value)}
@@ -141,7 +197,6 @@ const AdminAPI = () => {
             Track
           </button>
         </div>
-
         {trackingResult && (
           <div className="border border-border p-4 space-y-2 bg-muted/10 text-sm">
             {trackingResult.delivery_status && (
@@ -150,10 +205,10 @@ const AdminAPI = () => {
                 <span className="luxury-badge">{trackingResult.delivery_status}</span>
               </div>
             )}
-            {trackingResult.tracking_code && (
+            {(trackingResult.tracking_code || trackingResult.consignment_id) && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tracking Code</span>
-                <span>{trackingResult.tracking_code}</span>
+                <span>{trackingResult.tracking_code || trackingResult.consignment_id}</span>
               </div>
             )}
             {!trackingResult.delivery_status && (
@@ -166,11 +221,19 @@ const AdminAPI = () => {
       {/* API Info */}
       <div className="border border-border p-6 space-y-3 opacity-70">
         <h3 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>API Information</h3>
-        <div className="space-y-1 text-xs text-muted-foreground">
-          <p>• Base URL: portal.steadfast.com.bd/api/v1</p>
-          <p>• Auth: API Key + Secret Key (stored securely)</p>
-          <p>• Endpoints: create_order, status_by_cid, get_balance</p>
-          <p>• Keys can be updated in project secrets</p>
+        <div className="space-y-2 text-xs text-muted-foreground">
+          <div>
+            <p className="font-medium text-foreground/70 mb-1">Steadfast Courier</p>
+            <p>• Base URL: portal.steadfast.com.bd/api/v1</p>
+            <p>• Auth: API Key + Secret Key</p>
+            <p>• Endpoints: create_order, status_by_cid, get_balance</p>
+          </div>
+          <div>
+            <p className="font-medium text-foreground/70 mb-1">Pathao Courier</p>
+            <p>• Base URL: api-hermes.pathao.com</p>
+            <p>• Auth: OAuth2 (Client ID, Secret, Username, Password)</p>
+            <p>• Endpoints: issue-token, cities, zones, areas, orders</p>
+          </div>
         </div>
       </div>
     </div>
