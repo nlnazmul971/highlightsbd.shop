@@ -60,7 +60,7 @@ const Header = () => {
             </Link>
 
             {/* Right - Icons */}
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-3">
               <Link to="/wishlist" className="p-2 hover:opacity-60 transition-opacity relative">
                 <Heart size={20} />
                 {wishlistItems.length > 0 && (
