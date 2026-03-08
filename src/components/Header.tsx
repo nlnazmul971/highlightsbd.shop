@@ -38,8 +38,8 @@ const Header = () => {
   return (
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-background ${scrolled ? 'shadow-sm' : ''}`}>
-        {/* Top bar - hides on scroll for mobile */}
-        <div className={`border-b border-border transition-all duration-300 overflow-hidden ${scrolled ? 'sm:max-h-20 max-h-0' : 'max-h-20'}`}>
+        {/* Top bar - completely hidden on mobile scroll, always visible on desktop */}
+        <div className={`border-b border-border overflow-hidden transition-all duration-300 ${scrolled ? 'max-h-0 sm:max-h-20' : 'max-h-20'}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 sm:h-20">
               {/* Left - Search + Mobile Menu */}
