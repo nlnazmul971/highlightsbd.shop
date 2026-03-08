@@ -29,6 +29,23 @@ export const useProduct = (id: string) => {
   });
 };
 
+export const useRelatedProducts = (category: string, excludeId: string) => {
+  return useQuery({
+    queryKey: ['related-products', category, excludeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('category', category)
+        .neq('id', excludeId)
+        .limit(4);
+      if (error) throw error;
+      return (data || []).map(p => ({ ...p, colors: p.colors as unknown as ProductColor[] })) as Product[];
+    },
+    enabled: !!category && !!excludeId,
+  });
+};
+
 export const useProductReviews = (productId: string) => {
   return useQuery({
     queryKey: ['reviews', productId],
