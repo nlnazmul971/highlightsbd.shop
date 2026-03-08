@@ -16,7 +16,7 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-border mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-12">
         {/* Top section - Brand + Contact */}
         <div className="mb-6 sm:mb-10">
           <h3 className="luxury-heading text-xl tracking-[0.3em] font-semibold mb-2 sm:mb-4">HIGHLIGHTS</h3>
