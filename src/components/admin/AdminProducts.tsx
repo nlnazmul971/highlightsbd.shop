@@ -96,13 +96,25 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
     <div className="border border-border p-6 space-y-4 bg-muted/10">
       <h3 className="text-sm font-medium tracking-wider uppercase">{isNew ? 'Add Product' : 'Edit Product'}</h3>
       <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Product Name" className="luxury-input" />
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <input type="number" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} placeholder="Price" className="luxury-input" />
-        <input type="number" value={form.original_price || ''} onChange={e => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} placeholder="Original Price" className="luxury-input" />
-        <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} placeholder="Stock" className="luxury-input" />
-        <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="luxury-input">
-          {['T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'].map(c => <option key={c}>{c}</option>)}
-        </select>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Price (৳)</label>
+          <input type="number" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} placeholder="Price" className="luxury-input" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Original Price (৳)</label>
+          <input type="number" value={form.original_price || ''} onChange={e => setForm({ ...form, original_price: e.target.value ? Number(e.target.value) : null })} placeholder="Original Price" className="luxury-input" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Stock</label>
+          <input type="number" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} placeholder="Stock" className="luxury-input" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Category</label>
+          <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className="luxury-input">
+            {['T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'].map(c => <option key={c}>{c}</option>)}
+          </select>
+        </div>
       </div>
       <div className="space-y-2">
         <label className="text-xs text-muted-foreground tracking-wider uppercase">Product Image</label>
