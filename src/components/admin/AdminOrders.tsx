@@ -216,7 +216,10 @@ const AdminOrders = () => {
                   <EditField label="Address" value={editData.customer_address} onChange={v => setEditData(p => ({ ...p, customer_address: v }))} textarea />
                   <EditField label="City" value={editData.customer_city} onChange={v => setEditData(p => ({ ...p, customer_city: v }))} />
                   <EditField label="Delivery Method" value={editData.delivery_method} onChange={v => setEditData(p => ({ ...p, delivery_method: v }))} />
-                  <EditField label="Payment Method" value={editData.payment_method} onChange={v => setEditData(p => ({ ...p, payment_method: v }))} />
+                  <div className="space-y-1">
+                    <label className="text-xs text-muted-foreground tracking-wider uppercase">Payment Method</label>
+                    <p className="text-sm py-1.5 text-muted-foreground">{editData.payment_method}</p>
+                  </div>
                 </>
               ) : (
                 <>
