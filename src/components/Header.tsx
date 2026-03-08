@@ -60,20 +60,20 @@ const Header = () => {
             </Link>
 
             {/* Right - Icons */}
-            <div className="flex items-center gap-1 sm:gap-3">
-              <Link to="/wishlist" className="p-2 hover:opacity-60 transition-opacity relative">
-                <Heart size={20} />
+            <div className="flex items-center gap-0.5 sm:gap-3">
+              <Link to="/wishlist" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
+                <Heart size={18} className="sm:w-5 sm:h-5" />
                 {wishlistItems.length > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
                     {wishlistItems.length}
                   </span>
                 )}
               </Link>
-              <Link to="/admin" className="p-2 hover:opacity-60 transition-opacity">
-                <User size={20} />
+              <Link to="/admin" className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity">
+                <User size={18} className="sm:w-5 sm:h-5" />
               </Link>
-              <button onClick={() => setIsCartOpen(true)} className="p-2 hover:opacity-60 transition-opacity relative">
-                <ShoppingBag size={20} />
+              <button onClick={() => setIsCartOpen(true)} className="p-1.5 sm:p-2 hover:opacity-60 transition-opacity relative">
+                <ShoppingBag size={18} className="sm:w-5 sm:h-5" />
                 {itemCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-foreground text-background text-[9px] rounded-full flex items-center justify-center">
                     {itemCount}
