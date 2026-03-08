@@ -80,24 +80,24 @@ const Index = () => {
         {!showProducts && (
           <section className="mt-20 sm:mt-28">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="relative group overflow-hidden cursor-pointer">
-                <img src={poster1} alt="HIGHLIGHTS Collection" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+              <Link to="/?category=New+Dropped" className="relative group overflow-hidden cursor-pointer block">
+                <img src={poster1} alt="New Dropped Collection" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6">
                   <p className="luxury-body text-[10px] text-background/70 mb-2">New Season</p>
                   <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">The Art of Dressing</h3>
                   <div className="w-8 h-px bg-background/50 mt-3" />
                 </div>
-              </div>
-              <div className="relative group overflow-hidden cursor-pointer">
-                <img src={poster2} alt="HIGHLIGHTS Campaign" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+              </Link>
+              <Link to="/?category=Shirts" className="relative group overflow-hidden cursor-pointer block">
+                <img src={poster2} alt="Shirts Collection" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6">
                   <p className="luxury-body text-[10px] text-background/70 mb-2">Campaign 2026</p>
                   <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">Walk Together</h3>
                   <div className="w-8 h-px bg-background/50 mt-3" />
                 </div>
-              </div>
+              </Link>
             </div>
           </section>
         )}
