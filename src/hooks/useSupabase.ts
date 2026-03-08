@@ -137,8 +137,8 @@ export const useOrders = () => {
 export const useUpdateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; customer_name?: string; customer_phone?: string; customer_address?: string; customer_city?: string; delivery_method?: string; payment_method?: string }) => {
+      const { error } = await supabase.from('orders').update(updates).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),

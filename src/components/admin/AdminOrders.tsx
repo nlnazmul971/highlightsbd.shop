@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
-import { ShoppingBag, Eye, X } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const statusOptions = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
@@ -10,6 +10,15 @@ const AdminOrders = () => {
   const updateOrder = useUpdateOrder();
   const [filter, setFilter] = useState('All');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [editing, setEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    customer_name: '',
+    customer_phone: '',
+    customer_address: '',
+    customer_city: '',
+    delivery_method: '',
+    payment_method: '',
+  });
 
   const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
 
@@ -17,6 +26,29 @@ const AdminOrders = () => {
     try {
       await updateOrder.mutateAsync({ id, status });
       toast.success(`Order status updated to ${status}`);
+    } catch (err: any) { toast.error(err.message); }
+  };
+
+  const openOrder = (order: any) => {
+    setSelectedOrder(order);
+    setEditing(false);
+    setEditData({
+      customer_name: order.customer_name,
+      customer_phone: order.customer_phone,
+      customer_address: order.customer_address,
+      customer_city: order.customer_city,
+      delivery_method: order.delivery_method,
+      payment_method: order.payment_method,
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!selectedOrder) return;
+    try {
+      await updateOrder.mutateAsync({ id: selectedOrder.id, ...editData });
+      setSelectedOrder({ ...selectedOrder, ...editData });
+      setEditing(false);
+      toast.success('Customer details updated!');
     } catch (err: any) { toast.error(err.message); }
   };
 
@@ -67,7 +99,7 @@ const AdminOrders = () => {
                     </td>
                     <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">{new Date(order.created_at).toLocaleDateString()}</td>
                     <td className="p-3 text-right">
-                      <button onClick={() => setSelectedOrder(order)} className="p-2 hover:bg-accent transition-colors"><Eye size={14} /></button>
+                      <button onClick={() => openOrder(order)} className="p-2 hover:bg-accent transition-colors"><Eye size={14} /></button>
                     </td>
                   </tr>
                 ))}
@@ -85,18 +117,44 @@ const AdminOrders = () => {
           <div className="bg-background border border-border max-w-lg w-full max-h-[80vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Order #{selectedOrder.id.slice(0, 8)}</h3>
-              <button onClick={() => setSelectedOrder(null)} className="p-1 hover:bg-accent"><X size={16} /></button>
+              <div className="flex items-center gap-1">
+                {!editing ? (
+                  <button onClick={() => setEditing(true)} className="p-1.5 hover:bg-accent transition-colors" title="Edit customer details">
+                    <Pencil size={14} />
+                  </button>
+                ) : (
+                  <button onClick={saveEdit} disabled={updateOrder.isPending} className="p-1.5 hover:bg-accent transition-colors text-primary" title="Save changes">
+                    {updateOrder.isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  </button>
+                )}
+                <button onClick={() => setSelectedOrder(null)} className="p-1.5 hover:bg-accent"><X size={16} /></button>
+              </div>
             </div>
-            <div className="space-y-2 text-sm">
-              <p><span className="text-muted-foreground">Customer:</span> {selectedOrder.customer_name}</p>
-              <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.customer_phone}</p>
-              <p><span className="text-muted-foreground">Address:</span> {selectedOrder.customer_address}</p>
-              <p><span className="text-muted-foreground">City:</span> {selectedOrder.customer_city}</p>
-              <p><span className="text-muted-foreground">Delivery:</span> {selectedOrder.delivery_method}</p>
-              <p><span className="text-muted-foreground">Payment:</span> {selectedOrder.payment_method}</p>
+
+            <div className="space-y-3 text-sm">
+              {editing ? (
+                <>
+                  <EditField label="Customer Name" value={editData.customer_name} onChange={v => setEditData(p => ({ ...p, customer_name: v }))} />
+                  <EditField label="Phone" value={editData.customer_phone} onChange={v => setEditData(p => ({ ...p, customer_phone: v }))} />
+                  <EditField label="Address" value={editData.customer_address} onChange={v => setEditData(p => ({ ...p, customer_address: v }))} textarea />
+                  <EditField label="City" value={editData.customer_city} onChange={v => setEditData(p => ({ ...p, customer_city: v }))} />
+                  <EditField label="Delivery Method" value={editData.delivery_method} onChange={v => setEditData(p => ({ ...p, delivery_method: v }))} />
+                  <EditField label="Payment Method" value={editData.payment_method} onChange={v => setEditData(p => ({ ...p, payment_method: v }))} />
+                </>
+              ) : (
+                <>
+                  <p><span className="text-muted-foreground">Customer:</span> {selectedOrder.customer_name}</p>
+                  <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.customer_phone}</p>
+                  <p><span className="text-muted-foreground">Address:</span> {selectedOrder.customer_address}</p>
+                  <p><span className="text-muted-foreground">City:</span> {selectedOrder.customer_city}</p>
+                  <p><span className="text-muted-foreground">Delivery:</span> {selectedOrder.delivery_method}</p>
+                  <p><span className="text-muted-foreground">Payment:</span> {selectedOrder.payment_method}</p>
+                </>
+              )}
               <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
               <p><span className="text-muted-foreground">Date:</span> {new Date(selectedOrder.created_at).toLocaleString()}</p>
             </div>
+
             <div className="border-t border-border pt-4">
               <h4 className="text-xs tracking-wider uppercase text-muted-foreground mb-3">Items</h4>
               <div className="space-y-2">
@@ -118,5 +176,16 @@ const AdminOrders = () => {
     </div>
   );
 };
+
+const EditField = ({ label, value, onChange, textarea }: { label: string; value: string; onChange: (v: string) => void; textarea?: boolean }) => (
+  <div className="space-y-1">
+    <label className="text-xs text-muted-foreground tracking-wider uppercase">{label}</label>
+    {textarea ? (
+      <textarea value={value} onChange={e => onChange(e.target.value)} rows={2} className="luxury-input w-full text-sm" />
+    ) : (
+      <input value={value} onChange={e => onChange(e.target.value)} className="luxury-input w-full text-sm" />
+    )}
+  </div>
+);
 
 export default AdminOrders;
