@@ -122,11 +122,11 @@ const Header = () => {
           </div>
         </nav>
 
-        {/* Mobile menu */}
+        {/* Mobile menu - all categories */}
         {mobileMenuOpen && (
           <div className="sm:hidden absolute top-full left-0 right-0 bg-background border-b border-border animate-fade-in">
             <div className="px-4 py-4 space-y-3">
-              {navCategories.map(cat => (
+              {allCategories.map(cat => (
                 <Link
                   key={cat.name}
                   to={cat.path}
