@@ -31,6 +31,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [lastAddedItem, setLastAddedItem] = useState<CartItem | null>(null);
 
   useEffect(() => {
     localStorage.setItem('highlights-cart', JSON.stringify(items));
@@ -47,7 +49,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return [...prev, { product, quantity, size, color }];
     });
-    setIsCartOpen(true);
+    setLastAddedItem({ product, quantity, size, color });
+    setShowPopup(true);
   }, []);
 
   const removeItem = useCallback((productId: string, size: string, color: string) => {
