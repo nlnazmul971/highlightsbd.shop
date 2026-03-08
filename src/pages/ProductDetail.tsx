@@ -16,9 +16,14 @@ const ProductDetail = () => {
   const { data: reviews = [] } = useProductReviews(id || '');
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
+  const { addView } = useRecentlyViewed();
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
+
+  useEffect(() => {
+    if (product?.id) addView(product.id);
+  }, [product?.id, addView]);
 
   if (isLoading) return (
     <div className="min-h-screen bg-background"><Header /><CartDrawer />
