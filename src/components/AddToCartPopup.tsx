@@ -18,7 +18,7 @@ const AddToCartPopup = () => {
   return (
     <>
       <div className="fixed inset-0 z-50" onClick={() => setShowPopup(false)} />
-      <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-md bg-background border border-border shadow-xl animate-fade-in">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[92vw] max-w-md bg-background border border-border shadow-xl animate-fade-in">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-accent/30">
           <div className="flex items-center gap-2">
             <CheckCircle size={15} className="text-foreground" />
