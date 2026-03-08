@@ -104,56 +104,56 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header /><CartDrawer />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-24">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-2">
           <ArrowLeft size={16} /> Back
         </Link>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-12">
           <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} />
-          <div className="py-1 lg:py-4">
-            <p className="luxury-body text-[11px] text-muted-foreground mb-1">{product.category}</p>
-            <h1 className="luxury-heading text-2xl sm:text-4xl tracking-[0.1em] mb-2 sm:mb-4">{product.name}</h1>
-            <div className="flex items-center gap-3 mb-3 sm:mb-6">
-              <span className="text-xl sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
-              {product.original_price && <span className="text-base sm:text-lg text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
+          <div className="py-0 lg:py-4">
+            <p className="luxury-body text-[10px] text-muted-foreground mb-0.5">{product.category}</p>
+            <h1 className="luxury-heading text-[22px] sm:text-4xl tracking-[0.08em] mb-1.5 sm:mb-4">{product.name}</h1>
+            <div className="flex items-center gap-2 mb-2 sm:mb-6">
+              <span className="text-lg sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
+              {product.original_price && <span className="text-sm sm:text-lg text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4 sm:mb-8">{product.description}</p>
+            <p className="text-[13px] sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-8">{product.description}</p>
 
-            <div className="mb-4 sm:mb-6">
-              <p className="luxury-body text-[11px] mb-2">Size</p>
-              <div className="flex gap-2">
+            <div className="mb-3 sm:mb-6">
+              <p className="luxury-body text-[10px] mb-1.5">Size</p>
+              <div className="flex gap-1.5">
                 {product.sizes.map(s => (
-                  <button key={s} onClick={() => setSelectedSize(s)} className={`w-10 h-10 sm:w-12 sm:h-12 text-xs tracking-wider border transition-colors ${size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}>{s}</button>
+                  <button key={s} onClick={() => setSelectedSize(s)} className={`w-9 h-9 sm:w-12 sm:h-12 text-xs tracking-wider border transition-colors ${size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'}`}>{s}</button>
                 ))}
               </div>
             </div>
 
-            <div className="mb-4 sm:mb-6">
-              <p className="luxury-body text-[11px] mb-2">Color — {color}</p>
-              <div className="flex gap-2">
+            <div className="mb-3 sm:mb-6">
+              <p className="luxury-body text-[10px] mb-1.5">Color — {color}</p>
+              <div className="flex gap-1.5">
                 {product.colors.map(c => (
-                  <button key={c.name} onClick={() => setSelectedColor(c.name)} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${color === c.name ? 'border-foreground scale-110' : 'border-border'}`} style={{ backgroundColor: c.hex }} />
+                  <button key={c.name} onClick={() => setSelectedColor(c.name)} className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 transition-all ${color === c.name ? 'border-foreground scale-110' : 'border-border'}`} style={{ backgroundColor: c.hex }} />
                 ))}
               </div>
             </div>
 
-            <div className="mb-5 sm:mb-8">
-              <p className="luxury-body text-[11px] mb-2">Quantity</p>
+            <div className="mb-4 sm:mb-8">
+              <p className="luxury-body text-[10px] mb-1.5">Quantity</p>
               <div className="inline-flex items-center border border-border">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Minus size={14} /></button>
-                <span className="w-10 sm:w-12 text-center text-sm">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="p-2.5 sm:p-3 hover:bg-accent transition-colors"><Plus size={14} /></button>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Minus size={13} /></button>
+                <span className="w-9 sm:w-12 text-center text-sm">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Plus size={13} /></button>
               </div>
             </div>
 
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-2 mb-2.5">
               <button onClick={handleAddToCart} className="flex-1 luxury-button-primary">Add to Cart</button>
-              <button onClick={() => toggleItem(product)} className={`p-4 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-                <Heart size={20} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+              <button onClick={() => toggleItem(product)} className={`p-3 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+                <Heart size={18} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
               </button>
             </div>
             <button onClick={handleBuyNow} className="w-full luxury-button-outline">Buy Now</button>
-            <p className="text-xs text-muted-foreground mt-4">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
+            <p className="text-xs text-muted-foreground mt-2.5">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
 
             {reviews.length > 0 && (
               <div className="mt-12 pt-8 border-t border-border">
