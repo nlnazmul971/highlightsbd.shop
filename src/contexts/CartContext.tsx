@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { Product } from '@/data/products';
+import { Product, getProductImage } from '@/data/products';
 
 export type CartItem = {
   product: Product;
