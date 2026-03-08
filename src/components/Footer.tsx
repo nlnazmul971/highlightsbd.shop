@@ -68,7 +68,7 @@ const Footer = () => {
             </div>
           </div>
           <div className="col-span-2 sm:col-span-1">
-            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Newsletter</h4>
+            <h4 className="luxury-body text-[11px] mb-1.5 sm:mb-4 text-foreground">Newsletter</h4>
             <form onSubmit={handleNewsletter} className="flex">
               <input
                 type="email"
