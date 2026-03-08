@@ -6,7 +6,8 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useProduct, useProductReviews } from '@/hooks/useSupabase';
+import { useProduct, useProductReviews, useRelatedProducts } from '@/hooks/useSupabase';
+import ProductCard from '@/components/ProductCard';
 import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
@@ -70,6 +71,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const { data: product, isLoading } = useProduct(id || '');
   const { data: reviews = [] } = useProductReviews(id || '');
+  const { data: relatedProducts = [] } = useRelatedProducts(product?.category || '', id || '');
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { addView } = useRecentlyViewed();
@@ -171,6 +173,19 @@ const ProductDetail = () => {
             )}
           </div>
         </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <section className="mt-16 mb-12">
+            <div className="text-center mb-10">
+              <h2 className="luxury-heading text-2xl sm:text-3xl tracking-[0.15em]">You May Also Like</h2>
+              <div className="w-12 h-px bg-foreground mx-auto mt-4" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </section>
+        )}
       </main>
       <Footer />
     </div>
