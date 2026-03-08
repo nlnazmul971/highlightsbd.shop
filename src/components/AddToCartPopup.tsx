@@ -21,7 +21,7 @@ const AddToCartPopup = () => {
       <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-[92vw] max-w-md bg-background border border-border shadow-xl animate-fade-in">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-accent/30">
           <div className="flex items-center gap-2">
-            <CheckCircle size={15} className="text-green-600" />
+            <CheckCircle size={15} className="text-foreground" />
             <span className="text-xs tracking-wide uppercase" style={{ fontFamily: 'var(--font-body)' }}>Added to Cart</span>
           </div>
           <button onClick={() => setShowPopup(false)} className="p-1 hover:opacity-60 transition-opacity">
