@@ -1,1 +1,4 @@
 project_id = "fciytyiyzojvmzchyncw"
+
+[functions.steadfast-courier]
+verify_jwt = false

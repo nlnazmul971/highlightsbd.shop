@@ -13,6 +13,7 @@ import AdminOrders from '@/components/admin/AdminOrders';
 import AdminReviews from '@/components/admin/AdminReviews';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminSettings from '@/components/admin/AdminSettings';
+import AdminAPI from '@/components/admin/AdminAPI';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 const Admin = () => {
@@ -88,6 +89,7 @@ const Admin = () => {
             {activeTab === 'reviews' && <AdminReviews />}
             {activeTab === 'users' && <AdminUsers />}
             {activeTab === 'settings' && <AdminSettings />}
+            {activeTab === 'api' && <AdminAPI />}
           </main>
         </div>
       </div>
