@@ -16,11 +16,11 @@ const Footer = () => {
 
   return (
     <footer className="border-t border-border mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Top section - Brand + Contact */}
-        <div className="mb-10">
-          <h3 className="luxury-heading text-xl tracking-[0.3em] font-semibold mb-4">HIGHLIGHTS</h3>
-          <div className="space-y-2 text-sm text-muted-foreground">
+        <div className="mb-6 sm:mb-10">
+          <h3 className="luxury-heading text-xl tracking-[0.3em] font-semibold mb-2 sm:mb-4">HIGHLIGHTS</h3>
+          <div className="space-y-1 sm:space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
               <MapPin size={14} className="shrink-0" />
               HOUSE 12, ROAD 5, SECTOR 3, UTTARA, DHAKA
@@ -37,7 +37,7 @@ const Footer = () => {
             </div>
           </div>
           {/* Social icons */}
-          <div className="flex items-center gap-3 mt-4">
+          <div className="flex items-center gap-3 mt-3 sm:mt-4">
             <a href="#" className="p-1.5 hover:opacity-60 transition-opacity" aria-label="Facebook">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
             </a>
@@ -48,10 +48,10 @@ const Footer = () => {
         </div>
 
         {/* Links + Newsletter */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-8 mb-6 sm:mb-10">
           <div>
-            <h4 className="luxury-body text-[11px] mb-4 text-foreground">Information</h4>
-            <div className="space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
+            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Information</h4>
+            <div className="space-y-1.5 sm:space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
               <Link to="/" className="block hover:text-foreground transition-colors">Home</Link>
               <p className="hover:text-foreground cursor-pointer transition-colors">About Us</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Contact</p>
@@ -59,16 +59,16 @@ const Footer = () => {
             </div>
           </div>
           <div>
-            <h4 className="luxury-body text-[11px] mb-4 text-foreground">Policies</h4>
-            <div className="space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
+            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Policies</h4>
+            <div className="space-y-1.5 sm:space-y-2 text-sm text-muted-foreground uppercase tracking-wider">
               <p className="hover:text-foreground cursor-pointer transition-colors">Privacy Policy</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Terms & Conditions</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Refund Policy</p>
               <p className="hover:text-foreground cursor-pointer transition-colors">Guidelines</p>
             </div>
           </div>
-          <div>
-            <h4 className="luxury-body text-[11px] mb-4 text-foreground">Newsletter</h4>
+          <div className="col-span-2 sm:col-span-1">
+            <h4 className="luxury-body text-[11px] mb-2 sm:mb-4 text-foreground">Newsletter</h4>
             <form onSubmit={handleNewsletter} className="flex">
               <input
                 type="email"
@@ -84,7 +84,7 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="luxury-divider mb-6" />
+        <div className="luxury-divider mb-4 sm:mb-6" />
         <p className="text-center text-xs text-muted-foreground tracking-[0.2em] uppercase">© 2026 HIGHLIGHTS. All rights reserved.</p>
       </div>
     </footer>
