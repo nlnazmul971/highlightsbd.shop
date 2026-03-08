@@ -13,7 +13,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('arjo-wishlist');
+    const saved = localStorage.getItem('highlights-wishlist');
     return saved ? JSON.parse(saved) : [];
   });
 
