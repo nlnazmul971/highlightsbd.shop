@@ -21,6 +21,18 @@ const Hero = () => {
   const next = useCallback(() => goTo((current + 1) % slides.length), [current, goTo, slides.length]);
 
   useEffect(() => {
+    const detectMobile = () => {
+      const byWidth = window.matchMedia('(max-width: 767px)').matches;
+      const byUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      setIsMobileDevice(byWidth || byUA);
+    };
+
+    detectMobile();
+    window.addEventListener('resize', detectMobile);
+    return () => window.removeEventListener('resize', detectMobile);
+  }, []);
+
+  useEffect(() => {
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
   }, [next]);
