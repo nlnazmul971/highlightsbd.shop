@@ -28,7 +28,7 @@ const AdminHomepage = () => {
         <Info size={16} className="text-muted-foreground shrink-0 mt-0.5" />
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>Image Guidelines:</strong></p>
-          <p>• Hero Slider PC: <strong>1920×1080px</strong> (16:9), Mobile: <strong>1080×1920px</strong> (9:16), Max <strong>10MB</strong></p>
+          <p>• Hero Slider PC: <strong>1920×1080px</strong> (16:9), Mobile: <strong>1920×1080px</strong> (16:9), Max <strong>10MB</strong></p>
           <p>• Posters: <strong>800×1000px</strong> recommended (4:5 ratio), Max <strong>10MB</strong></p>
           <p>• Supported formats: JPG, PNG, WebP</p>
         </div>
