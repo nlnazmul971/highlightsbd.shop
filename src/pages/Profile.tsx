@@ -27,7 +27,6 @@ const Profile = () => {
           <p className="text-sm text-muted-foreground mb-6">Please sign in to view your profile.</p>
           <Link to="/admin" className="luxury-button-primary inline-block px-8">Sign In</Link>
         </main>
-        <Footer />
       </div>
     );
   }
