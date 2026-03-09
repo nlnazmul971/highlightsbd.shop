@@ -15,6 +15,8 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminAPI from '@/components/admin/AdminAPI';
 import AdminHomepage from '@/components/admin/AdminHomepage';
+import AdminWishlist from '@/components/admin/AdminWishlist';
+import AdminNewsletter from '@/components/admin/AdminNewsletter';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import OrderTracker from '@/components/OrderTracker';
 
