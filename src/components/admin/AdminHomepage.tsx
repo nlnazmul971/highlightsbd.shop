@@ -126,7 +126,7 @@ const PosterManager = ({ posters, onSave }: {
     if (posters.length > 0 && items.length === 0) setItems(posters);
   }, [posters]);
 
-  const handleSave = async () => {
+  const [saving, setSaving] = useState(false);
     setSaving(true);
     try { await onSave(items); } finally { setSaving(false); }
   };
