@@ -149,7 +149,30 @@ const Checkout = () => {
     return selected?.price ?? 0;
   }, [delivery, deliveryOptions]);
 
-  const grandTotal = total + deliveryFee;
+  const grandTotal = Math.max(0, total + deliveryFee - couponDiscount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) { toast.error('Enter a coupon code'); return; }
+    try {
+      const coupon = await validateCoupon.mutateAsync({ code: couponCode, orderTotal: total });
+      setAppliedCoupon(coupon);
+      const discount = coupon.discount_type === 'percentage'
+        ? Math.round(total * coupon.discount_value / 100)
+        : coupon.discount_value;
+      setCouponDiscount(Math.min(discount, total));
+      toast.success(`Coupon applied! ৳${Math.min(discount, total)} off`);
+    } catch (err: any) {
+      toast.error(err.message || 'Invalid coupon');
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponCode('');
+  };
 
   const paymentMap = useMemo(() => {
     const map: Record<string, { number: string; instructions: string; is_active: boolean }> = {};
