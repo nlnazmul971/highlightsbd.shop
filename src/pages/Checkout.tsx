@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -8,6 +8,45 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCreateOrder } from '@/hooks/useSupabase';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import { Check, Copy } from 'lucide-react';
+
+type PaymentMethod = 'cod' | 'bkash' | 'nagad';
+
+const BkashLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 64 64" className={className} aria-hidden="true" focusable="false">
+    <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" strokeWidth="4" />
+    <path
+      d="M24 44V20h12a8 8 0 0 1 0 16H24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M24 32h13a6 6 0 0 1 0 12H24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const NagadLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 64 64" className={className} aria-hidden="true" focusable="false">
+    <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" strokeWidth="4" />
+    <path
+      d="M20 44V20l24 24V20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
@@ -15,16 +54,46 @@ const Checkout = () => {
   const createOrder = useCreateOrder();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', transactionId: '' });
-  const [delivery, setDelivery] = useState('standard');
-  const [payment, setPayment] = useState('cod');
+  const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
+  const [payment, setPayment] = useState<PaymentMethod>('cod');
+  const [copied, setCopied] = useState<PaymentMethod | null>(null);
 
   const deliveryFee = delivery === 'express' ? 150 : 80;
 
+  const onlinePaymentNumber = useMemo(() => {
+    if (payment === 'bkash') return '01712-345678';
+    if (payment === 'nagad') return '01812-345678';
+    return null;
+  }, [payment]);
+
+  const isOnlinePayment = payment === 'bkash' || payment === 'nagad';
+
+  const handleCopyNumber = useCallback(async () => {
+    if (!onlinePaymentNumber) return;
+    try {
+      await navigator.clipboard.writeText(onlinePaymentNumber);
+      setCopied(payment);
+      toast.success('Number copied');
+      window.setTimeout(() => setCopied(null), 1200);
+    } catch {
+      toast.error('Copy failed');
+    }
+  }, [onlinePaymentNumber, payment]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) { toast.error('Cart is empty'); return; }
-    if (!form.name || !form.phone || !form.address || !form.city) { toast.error('Please fill all fields'); return; }
-    if (['bkash', 'nagad', 'rocket'].includes(payment) && !form.transactionId) { toast.error('Please enter transaction ID'); return; }
+    if (items.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+    if (!form.name || !form.phone || !form.address || !form.city) {
+      toast.error('Please fill all fields');
+      return;
+    }
+    if (['bkash', 'nagad'].includes(payment) && !form.transactionId) {
+      toast.error('Please enter transaction ID');
+      return;
+    }
 
     if (!user) {
       toast.error('Please sign in to place an order');
@@ -81,7 +150,7 @@ const Checkout = () => {
                         <div><p className="text-sm">{d.label}</p><p className="text-xs text-muted-foreground">{d.time}</p></div>
                       </div>
                       <span className="text-sm">৳{d.price}</span>
-                      <input type="radio" name="delivery" value={d.id} checked={delivery === d.id} onChange={() => setDelivery(d.id)} className="hidden" />
+                      <input type="radio" name="delivery" value={d.id} checked={delivery === d.id} onChange={() => setDelivery(d.id as 'standard' | 'express')} className="hidden" />
                     </label>
                   ))}
                 </div>
@@ -89,44 +158,87 @@ const Checkout = () => {
 
               <div>
                 <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Payment Method</h2>
-                <div className="space-y-2">
-                  {[
-                    { id: 'cod', label: 'Cash on Delivery', desc: 'Pay when you receive', number: null },
-                    { id: 'bkash', label: 'bKash', desc: 'Send to: 01712-345678', number: '01712-345678' },
-                    { id: 'nagad', label: 'Nagad', desc: 'Send to: 01812-345678', number: '01812-345678' },
-                    { id: 'rocket', label: 'Rocket', desc: 'Send to: 01912-345678', number: '01912-345678' }
-                  ].map(p => (
-                    <label key={p.id} className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${payment === p.id ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${payment === p.id ? 'border-foreground' : 'border-muted-foreground'}`}>
-                          {payment === p.id && <div className="w-2 h-2 rounded-full bg-foreground" />}
-                        </div>
-                        <div><p className="text-sm">{p.label}</p><p className="text-xs text-muted-foreground">{p.desc}</p></div>
-                      </div>
-                      <input type="radio" name="payment" value={p.id} checked={payment === p.id} onChange={() => setPayment(p.id)} className="hidden" />
-                    </label>
-                  ))}
-                </div>
-                {['bkash', 'nagad', 'rocket'].includes(payment) && (
-                  <div className="mt-4 p-4 bg-secondary/30 border border-border">
-                    <p className="text-sm mb-3">
-                      Send <span className="font-semibold">৳{(total + deliveryFee).toLocaleString()}</span> to{' '}
-                      <span className="font-semibold">
-                        {payment === 'bkash' && '01712-345678'}
-                        {payment === 'nagad' && '01812-345678'}
-                        {payment === 'rocket' && '01912-345678'}
-                      </span>
-                    </p>
-                    <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">Transaction ID</label>
-                    <input 
-                      required 
-                      value={form.transactionId} 
-                      onChange={e => setForm({ ...form, transactionId: e.target.value })} 
-                      placeholder={`Enter your ${payment.charAt(0).toUpperCase() + payment.slice(1)} transaction ID`}
-                      className="luxury-input" 
-                    />
+
+                {/* Cash on Delivery */}
+                <label className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${payment === 'cod' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${payment === 'cod' ? 'border-foreground' : 'border-muted-foreground'}`}>
+                      {payment === 'cod' && <div className="w-2 h-2 rounded-full bg-foreground" />}
+                    </div>
+                    <div>
+                      <p className="text-sm">Cash on Delivery</p>
+                      <p className="text-xs text-muted-foreground">Pay when you receive</p>
+                    </div>
                   </div>
-                )}
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="cod"
+                    checked={payment === 'cod'}
+                    onChange={() => {
+                      setPayment('cod');
+                      setForm((f) => ({ ...f, transactionId: '' }));
+                      setCopied(null);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+
+                {/* Online payment options (under COD) */}
+                <div className="mt-5">
+                  <p className="luxury-body text-[11px] text-foreground mb-3">Online Payment</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPayment('bkash')}
+                      className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'bkash' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
+                    >
+                      <BkashLogo className="h-6 w-6 text-foreground" />
+                      <span className="text-sm">bKash</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPayment('nagad')}
+                      className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'nagad' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
+                    >
+                      <NagadLogo className="h-6 w-6 text-foreground" />
+                      <span className="text-sm">Nagad</span>
+                    </button>
+                  </div>
+
+                  {isOnlinePayment && onlinePaymentNumber && (
+                    <div className="mt-4 p-4 bg-secondary/30 border border-border">
+                      <p className="text-sm mb-3">
+                        Send <span className="font-semibold">৳{(total + deliveryFee).toLocaleString()}</span> to{' '}
+                        <span className="font-semibold">{onlinePaymentNumber}</span>
+                      </p>
+
+                      <div className="flex items-center justify-between gap-3 mb-4">
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Number:</span>{' '}
+                          <span className="font-semibold tracking-wider">{onlinePaymentNumber}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCopyNumber}
+                          className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                        >
+                          {copied === payment ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          <span className="text-sm">Copy</span>
+                        </button>
+                      </div>
+
+                      <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">Transaction ID</label>
+                      <input
+                        required
+                        value={form.transactionId}
+                        onChange={e => setForm({ ...form, transactionId: e.target.value })}
+                        placeholder={`Enter your ${payment === 'bkash' ? 'bKash' : 'Nagad'} transaction ID`}
+                        className="luxury-input"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
