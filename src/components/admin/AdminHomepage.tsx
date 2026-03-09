@@ -120,7 +120,11 @@ const PosterManager = ({ posters, onSave }: {
     { image: '', link: '/?category=New+Dropped', subtitle: 'New Season', title: 'The Art of Dressing' },
     { image: '', link: '/?category=Shirts', subtitle: 'Campaign 2026', title: 'Walk Together' },
   ]);
-  const [saving, setSaving] = useState(false);
+
+  // Sync when settings load
+  useEffect(() => {
+    if (posters.length > 0 && items.length === 0) setItems(posters);
+  }, [posters]);
 
   const handleSave = async () => {
     setSaving(true);
