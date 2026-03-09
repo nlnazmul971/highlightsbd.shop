@@ -80,14 +80,18 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
         />
       </div>
 
-      {/* Mobile dot indicators */}
-      <div className="flex sm:hidden items-center justify-center gap-1.5">
-        {images.map((_, i) => (
+      {/* Mobile thumbnail strip */}
+      <div className="flex sm:hidden items-center justify-center gap-1.5 overflow-x-auto py-2">
+        {images.map((img, i) => (
           <button
             key={i}
             onClick={() => setActiveIndex(i)}
-            className={`w-2 h-2 rounded-full transition-all ${i === activeIndex ? 'bg-foreground w-5' : 'bg-muted-foreground/30'}`}
-          />
+            className={`shrink-0 w-12 h-14 overflow-hidden border transition-all ${
+              i === activeIndex ? 'border-foreground' : 'border-transparent opacity-50'
+            }`}
+          >
+            <img src={img} alt={`${name} view ${i + 1}`} className="w-full h-full object-cover" />
+          </button>
         ))}
       </div>
     </div>
