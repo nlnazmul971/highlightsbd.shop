@@ -103,7 +103,7 @@ const ProductDetail = () => {
   const { data: product, isLoading } = useProduct(id || '');
   const { data: reviews = [] } = useProductReviews(id || '');
   const { data: relatedProducts = [] } = useRelatedProducts(product?.category || '', id || '');
-  const { addItem } = useCart();
+  const { addItem, setShowPopup } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { addView } = useRecentlyViewed();
   const [selectedSize, setSelectedSize] = useState('');
