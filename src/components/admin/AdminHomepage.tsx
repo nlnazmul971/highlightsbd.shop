@@ -128,6 +128,8 @@ const PosterManager = ({ posters, onSave }: {
   }, [posters]);
 
   const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
     setSaving(true);
     try { await onSave(items); } finally { setSaving(false); }
   };
