@@ -235,12 +235,13 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAttempted(true);
     if (items.length === 0) {
       toast.error('Cart is empty');
       return;
     }
-    if (!form.name || !form.phone || !form.address || !form.city) {
-      toast.error('Please fill all fields');
+    if (!form.name || !form.email || !form.phone || !form.address || !form.city) {
+      toast.error('Please fill all required fields');
       return;
     }
     if (payment === 'online' && !onlineProvider) {
