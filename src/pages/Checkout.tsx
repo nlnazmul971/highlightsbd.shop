@@ -149,10 +149,6 @@ const Checkout = () => {
 
   const handleDeliveryChange = (zone: DeliveryZone) => {
     setDelivery(zone);
-    if (zone === 'Outside Dhaka') {
-      setPayment('online');
-      setOnlineProvider('bkash');
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
