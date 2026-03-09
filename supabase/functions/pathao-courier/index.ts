@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,6 +7,36 @@ const corsHeaders = {
 };
 
 const PATHAO_BASE_URL = 'https://api-hermes.pathao.com';
+
+async function verifyAdmin(req: Request): Promise<{ authorized: boolean; error?: string }> {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return { authorized: false, error: 'Missing authorization header' };
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    return { authorized: false, error: 'Invalid token' };
+  }
+
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (!roleData) {
+    return { authorized: false, error: 'Forbidden: admin role required' };
+  }
+
+  return { authorized: true };
+}
 
 async function getAccessToken(): Promise<string> {
   const response = await fetch(`${PATHAO_BASE_URL}/aladdin/api/v1/issue-token`, {
@@ -38,6 +69,14 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Verify admin role
+  const auth = await verifyAdmin(req);
+  if (!auth.authorized) {
+    return new Response(JSON.stringify({ success: false, error: auth.error }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   const clientId = Deno.env.get('PATHAO_CLIENT_ID');
   const clientSecret = Deno.env.get('PATHAO_CLIENT_SECRET');
   const username = Deno.env.get('PATHAO_USERNAME');
@@ -53,7 +92,6 @@ serve(async (req) => {
     const body = await req.json();
     const { action, data } = body;
 
-    // For check_connection, just try to get a token
     if (action === 'check_connection') {
       try {
         const token = await getAccessToken();
