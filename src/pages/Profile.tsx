@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Package, MapPin, Lock, User, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import CartDrawer from '@/components/CartDrawer';
-import Footer from '@/components/Footer';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile, useUpdateProfile } from '@/hooks/useSupabase';
 import OrderTracker from '@/components/OrderTracker';
@@ -27,7 +27,6 @@ const Profile = () => {
           <p className="text-sm text-muted-foreground mb-6">Please sign in to view your profile.</p>
           <Link to="/admin" className="luxury-button-primary inline-block px-8">Sign In</Link>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -79,7 +78,6 @@ const Profile = () => {
           <ArrowLeft size={14} /> Back to store
         </Link>
       </main>
-      <Footer />
     </div>
   );
 };

@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStoreSettings } from '@/hooks/useSupabase';
+import { supabase } from '@/integrations/supabase/client';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
+  const [subscribing, setSubscribing] = useState(false);
   const { data: s } = useStoreSettings();
 
   const brandName = s?.footer_brand_name || 'HIGHLIGHTS';
@@ -18,11 +20,26 @@ const Footer = () => {
   const whatsappUrl = s?.footer_whatsapp || '';
   const copyright = s?.footer_copyright || `© 2026 ${brandName}. All rights reserved.`;
 
-  const handleNewsletter = (e: React.FormEvent) => {
+  const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      toast.success('Subscribed successfully!');
+    if (!email.trim()) return;
+    setSubscribing(true);
+    try {
+      const { error } = await supabase.from('newsletter_subscribers').insert({ email: email.trim().toLowerCase() });
+      if (error) {
+        if (error.code === '23505') {
+          toast.info('You are already subscribed!');
+        } else {
+          throw error;
+        }
+      } else {
+        toast.success('Subscribed successfully!');
+      }
       setEmail('');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to subscribe');
+    } finally {
+      setSubscribing(false);
     }
   };
 
