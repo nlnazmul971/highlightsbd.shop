@@ -88,6 +88,38 @@ const Checkout = () => {
   }, [profile, useSavedAddress]);
 
 
+  // GTM: begin_checkout event
+  useEffect(() => {
+    if (items.length === 0) return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: 'begin_checkout',
+      ecommerce: {
+        currency: 'BDT',
+        currencyCode: 'BDT',
+        value: total,
+        items: items.map(i => ({
+          item_id: i.product.id,
+          item_name: i.product.name,
+          category: i.product.category,
+          price: i.product.price,
+          quantity: i.quantity,
+        })),
+        detail: {
+          products: items.map(i => ({
+            id: i.product.id,
+            name: i.product.name,
+            category: i.product.category,
+            price: i.product.price,
+            quantity: i.quantity,
+          })),
+        },
+      },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const deliveryOptions = useMemo(() => {
     const active = (zones || []).filter(z => z.is_active);
     if (active.length > 0) {
