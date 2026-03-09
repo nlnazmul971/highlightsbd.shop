@@ -9,6 +9,9 @@ const Hero = () => {
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
+  // Check if any slide has a mobile image
+  const hasMobileImages = slides.some((s: any) => s.mobileImage);
+
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
@@ -29,39 +32,37 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
+      {/* CSS media query to toggle mobile/desktop images */}
+      {hasMobileImages && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media (max-width: 639px) {
+            .hero-img-pc { display: none !important; }
+            .hero-img-mobile { display: block !important; }
+          }
+          @media (min-width: 640px) {
+            .hero-img-pc { display: block !important; }
+            .hero-img-mobile { display: none !important; }
+          }
+        `}} />
+      )}
+
       {slides.map((s: any, i: number) => (
         <div
           key={i}
           className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
         >
-          {/* Mobile image: visible below 640px */}
           {s.mobileImage && (
             <img
               src={s.mobileImage}
               alt={`HIGHLIGHTS ${s.title} Collection`}
-              className="w-full h-auto sm:!hidden"
-              style={{ display: 'block' }}
+              className="hero-img-mobile w-full h-auto"
             />
           )}
-          {/* PC image: hidden below 640px if mobile image exists */}
           <img
             src={s.image}
             alt={`HIGHLIGHTS ${s.title} Collection`}
-            className="w-full h-auto"
-            style={s.mobileImage ? undefined : undefined}
-            data-pc="true"
+            className={`w-full h-auto ${s.mobileImage ? 'hero-img-pc' : 'block'}`}
           />
-          {/* CSS to hide PC image on mobile when mobileImage exists */}
-          {s.mobileImage && (
-            <style>{`
-              @media (max-width: 639px) {
-                [data-pc="true"] { display: none !important; }
-              }
-              @media (min-width: 640px) {
-                .sm\\:!hidden { display: none !important; }
-              }
-            `}</style>
-          )}
         </div>
       ))}
 
