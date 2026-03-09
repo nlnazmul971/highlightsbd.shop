@@ -42,19 +42,19 @@ const Hero = () => {
   const slide = slides[current];
 
   return (
-    <section className="relative w-full overflow-hidden">
+    <section className="relative w-full h-screen overflow-hidden">
       {slides.map((s: any, i: number) => {
         const imageSrc = isMobileDevice && s.mobileImage ? s.mobileImage : s.image;
 
         return (
           <div
             key={`${i}-${isMobileDevice ? 'mobile' : 'desktop'}`}
-            className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+            className={`w-full h-screen transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
           >
             <img
               src={imageSrc}
               alt={`HIGHLIGHTS ${s.title} Collection`}
-              className="w-full h-[58vh] sm:h-auto object-cover block"
+              className="w-full h-full object-cover block"
             />
           </div>
         );
