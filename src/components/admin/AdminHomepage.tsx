@@ -47,7 +47,7 @@ const AdminHomepage = () => {
   );
 };
 
-type SlideType = { image: string; mobileImage?: string; title: string; topText: string; bottomText: string };
+type SlideType = { image: string; mobileImage?: string; mobileImage?: string; title: string; topText: string; bottomText: string };
 type PosterType = { image: string; link: string; subtitle: string; title: string };
 
 const SliderManager = ({ slides, onSave }: {
@@ -68,7 +68,7 @@ const SliderManager = ({ slides, onSave }: {
   };
 
   const addSlide = () => {
-    setItems([...items, { image: '', title: '', topText: '', bottomText: '' }]);
+    setItems([.mobileImage: '', ..items, { image: '', title: '', topText: '', bottomText: '' }]);
   };
 
   const removeSlide = (index: number) => {
