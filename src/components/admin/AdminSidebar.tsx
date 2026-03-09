@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingBag, MessageSquare, Users, Settings, LogOut, Store, Plug, Home, Heart, Mail } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, MessageSquare, Users, Settings, LogOut, Store, Plug, Home, Heart, Mail, Trash2 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
