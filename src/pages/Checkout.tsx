@@ -10,16 +10,20 @@ import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy } from 'lucide-react';
 
-type PaymentMethod = 'cod' | 'bkash' | 'nagad';
+type PaymentMethod = 'cod' | 'online';
+type OnlineProvider = 'bkash' | 'nagad' | null;
 
-const PaymentLogo = ({ label }: { label: string }) => (
-  <span className="inline-flex h-6 items-center justify-center rounded-sm border border-border bg-background px-2 text-[10px] font-medium tracking-wider uppercase">
-    {label}
-  </span>
+const BkashLogo = () => (
+  <div className="flex items-center justify-center h-10 px-4 rounded bg-[#E2136E] text-white font-bold text-sm tracking-wide">
+    bKash
+  </div>
 );
 
-const BkashLogo = () => <PaymentLogo label="bKash" />;
-const NagadLogo = () => <PaymentLogo label="Nagad" />;
+const NagadLogo = () => (
+  <div className="flex items-center justify-center h-10 px-4 rounded bg-[#F6921E] text-white font-bold text-sm tracking-wide">
+    Nagad
+  </div>
+);
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
