@@ -32,6 +32,7 @@ const App = () => (
               <ScrollToTop />
               <AddToCartPopup />
               <TrackingScripts />
+              <FloatingActions />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/product/:id" element={<ProductDetail />} />
