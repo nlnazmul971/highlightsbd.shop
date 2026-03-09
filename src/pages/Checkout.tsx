@@ -223,6 +223,18 @@ const Checkout = () => {
         payment_sender_number: form.senderNumber || null,
         transaction_id: form.transactionId || null,
       });
+      // Save address to profile if logged in
+      if (user) {
+        try {
+          await updateProfile.mutateAsync({
+            userId: user.id,
+            display_name: form.name,
+            phone: form.phone,
+            address: form.address,
+            city: form.city,
+          });
+        } catch { /* silently fail address save */ }
+      }
       clearCart();
       toast.success('Order placed successfully!');
       navigate('/');
