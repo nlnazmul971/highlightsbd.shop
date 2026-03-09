@@ -91,7 +91,10 @@ const Checkout = () => {
         city: profile.city || f.city,
       }));
     }
-  }, [profile, useSavedAddress]);
+    if (user?.email) {
+      setForm(f => ({ ...f, email: f.email || user.email || '' }));
+    }
+  }, [profile, useSavedAddress, user]);
 
 
   // GTM: begin_checkout event
