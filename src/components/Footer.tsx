@@ -14,6 +14,8 @@ const Footer = () => {
   const footerEmail = s?.footer_email || 'INFO@HIGHLIGHTS.COM';
   const facebookUrl = s?.footer_facebook || '#';
   const instagramUrl = s?.footer_instagram || '#';
+  const messengerUrl = s?.footer_messenger || '';
+  const whatsappUrl = s?.footer_whatsapp || '';
   const copyright = s?.footer_copyright || `© 2026 ${brandName}. All rights reserved.`;
 
   const handleNewsletter = (e: React.FormEvent) => {

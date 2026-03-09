@@ -10,6 +10,8 @@ const FOOTER_FIELDS = [
   { key: 'footer_email', label: 'Email', placeholder: 'info@example.com' },
   { key: 'footer_facebook', label: 'Facebook URL', placeholder: 'https://facebook.com/...' },
   { key: 'footer_instagram', label: 'Instagram URL', placeholder: 'https://instagram.com/...' },
+  { key: 'footer_messenger', label: 'Messenger Link', placeholder: 'https://m.me/yourpage' },
+  { key: 'footer_whatsapp', label: 'WhatsApp Link', placeholder: 'https://wa.me/8801XXXXXXXXX' },
   { key: 'footer_copyright', label: 'Copyright Text', placeholder: '© 2026 HIGHLIGHTS. All rights reserved.' },
 ];
 
