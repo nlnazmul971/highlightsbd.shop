@@ -22,6 +22,7 @@ const menuItems = [
   { title: 'Newsletter', key: 'newsletter', icon: Mail },
   { title: 'Users', key: 'users', icon: Users },
   { title: 'API', key: 'api', icon: Plug },
+  { title: 'Trash', key: 'trash', icon: Trash2 },
   { title: 'Settings', key: 'settings', icon: Settings },
 ];
 

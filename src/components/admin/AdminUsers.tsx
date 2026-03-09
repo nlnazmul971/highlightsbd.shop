@@ -245,6 +245,19 @@ const AdminUsers = () => {
                       <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">
                         {new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => {
+                            if (confirm(`"${p.display_name || 'this user'}" কে ট্র্যাশে পাঠাতে চান?`)) {
+                              deleteUserMutation.mutate(p);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-destructive/10 text-destructive transition-colors"
+                          title="Move to Trash"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}

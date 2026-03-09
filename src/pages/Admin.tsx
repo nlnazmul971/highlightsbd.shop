@@ -159,6 +159,7 @@ const Admin = () => {
             {activeTab === 'wishlist' && <AdminWishlist />}
             {activeTab === 'newsletter' && <AdminNewsletter />}
             {activeTab === 'users' && <AdminUsers />}
+            {activeTab === 'trash' && <AdminTrash />}
             {activeTab === 'settings' && <AdminSettings />}
             {activeTab === 'api' && <AdminAPI />}
           </main>
