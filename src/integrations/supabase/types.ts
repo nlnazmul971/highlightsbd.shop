@@ -102,6 +102,7 @@ export type Database = {
           customer_name: string
           customer_note: string | null
           customer_phone: string
+          deleted_at: string | null
           delivery_method: string
           id: string
           items: Json
@@ -123,6 +124,7 @@ export type Database = {
           customer_name: string
           customer_note?: string | null
           customer_phone: string
+          deleted_at?: string | null
           delivery_method?: string
           id?: string
           items: Json
@@ -144,6 +146,7 @@ export type Database = {
           customer_name?: string
           customer_note?: string | null
           customer_phone?: string
+          deleted_at?: string | null
           delivery_method?: string
           id?: string
           items?: Json
@@ -354,6 +357,42 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: string
+        }
+        Relationships: []
+      }
+      trash_users: {
+        Row: {
+          address: string | null
+          city: string | null
+          deleted_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          original_user_id: string
+          phone: string | null
+          role: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          deleted_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          original_user_id: string
+          phone?: string | null
+          role?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          deleted_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          original_user_id?: string
+          phone?: string | null
+          role?: string | null
         }
         Relationships: []
       }
