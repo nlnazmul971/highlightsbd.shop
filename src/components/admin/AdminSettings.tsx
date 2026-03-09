@@ -210,6 +210,9 @@ const AdminSettings = () => {
         )}
       </div>
 
+      {/* Footer Settings */}
+      <AdminFooterSettings />
+
       <div className="border border-border p-6 space-y-3 opacity-60">
         <div className="flex items-center gap-2">
           <Settings size={16} />
