@@ -51,6 +51,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     setLastAddedItem({ product, quantity, size, color });
     setShowPopup(true);
+    // GTM: add_to_cart event
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: 'add_to_cart',
+      ecommerce: {
+        currency: 'BDT',
+        value: product.price * quantity,
+        items: [{
+          item_id: product.id,
+          item_name: product.name,
+          category: product.category,
+          price: product.price,
+          quantity,
+        }],
+        detail: {
+          products: [{
+            id: product.id,
+            name: product.name,
+            category: product.category,
+            price: product.price,
+            quantity,
+          }],
+        },
+      },
+    });
   }, []);
 
   const removeItem = useCallback((productId: string, size: string, color: string) => {
