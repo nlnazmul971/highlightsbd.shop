@@ -14,6 +14,7 @@ import AdminReviews from '@/components/admin/AdminReviews';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminAPI from '@/components/admin/AdminAPI';
+import AdminHomepage from '@/components/admin/AdminHomepage';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 
 const Admin = () => {
