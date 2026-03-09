@@ -43,27 +43,22 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
-      {null}
+      {slides.map((s: any, i: number) => {
+        const imageSrc = isMobileDevice && s.mobileImage ? s.mobileImage : s.image;
 
-      {slides.map((s: any, i: number) => (
-        <div
-          key={i}
-          className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
-        >
-          {s.mobileImage && (
+        return (
+          <div
+            key={`${i}-${isMobileDevice ? 'mobile' : 'desktop'}`}
+            className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+          >
             <img
-              src={s.mobileImage}
+              src={imageSrc}
               alt={`HIGHLIGHTS ${s.title} Collection`}
-              className="hero-img-mobile w-full h-auto"
+              className="w-full h-[58vh] sm:h-auto object-cover block"
             />
-          )}
-          <img
-            src={s.image}
-            alt={`HIGHLIGHTS ${s.title} Collection`}
-            className={`w-full h-auto ${s.mobileImage ? 'hero-img-pc' : 'block'}`}
-          />
-        </div>
-      ))}
+          </div>
+        );
+      })}
 
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20 pointer-events-none" />
 
