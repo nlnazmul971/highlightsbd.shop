@@ -240,6 +240,10 @@ const ProductDetail = () => {
                 <span className="text-[10px] sm:text-[11px]">Secure Payment</span>
               </div>
               <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Truck size={14} className="sm:w-4 sm:h-4" />
+                <span className="text-[10px] sm:text-[11px]">Fast Delivery</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <RotateCcw size={14} className="sm:w-4 sm:h-4" />
                 <span className="text-[10px] sm:text-[11px]">Easy Returns</span>
               </div>
