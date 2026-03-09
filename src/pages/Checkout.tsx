@@ -310,6 +310,9 @@ const Checkout = () => {
           transaction_id: new Date().getTime().toString(),
           currency: 'BDT',
           value: grandTotal,
+          shipping: deliveryFee,
+          coupon: appliedCoupon?.code || '',
+          discount: couponDiscount,
           items: items.map(i => ({
             item_id: i.product.id,
             item_name: i.product.name,
@@ -333,10 +336,19 @@ const Checkout = () => {
             billing: {
               first_name: form.name.split(' ')[0] || '',
               last_name: form.name.split(' ').slice(1).join(' ') || '',
+              email: form.email,
               phone: form.phone,
+              address: form.address,
               city: form.city,
               country: 'BD',
             },
+          },
+          delivery: {
+            method: delivery,
+            fee: deliveryFee,
+          },
+          payment: {
+            method: payment === 'online' ? onlineProvider : 'cod',
           },
         },
       });
