@@ -155,6 +155,8 @@ const Admin = () => {
             {activeTab === 'products' && <AdminProducts />}
             {activeTab === 'orders' && <AdminOrders />}
             {activeTab === 'reviews' && <AdminReviews />}
+            {activeTab === 'wishlist' && <AdminWishlist />}
+            {activeTab === 'newsletter' && <AdminNewsletter />}
             {activeTab === 'users' && <AdminUsers />}
             {activeTab === 'settings' && <AdminSettings />}
             {activeTab === 'api' && <AdminAPI />}

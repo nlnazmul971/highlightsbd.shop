@@ -18,6 +18,8 @@ const menuItems = [
   { title: 'Products', key: 'products', icon: Package },
   { title: 'Orders', key: 'orders', icon: ShoppingBag },
   { title: 'Reviews', key: 'reviews', icon: MessageSquare },
+  { title: 'Wishlist', key: 'wishlist', icon: Heart },
+  { title: 'Newsletter', key: 'newsletter', icon: Mail },
   { title: 'Users', key: 'users', icon: Users },
   { title: 'API', key: 'api', icon: Plug },
   { title: 'Settings', key: 'settings', icon: Settings },
