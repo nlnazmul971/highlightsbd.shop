@@ -9,10 +9,17 @@ import { useCreateOrder } from '@/hooks/useSupabase';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy } from 'lucide-react';
-import bkashLogo from '@/assets/bkash-logo.png';
-import nagadLogo from '@/assets/nagad-logo.png';
 
 type PaymentMethod = 'cod' | 'bkash' | 'nagad';
+
+const PaymentLogo = ({ label }: { label: string }) => (
+  <span className="inline-flex h-6 items-center justify-center rounded-sm border border-border bg-background px-2 text-[10px] font-medium tracking-wider uppercase">
+    {label}
+  </span>
+);
+
+const BkashLogo = () => <PaymentLogo label="bKash" />;
+const NagadLogo = () => <PaymentLogo label="Nagad" />;
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
@@ -159,7 +166,7 @@ const Checkout = () => {
                       onClick={() => setPayment('bkash')}
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'bkash' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
-                      <img src={bkashLogo} alt="bKash" className="h-6 object-contain" />
+                      <BkashLogo />
                       <span className="text-sm">bKash</span>
                     </button>
                     <button
@@ -167,7 +174,7 @@ const Checkout = () => {
                       onClick={() => setPayment('nagad')}
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'nagad' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
-                      <img src={nagadLogo} alt="Nagad" className="h-6 object-contain" />
+                      <NagadLogo />
                       <span className="text-sm">Nagad</span>
                     </button>
                   </div>
