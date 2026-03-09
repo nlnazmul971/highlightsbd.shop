@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      delivery_zones: {
+        Row: {
+          created_at: string
+          description: string | null
+          fee: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          fee?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           consignment_id: string | null
