@@ -116,7 +116,7 @@ const SliderManager = ({ slides, onSave }: {
                 <HomepageImageUpload value={slide.image} onChange={(url) => updateSlide(i, 'image', url)} folder="hero" />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">📱 Mobile Image (1080×1920, max 10MB)</label>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">📱 Mobile Image (1920×1080, max 10MB)</label>
                 <HomepageImageUpload value={slide.mobileImage || ''} onChange={(url) => updateSlide(i, 'mobileImage', url)} folder="hero-mobile" />
               </div>
             </div>
