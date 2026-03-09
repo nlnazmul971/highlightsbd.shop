@@ -30,7 +30,7 @@ const Checkout = () => {
   const { user } = useAuth();
   const createOrder = useCreateOrder();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', transactionId: '' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
   const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
