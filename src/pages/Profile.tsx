@@ -78,7 +78,6 @@ const Profile = () => {
           <ArrowLeft size={14} /> Back to store
         </Link>
       </main>
-      <Footer />
     </div>
   );
 };
