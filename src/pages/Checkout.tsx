@@ -96,6 +96,7 @@ const Checkout = () => {
         customer_city: form.city,
         delivery_method: delivery,
         payment_method: payment === 'online' ? onlineProvider! : 'cod',
+        payment_sender_number: form.senderNumber || null,
         transaction_id: form.transactionId || null,
       });
       clearCart();
