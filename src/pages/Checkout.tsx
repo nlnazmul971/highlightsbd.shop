@@ -270,8 +270,8 @@ const Checkout = () => {
               <div>
                 <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Payment Method</h2>
                 <div className="space-y-3">
-                  {/* Cash on Delivery — hidden for outside Dhaka */}
-                  {!outsideDhakaRequiresBkash && (
+                  {/* Cash on Delivery */}
+                  {(
                     <label className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${payment === 'cod' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${payment === 'cod' ? 'border-foreground' : 'border-muted-foreground'}`}>
