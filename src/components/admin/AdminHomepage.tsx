@@ -47,6 +47,7 @@ const SliderManager = ({ slides, onSave }: {
   }, [slides]);
   const [saving, setSaving] = useState(false);
 
+  const handleSave = async () => {
     setSaving(true);
     try { await onSave(items); } finally { setSaving(false); }
   };
