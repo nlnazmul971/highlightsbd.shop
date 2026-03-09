@@ -467,6 +467,9 @@ const AdminOrders = () => {
                   {selectedOrder.payment_method !== 'cod' && selectedOrder.transaction_id && (
                     <p><span className="text-muted-foreground">Transaction ID:</span> <span className="font-mono font-medium">{selectedOrder.transaction_id}</span></p>
                   )}
+                  {selectedOrder.customer_note && (
+                    <p><span className="text-muted-foreground">Customer Note:</span> <span className="italic">{selectedOrder.customer_note}</span></p>
+                  )}
                 </>
               )}
               <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
