@@ -159,7 +159,7 @@ const Checkout = () => {
                       onClick={() => setPayment('bkash')}
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'bkash' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
-                      <BkashLogo className="h-6 w-6 text-foreground" />
+                      <img src={bkashLogo} alt="bKash" className="h-6 object-contain" />
                       <span className="text-sm">bKash</span>
                     </button>
                     <button
@@ -167,7 +167,7 @@ const Checkout = () => {
                       onClick={() => setPayment('nagad')}
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'nagad' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
-                      <NagadLogo className="h-6 w-6 text-foreground" />
+                      <img src={nagadLogo} alt="Nagad" className="h-6 object-contain" />
                       <span className="text-sm">Nagad</span>
                     </button>
                   </div>
