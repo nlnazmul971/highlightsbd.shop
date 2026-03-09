@@ -1,10 +1,17 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Users, UserCheck, Shield, TrendingUp } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 const AdminUsers = () => {
+  const queryClient = useQueryClient();
+
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
     queryKey: ['all-profiles'],
     queryFn: async () => {
@@ -28,24 +35,49 @@ const AdminUsers = () => {
     return r ? r.role : 'user';
   };
 
+  const changeRoleMutation = useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: AppRole }) => {
+      const existingRole = roles.find((r: any) => r.user_id === userId);
+
+      if (newRole === 'user') {
+        // Remove role entry (default is 'user')
+        if (existingRole) {
+          const { error } = await supabase.from('user_roles').delete().eq('user_id', userId);
+          if (error) throw error;
+        }
+      } else if (existingRole) {
+        // Update existing role
+        const { error } = await supabase.from('user_roles').update({ role: newRole }).eq('user_id', userId);
+        if (error) throw error;
+      } else {
+        // Insert new role
+        const { error } = await supabase.from('user_roles').insert({ user_id: userId, role: newRole });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-roles'] });
+      toast.success('Role updated successfully');
+    },
+    onError: (err: any) => {
+      toast.error('Failed to update role: ' + err.message);
+    },
+  });
+
   const adminCount = profiles.filter((p: any) => getRoleForUser(p.user_id) === 'admin').length;
   const userCount = profiles.length - adminCount;
 
-  // Build chart data - group by date
+  // Build chart data
   const chartData = React.useMemo(() => {
     if (profiles.length === 0) return [];
-    
     const grouped: Record<string, number> = {};
     profiles.forEach((p: any) => {
       const date = new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       grouped[date] = (grouped[date] || 0) + 1;
     });
-
-    // Sort by date and create cumulative
-    const sortedProfiles = [...profiles].sort((a: any, b: any) => 
+    const sortedProfiles = [...profiles].sort((a: any, b: any) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
-
     const cumulativeMap: Record<string, number> = {};
     let cumulative = 0;
     sortedProfiles.forEach((p: any) => {
@@ -53,7 +85,6 @@ const AdminUsers = () => {
       cumulative++;
       cumulativeMap[date] = cumulative;
     });
-
     return Object.entries(cumulativeMap).map(([date, total]) => ({
       date,
       total,
@@ -82,21 +113,21 @@ const AdminUsers = () => {
         </div>
         <div className="border border-border p-4 bg-card">
           <div className="flex items-center gap-2 mb-2">
-            <UserCheck size={16} className="text-emerald-500" />
+            <UserCheck size={16} className="text-primary" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">Customers</span>
           </div>
           <p className="text-2xl font-bold">{userCount}</p>
         </div>
         <div className="border border-border p-4 bg-card">
           <div className="flex items-center gap-2 mb-2">
-            <Shield size={16} className="text-amber-500" />
+            <Shield size={16} className="text-primary" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">Admins</span>
           </div>
           <p className="text-2xl font-bold">{adminCount}</p>
         </div>
         <div className="border border-border p-4 bg-card">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={16} className="text-blue-500" />
+            <TrendingUp size={16} className="text-primary" />
             <span className="text-xs text-muted-foreground uppercase tracking-wider">This Month</span>
           </div>
           <p className="text-2xl font-bold">
@@ -123,33 +154,13 @@ const AdminUsers = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} 
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                />
-                <YAxis 
-                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} 
-                  axisLine={{ stroke: 'hsl(var(--border))' }}
-                  allowDecimals={false}
-                />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} />
+                <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={{ stroke: 'hsl(var(--border))' }} allowDecimals={false} />
                 <Tooltip
-                  contentStyle={{
-                    background: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                  }}
+                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '4px', fontSize: '12px' }}
                   labelStyle={{ color: 'hsl(var(--foreground))' }}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="total"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  fill="url(#userGradient)"
-                  name="Total Users"
-                />
+                <Area type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#userGradient)" name="Total Users" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -176,25 +187,36 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody>
-                {profiles.map((p: any) => (
-                  <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                    <td className="p-3 font-medium">{p.display_name || '—'}</td>
-                    <td className="p-3 text-muted-foreground hidden sm:table-cell">{p.phone || '—'}</td>
-                    <td className="p-3 text-muted-foreground hidden md:table-cell">{p.city || '—'}</td>
-                    <td className="p-3">
-                      <span className={`inline-block px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider border ${
-                        getRoleForUser(p.user_id) === 'admin' 
-                          ? 'border-amber-500/30 text-amber-500 bg-amber-500/10' 
-                          : 'border-border text-muted-foreground'
-                      }`}>
-                        {getRoleForUser(p.user_id)}
-                      </span>
-                    </td>
-                    <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">
-                      {new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
-                    </td>
-                  </tr>
-                ))}
+                {profiles.map((p: any) => {
+                  const currentRole = getRoleForUser(p.user_id);
+                  return (
+                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                      <td className="p-3 font-medium">{p.display_name || '—'}</td>
+                      <td className="p-3 text-muted-foreground hidden sm:table-cell">{p.phone || '—'}</td>
+                      <td className="p-3 text-muted-foreground hidden md:table-cell">{p.city || '—'}</td>
+                      <td className="p-3">
+                        <Select
+                          value={currentRole}
+                          onValueChange={(value) => {
+                            changeRoleMutation.mutate({ userId: p.user_id, newRole: value as AppRole });
+                          }}
+                        >
+                          <SelectTrigger className="h-7 w-[120px] text-xs border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="moderator">Moderator</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">
+                        {new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
