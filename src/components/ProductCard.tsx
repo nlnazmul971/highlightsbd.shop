@@ -1,14 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { Heart, Eye, ShoppingBag } from 'lucide-react';
+import { Heart, Eye, ShoppingBag, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Product, getProductImage } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
+import { useAllReviewStats } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
+  const { data: reviewStats = {} } = useAllReviewStats();
   const [showSizes, setShowSizes] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const discountPercent = product.original_price
@@ -105,6 +107,20 @@ const ProductCard = ({ product }: { product: Product }) => {
             <span className="text-sm font-medium">৳{product.price.toLocaleString()}</span>
             {product.original_price && <span className="text-xs text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
           </div>
+          {reviewStats[product.id] && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <Star
+                    key={star}
+                    size={12}
+                    className={star <= Math.round(reviewStats[product.id].avg) ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground/30'}
+                  />
+                ))}
+              </div>
+              <span className="text-[11px] text-muted-foreground">({reviewStats[product.id].avg.toFixed(1)})</span>
+            </div>
+          )}
         </div>
       </Link>
     </div>
