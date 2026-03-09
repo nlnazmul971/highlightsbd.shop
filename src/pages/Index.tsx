@@ -5,10 +5,15 @@ import ProductCard from '@/components/ProductCard';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
-import { useProducts } from '@/hooks/useSupabase';
+import { useProducts, useStoreSettings } from '@/hooks/useSupabase';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import poster1 from '@/assets/poster-1.jpg';
 import poster2 from '@/assets/poster-2.jpg';
+
+const defaultPosters = [
+  { image: poster1, link: '/?category=New+Dropped', subtitle: 'New Season', title: 'The Art of Dressing' },
+  { image: poster2, link: '/?category=Shirts', subtitle: 'Campaign 2026', title: 'Walk Together' },
+];
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,6 +24,7 @@ const Index = () => {
     searchQuery || undefined
   );
   const { data: allProducts = [] } = useProducts();
+  const { data: settings = {} } = useStoreSettings();
   const { viewedIds } = useRecentlyViewed();
 
   const showProducts = activeCategory || searchQuery;
@@ -27,6 +33,16 @@ const Index = () => {
     .map(id => allProducts.find(p => p.id === id))
     .filter(Boolean)
     .slice(0, 6);
+
+  // Dynamic posters from settings
+  const rawPosters = settings['homepage_posters'];
+  const dynamicPosters = rawPosters ? JSON.parse(rawPosters) : [];
+  const posters = dynamicPosters.length > 0
+    ? dynamicPosters.map((p: any, i: number) => ({
+        ...p,
+        image: p.image || defaultPosters[i]?.image || '',
+      }))
+    : defaultPosters;
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,24 +96,17 @@ const Index = () => {
         {!showProducts && (
           <section className="mt-20 sm:mt-28">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <Link to="/?category=New+Dropped" className="relative group overflow-hidden cursor-pointer block">
-                <img src={poster1} alt="New Dropped Collection" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <p className="luxury-body text-[10px] text-background/70 mb-2">New Season</p>
-                  <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">The Art of Dressing</h3>
-                  <div className="w-8 h-px bg-background/50 mt-3" />
-                </div>
-              </Link>
-              <Link to="/?category=Shirts" className="relative group overflow-hidden cursor-pointer block">
-                <img src={poster2} alt="Shirts Collection" className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <p className="luxury-body text-[10px] text-background/70 mb-2">Campaign 2026</p>
-                  <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">Walk Together</h3>
-                  <div className="w-8 h-px bg-background/50 mt-3" />
-                </div>
-              </Link>
+              {posters.map((poster: any, i: number) => (
+                <Link key={i} to={poster.link || '/'} className="relative group overflow-hidden cursor-pointer block">
+                  <img src={poster.image} alt={poster.title} className="w-full aspect-[3/4] sm:aspect-square object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 via-transparent to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <p className="luxury-body text-[10px] text-background/70 mb-2">{poster.subtitle}</p>
+                    <h3 className="luxury-heading text-2xl sm:text-3xl text-background tracking-[0.1em]">{poster.title}</h3>
+                    <div className="w-8 h-px bg-background/50 mt-3" />
+                  </div>
+                </Link>
+              ))}
             </div>
           </section>
         )}

@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useStoreSettings } from '@/hooks/useSupabase';
 import heroSlide1 from '@/assets/hero-slide-1.jpg';
 import heroSlide2 from '@/assets/hero-slide-2.jpg';
 import heroSlide3 from '@/assets/hero-slide-3.jpg';
 
-const slides = [
+const defaultSlides = [
   {
     image: heroSlide1,
     title: 'Friends',
@@ -27,8 +26,14 @@ const slides = [
 ];
 
 const Hero = () => {
+  const { data: settings = {} } = useStoreSettings();
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Use dynamic slides from settings or fallback to defaults
+  const rawSlides = settings['hero_slides'];
+  const dynamicSlides = rawSlides ? JSON.parse(rawSlides) : [];
+  const slides = dynamicSlides.length > 0 ? dynamicSlides : defaultSlides;
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
@@ -37,8 +42,7 @@ const Hero = () => {
     setTimeout(() => setIsTransitioning(false), 600);
   }, [isTransitioning]);
 
-  const prev = () => goTo((current - 1 + slides.length) % slides.length);
-  const next = useCallback(() => goTo((current + 1) % slides.length), [current, goTo]);
+  const next = useCallback(() => goTo((current + 1) % slides.length), [current, goTo, slides.length]);
 
   useEffect(() => {
     const timer = setInterval(next, 5000);
@@ -49,8 +53,7 @@ const Hero = () => {
 
   return (
     <section className="relative w-full h-[85vh] sm:h-screen overflow-hidden bg-muted">
-      {/* Slides */}
-      {slides.map((s, i) => (
+      {slides.map((s: any, i: number) => (
         <div
           key={i}
           className="absolute inset-0 transition-opacity duration-700 ease-in-out"
@@ -64,10 +67,8 @@ const Hero = () => {
         </div>
       ))}
 
-      {/* Overlay gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20" />
 
-      {/* Large background title */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <h1
           className="luxury-heading text-[18vw] sm:text-[14vw] lg:text-[12vw] leading-none text-background/20 font-light tracking-[0.1em] select-none transition-all duration-700"
@@ -77,25 +78,20 @@ const Hero = () => {
         </h1>
       </div>
 
-      {/* Top right poetic text */}
       <div className="absolute top-[15%] right-4 sm:right-10 max-w-[220px] sm:max-w-xs text-right animate-fade-in">
         <p className="text-[10px] sm:text-xs text-background/80 leading-relaxed whitespace-pre-line" style={{ fontFamily: 'var(--font-body)' }}>
           {slide.topText}
         </p>
       </div>
 
-      {/* Bottom left poetic text */}
       <div className="absolute bottom-[12%] left-4 sm:left-10 max-w-[220px] sm:max-w-xs animate-fade-in">
         <p className="text-[10px] sm:text-xs text-background/80 leading-relaxed whitespace-pre-line" style={{ fontFamily: 'var(--font-body)' }}>
           {slide.bottomText}
         </p>
       </div>
 
-      {/* Navigation arrows removed */}
-
-      {/* Dots indicator */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        {slides.map((_, i) => (
+        {slides.map((_: any, i: number) => (
           <button
             key={i}
             onClick={() => goTo(i)}

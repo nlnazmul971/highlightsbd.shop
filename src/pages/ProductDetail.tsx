@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useProduct, useProductReviews, useRelatedProducts } from '@/hooks/useSupabase';
+import { useProduct, useProductReviews, useRelatedProducts, useProductImages } from '@/hooks/useSupabase';
 import ProductCard from '@/components/ProductCard';
 import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
@@ -15,8 +15,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: string }) => {
-  const images = [mainImage, mainImage, mainImage, mainImage];
+const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string; name: string; productId: string }) => {
+  const { data: additionalImages = [] } = useProductImages(productId);
+  
+  // Build images array: main image + additional images
+  const images = [mainImage, ...additionalImages.map((img: any) => img.image_url)];
+  
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
@@ -30,7 +34,6 @@ const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: str
     setZoomPos({ x, y });
   }, []);
 
-  // Mobile swipe
   const touchStart = useRef(0);
   const handleTouchStart = (e: React.TouchEvent) => { touchStart.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -43,8 +46,8 @@ const ProductImageGallery = ({ mainImage, name }: { mainImage: string; name: str
 
   return (
     <div className="flex flex-col sm:flex-row gap-3">
-      {/* Thumbnails - side on desktop, bottom on mobile */}
-      <div className="hidden sm:flex sm:flex-col gap-2 sm:max-h-[600px]">
+      {/* Thumbnails */}
+      <div className="hidden sm:flex sm:flex-col gap-2 sm:max-h-[600px] overflow-y-auto">
         {images.map((img, i) => (
           <button
             key={i}
@@ -107,7 +110,6 @@ const ProductDetail = () => {
     if (product?.id) addView(product.id);
   }, [product?.id, addView]);
 
-  // Scroll to top on product change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
@@ -160,7 +162,7 @@ const ProductDetail = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-14">
-          <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} />
+          <ProductImageGallery mainImage={getProductImage(product.image_url)} name={product.name} productId={product.id} />
 
           <div className="py-0 lg:py-4">
             <p className="luxury-body text-[10px] text-muted-foreground mb-1 tracking-[0.15em]">{product.category}</p>
@@ -172,7 +174,6 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Rating */}
             {reviews.length > 0 && (
               <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <div className="flex">
@@ -184,7 +185,6 @@ const ProductDetail = () => {
               </div>
             )}
 
-            {/* Price */}
             <div className="flex items-baseline gap-2 sm:gap-3 mb-3 sm:mb-6">
               <span className="text-lg sm:text-2xl font-light">৳{product.price.toLocaleString()}</span>
               {product.original_price && (
@@ -199,7 +199,6 @@ const ProductDetail = () => {
 
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4 sm:mb-8">{product.description}</p>
 
-            {/* Size */}
             <div className="mb-3 sm:mb-6">
               <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Size — <span className="text-muted-foreground">{size}</span></p>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -212,10 +211,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-
-
-
-            {/* Quantity */}
             <div className="mb-4 sm:mb-8">
               <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Quantity</p>
               <div className="inline-flex items-center border border-border">
@@ -226,7 +221,6 @@ const ProductDetail = () => {
               <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
             </div>
 
-            {/* CTA - visible on both mobile & desktop */}
             <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
               <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Add to Cart</button>
               <button onClick={() => toggleItem(product)}
@@ -236,7 +230,6 @@ const ProductDetail = () => {
             </div>
             <button onClick={handleBuyNow} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Buy Now</button>
 
-            {/* Trust badges */}
             <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
               <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Truck size={14} className="sm:w-4 sm:h-4" />
@@ -252,7 +245,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Review Form & Reviews */}
             <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
               <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
               
@@ -276,7 +268,6 @@ const ProductDetail = () => {
           </div>
         </div>
 
-        {/* Related Products */}
         {relatedProducts.length > 0 && (
           <section className="mt-12 sm:mt-20 mb-8 sm:mb-12">
             <div className="text-center mb-8 sm:mb-10">
