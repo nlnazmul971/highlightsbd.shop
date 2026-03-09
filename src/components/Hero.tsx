@@ -9,6 +9,9 @@ const Hero = () => {
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
+  // Check if any slide has a mobile image
+  const hasMobileImages = slides.some((s: any) => s.mobileImage);
+
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
     setIsTransitioning(true);
@@ -29,18 +32,38 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
+      {/* CSS media query to toggle mobile/desktop images */}
+      {hasMobileImages && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          @media (max-width: 639px) {
+            .hero-img-pc { display: none !important; }
+            .hero-img-mobile { display: block !important; }
+          }
+          @media (min-width: 640px) {
+            .hero-img-pc { display: block !important; }
+            .hero-img-mobile { display: none !important; }
+          }
+        `}} />
+      )}
+
       {slides.map((s: any, i: number) => (
-        <picture
+        <div
           key={i}
-          className={`block w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+          className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
         >
-          <source media="(max-width: 767px)" srcSet={s.mobileImage || s.image} />
+          {s.mobileImage && (
+            <img
+              src={s.mobileImage}
+              alt={`HIGHLIGHTS ${s.title} Collection`}
+              className="hero-img-mobile w-full h-auto"
+            />
+          )}
           <img
             src={s.image}
             alt={`HIGHLIGHTS ${s.title} Collection`}
-            className="w-full h-auto block"
+            className={`w-full h-auto ${s.mobileImage ? 'hero-img-pc' : 'block'}`}
           />
-        </picture>
+        </div>
       ))}
 
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20 pointer-events-none" />
