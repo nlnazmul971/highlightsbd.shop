@@ -31,19 +31,7 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
-      {/* CSS media query to toggle mobile/desktop images */}
-      {hasMobileImages && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          @media (max-width: 639px) {
-            .hero-img-pc { display: none !important; }
-            .hero-img-mobile { display: block !important; }
-          }
-          @media (min-width: 640px) {
-            .hero-img-pc { display: block !important; }
-            .hero-img-mobile { display: none !important; }
-          }
-        `}} />
-      )}
+      {null}
 
       {slides.map((s: any, i: number) => (
         <div
