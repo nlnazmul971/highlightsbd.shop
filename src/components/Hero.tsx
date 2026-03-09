@@ -6,7 +6,6 @@ const Hero = () => {
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  // Use dynamic slides from settings or fallback to defaults
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
@@ -29,21 +28,19 @@ const Hero = () => {
   const slide = slides[current];
 
   return (
-    <section className="relative w-full overflow-hidden bg-foreground">
+    <section className="relative w-full overflow-hidden">
+      {/* Images — natural size, no crop, no blank space */}
       {slides.map((s: any, i: number) => (
-        <div
+        <img
           key={i}
-          className={`w-full transition-opacity duration-700 ease-in-out ${i === current ? 'block' : 'hidden'}`}
-        >
-          <img
-            src={s.image}
-            alt={`HIGHLIGHTS ${s.title} Collection`}
-            className="w-full h-auto block"
-          />
-        </div>
+          src={s.image}
+          alt={`HIGHLIGHTS ${s.title} Collection`}
+          className={`w-full h-auto block transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+        />
       ))}
 
-      <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20" />
+      {/* Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20 pointer-events-none" />
 
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <h1
@@ -54,30 +51,36 @@ const Hero = () => {
         </h1>
       </div>
 
-      <div className="absolute top-[15%] right-4 sm:right-10 max-w-[220px] sm:max-w-xs text-right animate-fade-in">
-        <p className="text-[10px] sm:text-xs text-background/80 leading-relaxed whitespace-pre-line" style={{ fontFamily: 'var(--font-body)' }}>
-          {slide.topText}
-        </p>
-      </div>
+      {slide.topText && (
+        <div className="absolute top-[15%] right-4 sm:right-10 max-w-[220px] sm:max-w-xs text-right animate-fade-in">
+          <p className="text-[10px] sm:text-xs text-background/80 leading-relaxed whitespace-pre-line" style={{ fontFamily: 'var(--font-body)' }}>
+            {slide.topText}
+          </p>
+        </div>
+      )}
 
-      <div className="absolute bottom-[12%] left-4 sm:left-10 max-w-[220px] sm:max-w-xs animate-fade-in">
-        <p className="text-[10px] sm:text-xs text-background/80 leading-relaxed whitespace-pre-line" style={{ fontFamily: 'var(--font-body)' }}>
-          {slide.bottomText}
-        </p>
-      </div>
+      {slide.bottomText && (
+        <div className="absolute bottom-[12%] left-4 sm:left-10 max-w-[220px] sm:max-w-xs animate-fade-in">
+          <p className="text-[10px] sm:text-xs text-background/80 leading-relaxed whitespace-pre-line" style={{ fontFamily: 'var(--font-body)' }}>
+            {slide.bottomText}
+          </p>
+        </div>
+      )}
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
-        {slides.map((_: any, i: number) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              i === current ? 'bg-background w-6' : 'bg-background/40'
-            }`}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
-      </div>
+      {slides.length > 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+          {slides.map((_: any, i: number) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                i === current ? 'bg-background w-6' : 'bg-background/40'
+              }`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };
