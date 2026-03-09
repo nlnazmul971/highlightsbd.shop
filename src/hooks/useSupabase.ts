@@ -100,6 +100,26 @@ export const useProductReviews = (productId: string) => {
   });
 };
 
+export const useAllReviewStats = () => {
+  return useQuery({
+    queryKey: ['review-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('reviews').select('product_id, rating');
+      if (error) throw error;
+      const stats: Record<string, { avg: number; count: number }> = {};
+      for (const r of data || []) {
+        if (!stats[r.product_id]) stats[r.product_id] = { avg: 0, count: 0 };
+        stats[r.product_id].count++;
+        stats[r.product_id].avg += r.rating;
+      }
+      for (const id in stats) {
+        stats[id].avg = stats[id].avg / stats[id].count;
+      }
+      return stats;
+    },
+  });
+};
+
 export const useCreateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
