@@ -9,8 +9,7 @@ const Hero = () => {
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
-  // Check if any slide has a mobile image
-  const hasMobileImages = slides.some((s: any) => s.mobileImage);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
