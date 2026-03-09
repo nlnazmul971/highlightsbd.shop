@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useStoreSettings } from '@/hooks/useSupabase';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 const Hero = () => {
   const { data: settings = {} } = useStoreSettings();
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const isMobile = useIsMobile();
 
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
@@ -31,19 +29,20 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
-      {slides.map((s: any, i: number) => {
-        const imgSrc = isMobile && s.mobileImage ? s.mobileImage : s.image;
-        return (
+      {slides.map((s: any, i: number) => (
+        <picture
+          key={i}
+          className={`block w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+        >
+          <source media="(max-width: 767px)" srcSet={s.mobileImage || s.image} />
           <img
-            key={i}
-            src={imgSrc}
+            src={s.image}
             alt={`HIGHLIGHTS ${s.title} Collection`}
-            className={`w-full h-auto block transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+            className="w-full h-auto block"
           />
-        );
-      })}
+        </picture>
+      ))}
 
-      {/* Overlays */}
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20 pointer-events-none" />
 
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
