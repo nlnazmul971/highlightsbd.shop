@@ -390,10 +390,11 @@ const Checkout = () => {
                 </div>
               )}
 
-              <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name" className="luxury-input" />
-              <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number" className="luxury-input" />
-              <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area)" className="luxury-input min-h-[100px] resize-y" rows={4} />
-              <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City" className="luxury-input" />
+              <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name *" className={`luxury-input ${attempted && !form.name.trim() ? 'border-destructive' : ''}`} />
+              <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email *" className={`luxury-input ${attempted && !form.email.trim() ? 'border-destructive' : ''}`} />
+              <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number *" className={`luxury-input ${attempted && !form.phone.trim() ? 'border-destructive' : ''}`} />
+              <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area) *" className={`luxury-input min-h-[100px] resize-y ${attempted && !form.address.trim() ? 'border-destructive' : ''}`} rows={4} />
+              <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City *" className={`luxury-input ${attempted && !form.city.trim() ? 'border-destructive' : ''}`} />
               <textarea value={form.customerNote} onChange={e => setForm({ ...form, customerNote: e.target.value })} placeholder="Order Note (optional)" className="luxury-input min-h-[60px] resize-y" rows={2} />
 
               {/* Delivery Zone */}
