@@ -45,8 +45,8 @@ const SliderManager = ({ slides, onSave }: {
   useEffect(() => {
     if (slides.length > 0 && items.length === 0) setItems(slides);
   }, [slides]);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
     setSaving(true);
     try { await onSave(items); } finally { setSaving(false); }
   };
