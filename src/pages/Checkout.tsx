@@ -255,6 +255,32 @@ const Checkout = () => {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
               <h2 className="luxury-body text-[11px] text-foreground mb-4">Delivery Information</h2>
+              
+              {/* Saved address toggle */}
+              {user && profile?.address && (
+                <div className="flex items-center gap-3 p-3 bg-secondary/50 border border-border">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={useSavedAddress}
+                      onChange={e => {
+                        setUseSavedAddress(e.target.checked);
+                        if (!e.target.checked) {
+                          setForm(f => ({ ...f, name: '', phone: '', address: '', city: '' }));
+                        }
+                      }}
+                      className="accent-foreground"
+                    />
+                    Use saved address
+                  </label>
+                  {useSavedAddress && (
+                    <span className="text-[10px] text-muted-foreground ml-auto">
+                      {profile.address}, {profile.city}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name" className="luxury-input" />
               <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number" className="luxury-input" />
               <input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Address" className="luxury-input" />
