@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useProducts, useOrders } from '@/hooks/useSupabase';
 import { Package, ShoppingBag, DollarSign, TrendingUp, XCircle, RotateCcw, CreditCard, Truck } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, subDays, isWithinInterval, startOfDay, endOfDay, parseISO } from 'date-fns';
 
 const AdminDashboard = () => {
@@ -61,7 +61,15 @@ const AdminDashboard = () => {
     return Object.entries(statuses).map(([name, value]) => ({ name, value }));
   }, [filteredOrders]);
 
-  const PIE_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent-foreground))', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+  const PIE_COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+  const STATUS_COLORS: Record<string, string> = {
+    Pending: '#f59e0b',
+    Processing: '#3b82f6',
+    Shipped: '#8b5cf6',
+    Delivered: '#10b981',
+    Cancelled: '#ef4444',
+    Returned: '#f43f5e',
+  };
 
   const stats = [
     { label: 'Total Orders', value: filteredOrders.length, icon: ShoppingBag, color: 'bg-accent text-accent-foreground' },
@@ -118,30 +126,38 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Revenue Bar Chart */}
-      <div className="border border-border p-5">
-        <h3 className="text-sm font-light tracking-wide mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+      {/* Revenue Area Chart */}
+      <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
+        <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>
           Revenue Overview
         </h3>
+        <p className="text-xs text-muted-foreground mb-4">Daily revenue for selected period</p>
         {dailyData.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No revenue data for selected period</p>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={dailyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+          <ResponsiveContainer width="100%" height={320}>
+            <AreaChart data={dailyData}>
+              <defs>
+                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
               <Tooltip
                 contentStyle={{
                   background: 'hsl(var(--background))',
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: 0,
+                  borderRadius: 8,
                   fontSize: 12,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                 }}
                 formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']}
               />
-              <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[2, 2, 0, 0]} />
-            </BarChart>
+              <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }} />
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
@@ -149,44 +165,62 @@ const AdminDashboard = () => {
       {/* Pie Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Payment Method Pie */}
-        <div className="border border-border p-5">
-          <h3 className="text-sm font-light tracking-wide mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
+          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>
             Payment Methods
           </h3>
+          <p className="text-xs text-muted-foreground mb-4">Breakdown by payment type</p>
           {paymentData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No data</p>
           ) : (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={paymentData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                <defs>
+                  {PIE_COLORS.map((color, i) => (
+                    <linearGradient key={i} id={`payGrad${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={color} stopOpacity={1} />
+                      <stop offset="100%" stopColor={color} stopOpacity={0.7} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <Pie data={paymentData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={4} dataKey="value" cornerRadius={6} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}>
                   {paymentData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    <Cell key={i} fill={`url(#payGrad${i % PIE_COLORS.length})`} stroke="none" />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           )}
         </div>
 
         {/* Order Status Pie */}
-        <div className="border border-border p-5">
-          <h3 className="text-sm font-light tracking-wide mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
+          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>
             Order Status
           </h3>
+          <p className="text-xs text-muted-foreground mb-4">Distribution of order statuses</p>
           {statusData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No data</p>
           ) : (
-            <ResponsiveContainer width="100%" height={250}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={statusData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                <defs>
+                  {statusData.map((entry, i) => (
+                    <linearGradient key={i} id={`statusGrad${i}`} x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor={STATUS_COLORS[entry.name] || PIE_COLORS[i % PIE_COLORS.length]} stopOpacity={1} />
+                      <stop offset="100%" stopColor={STATUS_COLORS[entry.name] || PIE_COLORS[i % PIE_COLORS.length]} stopOpacity={0.65} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={4} dataKey="value" cornerRadius={6} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}>
                   {statusData.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    <Cell key={i} fill={`url(#statusGrad${i})`} stroke="none" />
                   ))}
                 </Pie>
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           )}
