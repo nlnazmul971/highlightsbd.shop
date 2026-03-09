@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Package, MapPin, Lock, User, ChevronRight } from 'lucide-react';
 import Header from '@/components/Header';
 import CartDrawer from '@/components/CartDrawer';
-import Footer from '@/components/Footer';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile, useUpdateProfile } from '@/hooks/useSupabase';
 import OrderTracker from '@/components/OrderTracker';
