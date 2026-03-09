@@ -1,34 +1,47 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCreateOrder } from '@/hooks/useSupabase';
+import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones } from '@/hooks/useSupabase';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
 
 type PaymentMethod = 'cod' | 'online';
 type OnlineProvider = 'bkash' | 'nagad' | null;
-type DeliveryZone = 'inside_dhaka' | 'sub_urban_dhaka' | 'outside_dhaka';
+type DeliveryZone = string;
 
-const DELIVERY_OPTIONS: { id: DeliveryZone; label: string; subtitle: string; price: number }[] = [
-  { id: 'inside_dhaka', label: 'Inside Dhaka', subtitle: 'Dhaka city area', price: 70 },
+const FALLBACK_DELIVERY_OPTIONS: { id: DeliveryZone; label: string; subtitle: string; price: number }[] = [
+  { id: 'Inside Dhaka', label: 'Inside Dhaka', subtitle: 'Dhaka city area', price: 70 },
   {
-    id: 'sub_urban_dhaka',
+    id: 'Sub - Urban Dhaka',
     label: 'Sub - Urban Dhaka',
     subtitle: 'Ashulia, Dhamrai, Keranigonj, Dohar, Hemayetpur, Keraniganj Model, Nowabganj, Savar, South Keraniganj',
     price: 120,
   },
   {
-    id: 'outside_dhaka',
+    id: 'Outside Dhaka',
     label: 'Outside Dhaka',
     subtitle: '150TK Advance Payment Required via Bkash',
     price: 150,
   },
 ];
+
+const FALLBACK_PAYMENT_SETTINGS: Record<'bkash' | 'nagad', { number: string; instructions: string; is_active: boolean }> = {
+  bkash: {
+    number: '01712-345678',
+    instructions: 'Please send the exact amount and enter your sender number + transaction ID below.',
+    is_active: true,
+  },
+  nagad: {
+    number: '01812-345678',
+    instructions: 'Please send the exact amount and enter your sender number + transaction ID below.',
+    is_active: true,
+  },
+};
 
 const BkashLogo = () => (
   <div className="flex items-center justify-center h-10 px-4 rounded bg-[#E2136E] text-white font-bold text-sm tracking-wide">
@@ -47,26 +60,82 @@ const Checkout = () => {
   const { user } = useAuth();
   const createOrder = useCreateOrder();
   const navigate = useNavigate();
+
+  const { data: zones = [] } = useDeliveryZones(false);
+  const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
+
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
-  const [delivery, setDelivery] = useState<DeliveryZone>('inside_dhaka');
+  const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
   const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
 
+  const deliveryOptions = useMemo(() => {
+    const active = (zones || []).filter(z => z.is_active);
+    if (active.length > 0) {
+      return active.map(z => ({
+        id: z.name,
+        label: z.name,
+        subtitle: z.description || '',
+        price: z.fee,
+      }));
+    }
+    return FALLBACK_DELIVERY_OPTIONS;
+  }, [zones]);
+
+  useEffect(() => {
+    if (!deliveryOptions.some(o => o.id === delivery)) {
+      setDelivery(deliveryOptions[0]?.id ?? 'Inside Dhaka');
+    }
+  }, [deliveryOptions, delivery]);
+
   const deliveryFee = useMemo(() => {
-    if (delivery === 'inside_dhaka') return 70;
-    if (delivery === 'sub_urban_dhaka') return 120;
-    return 150;
-  }, [delivery]);
+    const selected = deliveryOptions.find(o => o.id === delivery);
+    return selected?.price ?? 0;
+  }, [delivery, deliveryOptions]);
 
   const grandTotal = total + deliveryFee;
-  const outsideDhakaRequiresBkash = delivery === 'outside_dhaka';
+  const outsideDhakaRequiresBkash = delivery === 'Outside Dhaka';
+
+  const paymentMap = useMemo(() => {
+    const map: Record<string, { number: string; instructions: string; is_active: boolean }> = {};
+    for (const s of paymentSettings || []) {
+      map[s.provider] = { number: s.number || '', instructions: s.instructions || '', is_active: s.is_active };
+    }
+    return map;
+  }, [paymentSettings]);
+
+  const getProviderSetting = useCallback(
+    (provider: 'bkash' | 'nagad') => {
+      return paymentMap[provider] ?? FALLBACK_PAYMENT_SETTINGS[provider];
+    },
+    [paymentMap]
+  );
+
+  const selectableProviders = useMemo((): Array<'bkash' | 'nagad'> => {
+    const base: Array<'bkash' | 'nagad'> = ['bkash', 'nagad'];
+    const active = base.filter(p => getProviderSetting(p).is_active);
+    const list = active.length ? active : base;
+    return outsideDhakaRequiresBkash ? ['bkash'] : list;
+  }, [getProviderSetting, outsideDhakaRequiresBkash]);
+
+  useEffect(() => {
+    if (payment !== 'online') return;
+    const allowed = selectableProviders as unknown as Array<'bkash' | 'nagad'>;
+    if (!onlineProvider || !allowed.includes(onlineProvider as any)) {
+      setOnlineProvider(allowed[0] ?? 'bkash');
+    }
+  }, [payment, selectableProviders, onlineProvider]);
 
   const providerNumber = useMemo(() => {
-    if (onlineProvider === 'bkash') return '01712-345678';
-    if (onlineProvider === 'nagad') return '01812-345678';
-    return null;
-  }, [onlineProvider]);
+    if (!onlineProvider) return null;
+    return getProviderSetting(onlineProvider).number || null;
+  }, [onlineProvider, getProviderSetting]);
+
+  const providerInstruction = useMemo(() => {
+    if (!onlineProvider) return '';
+    return getProviderSetting(onlineProvider).instructions || '';
+  }, [onlineProvider, getProviderSetting]);
 
   const handleCopy = useCallback(async (type: 'number' | 'amount', value: string) => {
     try {
@@ -81,7 +150,7 @@ const Checkout = () => {
 
   const handleDeliveryChange = (zone: DeliveryZone) => {
     setDelivery(zone);
-    if (zone === 'outside_dhaka') {
+    if (zone === 'Outside Dhaka') {
       setPayment('online');
       setOnlineProvider('bkash');
     }
@@ -89,21 +158,58 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) { toast.error('Cart is empty'); return; }
-    if (!form.name || !form.phone || !form.address || !form.city) { toast.error('Please fill all fields'); return; }
+    if (items.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+    if (!form.name || !form.phone || !form.address || !form.city) {
+      toast.error('Please fill all fields');
+      return;
+    }
     if (outsideDhakaRequiresBkash && (payment !== 'online' || onlineProvider !== 'bkash')) {
       toast.error('Outside Dhaka orders require advance payment via bKash');
       return;
     }
-    if (payment === 'online' && !onlineProvider) { toast.error('Please select a payment provider'); return; }
-    if (payment === 'online' && !form.senderNumber) { toast.error('Please enter sender number'); return; }
-    if (payment === 'online' && !form.transactionId) { toast.error('Please enter transaction ID'); return; }
-    if (!user) { toast.error('Please sign in to place an order'); navigate('/auth'); return; }
+    if (payment === 'online' && !onlineProvider) {
+      toast.error('Please select a payment provider');
+      return;
+    }
+    if (payment === 'online' && onlineProvider) {
+      const s = getProviderSetting(onlineProvider);
+      if (!s.is_active) {
+        toast.error('Selected payment provider is currently unavailable');
+        return;
+      }
+      if (!s.number) {
+        toast.error('Payment number is not configured');
+        return;
+      }
+    }
+    if (payment === 'online' && !form.senderNumber) {
+      toast.error('Please enter sender number');
+      return;
+    }
+    if (payment === 'online' && !form.transactionId) {
+      toast.error('Please enter transaction ID');
+      return;
+    }
+    if (!user) {
+      toast.error('Please sign in to place an order');
+      navigate('/auth');
+      return;
+    }
 
     try {
       await createOrder.mutateAsync({
         user_id: user.id,
-        items: items.map(i => ({ product_id: i.product.id, name: i.product.name, quantity: i.quantity, price: i.product.price, size: i.size, color: i.color })) as unknown as Json,
+        items: items.map(i => ({
+          product_id: i.product.id,
+          name: i.product.name,
+          quantity: i.quantity,
+          price: i.product.price,
+          size: i.size,
+          color: i.color,
+        })) as unknown as Json,
         total: grandTotal,
         customer_name: form.name,
         customer_phone: form.phone,
@@ -124,7 +230,8 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header /><CartDrawer />
+      <Header />
+      <CartDrawer />
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 sm:pt-40 pb-20">
         <h1 className="luxury-heading text-3xl tracking-[0.15em] text-center mb-12">Checkout</h1>
         {items.length === 0 ? (
@@ -142,18 +249,24 @@ const Checkout = () => {
               <div>
                 <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Delivery</h2>
                 <div className="space-y-2">
-                  {DELIVERY_OPTIONS.map(d => (
+                  {deliveryOptions.map(d => (
                     <label
                       key={d.id}
                       className={`flex items-start gap-3 p-4 border cursor-pointer transition-colors ${delivery === d.id ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                       onClick={() => handleDeliveryChange(d.id)}
                     >
-                      <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${delivery === d.id ? 'border-foreground' : 'border-muted-foreground'}`}>
+                      <div
+                        className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
+                          delivery === d.id ? 'border-foreground' : 'border-muted-foreground'
+                        }`}
+                      >
                         {delivery === d.id && <div className="w-2 h-2 rounded-full bg-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">{d.label}</p>
-                        <p className={`text-xs mt-0.5 ${d.id === 'outside_dhaka' ? 'text-destructive' : 'text-muted-foreground'}`}>{d.subtitle}</p>
+                        {d.subtitle ? (
+                          <p className={`text-xs mt-0.5 ${d.id === 'Outside Dhaka' ? 'text-destructive' : 'text-muted-foreground'}`}>{d.subtitle}</p>
+                        ) : null}
                       </div>
                       <span className="text-sm flex-shrink-0">৳{d.price}</span>
                       <input type="radio" name="delivery" value={d.id} checked={delivery === d.id} onChange={() => handleDeliveryChange(d.id)} className="hidden" />
@@ -178,7 +291,18 @@ const Checkout = () => {
                           <p className="text-xs text-muted-foreground">Pay when you receive</p>
                         </div>
                       </div>
-                      <input type="radio" name="payment" value="cod" checked={payment === 'cod'} onChange={() => { setPayment('cod'); setOnlineProvider(null); setForm(f => ({ ...f, senderNumber: '', transactionId: '' })); }} className="hidden" />
+                      <input
+                        type="radio"
+                        name="payment"
+                        value="cod"
+                        checked={payment === 'cod'}
+                        onChange={() => {
+                          setPayment('cod');
+                          setOnlineProvider(null);
+                          setForm(f => ({ ...f, senderNumber: '', transactionId: '' }));
+                        }}
+                        className="hidden"
+                      />
                     </label>
                   )}
 
@@ -201,12 +325,22 @@ const Checkout = () => {
                     {payment === 'online' && (
                       <div className="px-4 pb-4 space-y-4">
                         <div className="grid grid-cols-2 gap-3">
-                          <button type="button" onClick={() => setOnlineProvider('bkash')} className={`p-3 border-2 transition-colors ${onlineProvider === 'bkash' ? 'border-[#E2136E]' : 'border-border hover:border-muted-foreground'}`}>
-                            <BkashLogo />
-                          </button>
-                          {/* Nagad disabled for outside Dhaka */}
-                          {!outsideDhakaRequiresBkash && (
-                            <button type="button" onClick={() => setOnlineProvider('nagad')} className={`p-3 border-2 transition-colors ${onlineProvider === 'nagad' ? 'border-[#F6921E]' : 'border-border hover:border-muted-foreground'}`}>
+                          {selectableProviders.includes('bkash') && (
+                            <button
+                              type="button"
+                              onClick={() => setOnlineProvider('bkash')}
+                              className={`p-3 border-2 transition-colors ${onlineProvider === 'bkash' ? 'border-[#E2136E]' : 'border-border hover:border-muted-foreground'}`}
+                            >
+                              <BkashLogo />
+                            </button>
+                          )}
+
+                          {selectableProviders.includes('nagad') && (
+                            <button
+                              type="button"
+                              onClick={() => setOnlineProvider('nagad')}
+                              className={`p-3 border-2 transition-colors ${onlineProvider === 'nagad' ? 'border-[#F6921E]' : 'border-border hover:border-muted-foreground'}`}
+                            >
                               <NagadLogo />
                             </button>
                           )}
@@ -216,12 +350,20 @@ const Checkout = () => {
                           <div className="p-4 bg-secondary/30 border border-border space-y-4">
                             <p className="text-sm font-medium">Send payment to {onlineProvider === 'bkash' ? 'bKash' : 'Nagad'}:</p>
 
+                            {providerInstruction ? (
+                              <p className="text-xs text-muted-foreground leading-relaxed">{providerInstruction}</p>
+                            ) : null}
+
                             <div className="flex items-center justify-between gap-3 p-3 bg-background border border-border rounded">
                               <div>
                                 <span className="text-xs text-muted-foreground">Number</span>
                                 <p className="font-semibold tracking-wider">{providerNumber}</p>
                               </div>
-                              <button type="button" onClick={() => handleCopy('number', providerNumber)} className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                              <button
+                                type="button"
+                                onClick={() => handleCopy('number', providerNumber)}
+                                className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
                                 {copied === 'number' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                 <span className="text-sm">Copy</span>
                               </button>
@@ -232,20 +374,40 @@ const Checkout = () => {
                                 <span className="text-xs text-muted-foreground">Amount</span>
                                 <p className="font-semibold">৳{grandTotal.toLocaleString()}</p>
                               </div>
-                              <button type="button" onClick={() => handleCopy('amount', grandTotal.toString())} className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+                              <button
+                                type="button"
+                                onClick={() => handleCopy('amount', grandTotal.toString())}
+                                className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors"
+                              >
                                 {copied === 'amount' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                 <span className="text-sm">Copy</span>
                               </button>
                             </div>
 
                             <div>
-                              <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">Sender Number <span className="text-destructive">*</span></label>
-                              <input required value={form.senderNumber} onChange={e => setForm({ ...form, senderNumber: e.target.value })} placeholder={`Enter your ${onlineProvider === 'bkash' ? 'bKash' : 'Nagad'} number`} className="luxury-input" />
+                              <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">
+                                Sender Number <span className="text-destructive">*</span>
+                              </label>
+                              <input
+                                required
+                                value={form.senderNumber}
+                                onChange={e => setForm({ ...form, senderNumber: e.target.value })}
+                                placeholder={`Enter your ${onlineProvider === 'bkash' ? 'bKash' : 'Nagad'} number`}
+                                className="luxury-input"
+                              />
                             </div>
 
                             <div>
-                              <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">Transaction ID <span className="text-destructive">*</span></label>
-                              <input required value={form.transactionId} onChange={e => setForm({ ...form, transactionId: e.target.value })} placeholder={`Enter your ${onlineProvider === 'bkash' ? 'bKash' : 'Nagad'} transaction ID`} className="luxury-input" />
+                              <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">
+                                Transaction ID <span className="text-destructive">*</span>
+                              </label>
+                              <input
+                                required
+                                value={form.transactionId}
+                                onChange={e => setForm({ ...form, transactionId: e.target.value })}
+                                placeholder={`Enter your ${onlineProvider === 'bkash' ? 'bKash' : 'Nagad'} transaction ID`}
+                                className="luxury-input"
+                              />
                             </div>
                           </div>
                         )}
@@ -262,16 +424,30 @@ const Checkout = () => {
                 <div className="space-y-4 mb-6">
                   {items.map((item, idx) => (
                     <div key={idx} className="flex justify-between text-sm">
-                      <div><p>{item.product.name}</p><p className="text-xs text-muted-foreground">{item.size} / {item.color} × {item.quantity}</p></div>
+                      <div>
+                        <p>{item.product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.size} / {item.color} × {item.quantity}
+                        </p>
+                      </div>
                       <span>৳{(item.product.price * item.quantity).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
                 <div className="luxury-divider mb-4" />
-                <div className="flex justify-between text-sm mb-2"><span>Subtotal</span><span>৳{total.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm mb-4"><span>Delivery</span><span>৳{deliveryFee}</span></div>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Subtotal</span>
+                  <span>৳{total.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm mb-4">
+                  <span>Delivery</span>
+                  <span>৳{deliveryFee}</span>
+                </div>
                 <div className="luxury-divider mb-4" />
-                <div className="flex justify-between text-lg font-medium"><span>Total</span><span>৳{grandTotal.toLocaleString()}</span></div>
+                <div className="flex justify-between text-lg font-medium">
+                  <span>Total</span>
+                  <span>৳{grandTotal.toLocaleString()}</span>
+                </div>
                 <button type="submit" disabled={createOrder.isPending} className="luxury-button-primary w-full mt-6">
                   {createOrder.isPending ? 'Placing Order...' : 'Place Order'}
                 </button>
@@ -286,3 +462,4 @@ const Checkout = () => {
 };
 
 export default Checkout;
+

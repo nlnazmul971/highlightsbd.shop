@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      checkout_payment_settings: {
+        Row: {
+          created_at: string
+          id: string
+          instructions: string
+          is_active: boolean
+          number: string
+          provider: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instructions?: string
+          is_active?: boolean
+          number?: string
+          provider: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instructions?: string
+          is_active?: boolean
+          number?: string
+          provider?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_zones: {
         Row: {
           created_at: string
