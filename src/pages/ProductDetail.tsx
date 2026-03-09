@@ -232,10 +232,6 @@ const ProductDetail = () => {
 
             <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
               <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Truck size={14} className="sm:w-4 sm:h-4" />
-                <span className="text-[10px] sm:text-[11px]">Free Delivery</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Shield size={14} className="sm:w-4 sm:h-4" />
                 <span className="text-[10px] sm:text-[11px]">Secure Payment</span>
               </div>
