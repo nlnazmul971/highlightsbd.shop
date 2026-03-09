@@ -116,7 +116,7 @@ const Checkout = () => {
     const active = base.filter(p => getProviderSetting(p).is_active);
     const list = active.length ? active : base;
     return list;
-  }, [getProviderSetting, outsideDhakaRequiresBkash]);
+  }, [getProviderSetting]);
 
   useEffect(() => {
     if (payment !== 'online') return;
