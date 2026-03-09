@@ -142,7 +142,7 @@ export const useCreateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (order: {
-      user_id: string;
+      user_id: string | null;
       items: Json;
       total: number;
       customer_name: string;
@@ -159,6 +159,30 @@ export const useCreateOrder = () => {
       return data;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
+  });
+};
+
+export const useProfile = (userId?: string) => {
+  return useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
+};
+
+export const useUpdateProfile = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, ...updates }: { userId: string; display_name?: string; phone?: string; address?: string; city?: string }) => {
+      const { error } = await supabase.from('profiles').update(updates).eq('user_id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['profile'] }),
   });
 };
 
