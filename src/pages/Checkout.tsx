@@ -73,6 +73,11 @@ const Checkout = () => {
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
   const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponRow | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const validateCoupon = useValidateCoupon();
+  const incrementCouponUsage = useIncrementCouponUsage();
 
   // Auto-fill from saved profile
   useEffect(() => {
