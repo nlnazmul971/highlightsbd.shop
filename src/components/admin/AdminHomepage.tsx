@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useStoreSettings, useUpdateStoreSetting } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, X, Image as ImageIcon, Save, Loader2 } from 'lucide-react';
