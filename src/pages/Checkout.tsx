@@ -24,7 +24,7 @@ const Checkout = () => {
     e.preventDefault();
     if (items.length === 0) { toast.error('Cart is empty'); return; }
     if (!form.name || !form.phone || !form.address || !form.city) { toast.error('Please fill all fields'); return; }
-    if (payment === 'manual' && !form.transactionId) { toast.error('Please enter transaction ID'); return; }
+    if (['bkash', 'nagad', 'rocket'].includes(payment) && !form.transactionId) { toast.error('Please enter transaction ID'); return; }
 
     if (!user) {
       toast.error('Please sign in to place an order');
