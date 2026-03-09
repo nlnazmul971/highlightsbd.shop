@@ -161,10 +161,6 @@ const Checkout = () => {
       toast.error('Please fill all fields');
       return;
     }
-    if (outsideDhakaRequiresBkash && (payment !== 'online' || onlineProvider !== 'bkash')) {
-      toast.error('Outside Dhaka orders require advance payment via bKash');
-      return;
-    }
     if (payment === 'online' && !onlineProvider) {
       toast.error('Please select a payment provider');
       return;
