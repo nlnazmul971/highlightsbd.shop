@@ -47,7 +47,7 @@ const AdminHomepage = () => {
   );
 };
 
-type SlideType = { image: string; title: string; topText: string; bottomText: string };
+type SlideType = { image: string; mobileImage?: string; title: string; topText: string; bottomText: string };
 type PosterType = { image: string; link: string; subtitle: string; title: string };
 
 const SliderManager = ({ slides, onSave }: {
