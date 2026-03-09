@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
