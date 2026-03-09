@@ -91,8 +91,10 @@ const Checkout = () => {
                 <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Payment Method</h2>
                 <div className="space-y-2">
                   {[
-                    { id: 'cod', label: 'Cash on Delivery', desc: 'Pay when you receive' },
-                    { id: 'manual', label: 'bKash / Nagad / Rocket', desc: 'Manual payment with transaction ID' }
+                    { id: 'cod', label: 'Cash on Delivery', desc: 'Pay when you receive', number: null },
+                    { id: 'bkash', label: 'bKash', desc: 'Send to: 01712-345678', number: '01712-345678' },
+                    { id: 'nagad', label: 'Nagad', desc: 'Send to: 01812-345678', number: '01812-345678' },
+                    { id: 'rocket', label: 'Rocket', desc: 'Send to: 01912-345678', number: '01912-345678' }
                   ].map(p => (
                     <label key={p.id} className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${payment === p.id ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}>
                       <div className="flex items-center gap-3">
@@ -105,17 +107,24 @@ const Checkout = () => {
                     </label>
                   ))}
                 </div>
-                {payment === 'manual' && (
-                  <div className="mt-4">
+                {['bkash', 'nagad', 'rocket'].includes(payment) && (
+                  <div className="mt-4 p-4 bg-secondary/30 border border-border">
+                    <p className="text-sm mb-3">
+                      Send <span className="font-semibold">৳{(total + deliveryFee).toLocaleString()}</span> to{' '}
+                      <span className="font-semibold">
+                        {payment === 'bkash' && '01712-345678'}
+                        {payment === 'nagad' && '01812-345678'}
+                        {payment === 'rocket' && '01912-345678'}
+                      </span>
+                    </p>
                     <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">Transaction ID</label>
                     <input 
-                      required={payment === 'manual'} 
+                      required 
                       value={form.transactionId} 
                       onChange={e => setForm({ ...form, transactionId: e.target.value })} 
-                      placeholder="Enter your bKash/Nagad/Rocket transaction ID" 
+                      placeholder={`Enter your ${payment.charAt(0).toUpperCase() + payment.slice(1)} transaction ID`}
                       className="luxury-input" 
                     />
-                    <p className="text-xs text-muted-foreground mt-2">Enter the transaction ID after completing payment</p>
                   </div>
                 )}
               </div>
