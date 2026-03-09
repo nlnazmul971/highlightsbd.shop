@@ -68,7 +68,7 @@ const SliderManager = ({ slides, onSave }: {
   };
 
   const addSlide = () => {
-    setItems([.mobileImage: '', ..items, { image: '', title: '', topText: '', bottomText: '' }]);
+    setItems([...items, { image: '', mobileImage: '', title: '', topText: '', bottomText: '' }]);
   };
 
   const removeSlide = (index: number) => {
