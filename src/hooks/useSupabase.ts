@@ -114,6 +114,7 @@ export const useCreateOrder = () => {
       customer_city: string;
       delivery_method: string;
       payment_method: string;
+      transaction_id?: string | null;
     }) => {
       const { data, error } = await supabase.from('orders').insert(order).select().single();
       if (error) throw error;

@@ -88,13 +88,36 @@ const Checkout = () => {
               </div>
 
               <div>
-                <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Payment</h2>
-                <label className="flex items-center gap-3 p-4 border border-foreground cursor-pointer">
-                  <div className="w-4 h-4 rounded-full border-2 border-foreground flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-foreground" />
+                <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Payment Method</h2>
+                <div className="space-y-2">
+                  {[
+                    { id: 'cod', label: 'Cash on Delivery', desc: 'Pay when you receive' },
+                    { id: 'manual', label: 'bKash / Nagad / Rocket', desc: 'Manual payment with transaction ID' }
+                  ].map(p => (
+                    <label key={p.id} className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${payment === p.id ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${payment === p.id ? 'border-foreground' : 'border-muted-foreground'}`}>
+                          {payment === p.id && <div className="w-2 h-2 rounded-full bg-foreground" />}
+                        </div>
+                        <div><p className="text-sm">{p.label}</p><p className="text-xs text-muted-foreground">{p.desc}</p></div>
+                      </div>
+                      <input type="radio" name="payment" value={p.id} checked={payment === p.id} onChange={() => setPayment(p.id)} className="hidden" />
+                    </label>
+                  ))}
+                </div>
+                {payment === 'manual' && (
+                  <div className="mt-4">
+                    <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">Transaction ID</label>
+                    <input 
+                      required={payment === 'manual'} 
+                      value={form.transactionId} 
+                      onChange={e => setForm({ ...form, transactionId: e.target.value })} 
+                      placeholder="Enter your bKash/Nagad/Rocket transaction ID" 
+                      className="luxury-input" 
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">Enter the transaction ID after completing payment</p>
                   </div>
-                  <span className="text-sm">Cash on Delivery</span>
-                </label>
+                )}
               </div>
             </div>
 
