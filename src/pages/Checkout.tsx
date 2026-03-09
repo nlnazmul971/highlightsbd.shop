@@ -115,7 +115,7 @@ const Checkout = () => {
     const base: Array<'bkash' | 'nagad'> = ['bkash', 'nagad'];
     const active = base.filter(p => getProviderSetting(p).is_active);
     const list = active.length ? active : base;
-    return outsideDhakaRequiresBkash ? ['bkash'] : list;
+    return list;
   }, [getProviderSetting, outsideDhakaRequiresBkash]);
 
   useEffect(() => {
