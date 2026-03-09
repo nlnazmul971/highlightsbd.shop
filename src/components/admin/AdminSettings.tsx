@@ -7,6 +7,7 @@ import {
   useUpdateDeliveryZone,
   useUpsertCheckoutPaymentSetting,
 } from '@/hooks/useSupabase';
+import AdminFooterSettings from './AdminFooterSettings';
 
 const AdminSettings = () => {
   const { data: zones = [], isLoading: zonesLoading } = useDeliveryZones(true);
