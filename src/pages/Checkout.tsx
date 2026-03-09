@@ -69,7 +69,7 @@ const Checkout = () => {
 
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
   const [attempted, setAttempted] = useState(false);
-  const [useSavedAddress, setUseSavedAddress] = useState(true);
+  const [useSavedAddress, setUseSavedAddress] = useState(false);
   const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
