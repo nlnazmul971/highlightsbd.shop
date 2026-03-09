@@ -64,6 +64,36 @@ const AdminUsers = () => {
     },
   });
 
+  // Delete user (move to trash)
+  const deleteUserMutation = useMutation({
+    mutationFn: async (profile: any) => {
+      const currentRole = getRoleForUser(profile.user_id);
+      // Insert into trash_users
+      const { error: trashError } = await supabase.from('trash_users' as any).insert({
+        original_user_id: profile.user_id,
+        display_name: profile.display_name,
+        phone: profile.phone,
+        city: profile.city,
+        address: profile.address,
+        role: currentRole,
+      });
+      if (trashError) throw trashError;
+
+      // Delete role if exists
+      await supabase.from('user_roles').delete().eq('user_id', profile.user_id);
+      // Delete profile
+      const { error } = await supabase.from('profiles').delete().eq('user_id', profile.user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['all-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['trash-users'] });
+      toast.success('User moved to trash');
+    },
+    onError: (e: any) => toast.error('Delete failed: ' + e.message),
+  });
+
   const adminCount = profiles.filter((p: any) => getRoleForUser(p.user_id) === 'admin').length;
   const userCount = profiles.length - adminCount;
 
