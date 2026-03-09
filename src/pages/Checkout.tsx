@@ -163,7 +163,7 @@ const Checkout = () => {
                       onChange={() => {
                         setPayment('cod');
                         setOnlineProvider(null);
-                        setForm(f => ({ ...f, transactionId: '' }));
+                        setForm(f => ({ ...f, senderNumber: '', transactionId: '' }));
                       }}
                       className="hidden"
                     />
