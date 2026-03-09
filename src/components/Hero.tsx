@@ -39,7 +39,7 @@ const Hero = () => {
           <img
             src={s.image}
             alt={`HIGHLIGHTS ${s.title} Collection`}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-contain sm:object-cover object-center"
           />
         </div>
       ))}
