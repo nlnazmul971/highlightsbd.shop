@@ -40,7 +40,11 @@ const SliderManager = ({ slides, onSave }: {
   onSave: (slides: any[]) => Promise<void>;
 }) => {
   const [items, setItems] = useState(slides);
-  const [saving, setSaving] = useState(false);
+
+  // Sync when settings load
+  useEffect(() => {
+    if (slides.length > 0 && items.length === 0) setItems(slides);
+  }, [slides]);
 
   const handleSave = async () => {
     setSaving(true);
