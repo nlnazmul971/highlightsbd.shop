@@ -1,29 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useStoreSettings } from '@/hooks/useSupabase';
-import heroSlide1 from '@/assets/hero-slide-1.jpg';
-import heroSlide2 from '@/assets/hero-slide-2.jpg';
-import heroSlide3 from '@/assets/hero-slide-3.jpg';
-
-const defaultSlides = [
-  {
-    image: heroSlide1,
-    title: 'Friends',
-    topText: 'They laughed without reason. Shared tea, shared secrets.\nAnd in every frame, their style spoke louder than words.',
-    bottomText: 'Shared smiles, shared silence, shared dreams.\nIn every glance, their spirit was timeless,\nand beautifully.',
-  },
-  {
-    image: heroSlide2,
-    title: 'Elegance',
-    topText: 'A man of substance, dressed in purpose.\nEvery thread tells a story of confidence.',
-    bottomText: 'Walk with pride, dress with intention.\nThe modern gentleman arrives.',
-  },
-  {
-    image: heroSlide3,
-    title: 'Journey',
-    topText: 'Two roads, one destination.\nStyle that moves with the seasons.',
-    bottomText: 'Winter warmth, summer soul.\nEvery step a statement.',
-  },
-];
 
 const Hero = () => {
   const { data: settings = {} } = useStoreSettings();
@@ -32,8 +8,7 @@ const Hero = () => {
 
   // Use dynamic slides from settings or fallback to defaults
   const rawSlides = settings['hero_slides'];
-  const dynamicSlides = rawSlides ? JSON.parse(rawSlides) : [];
-  const slides = dynamicSlides.length > 0 ? dynamicSlides : defaultSlides;
+  const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
@@ -48,6 +23,8 @@ const Hero = () => {
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
   }, [next]);
+
+  if (slides.length === 0) return null;
 
   const slide = slides[current];
 

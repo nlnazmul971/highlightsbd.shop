@@ -7,13 +7,6 @@ import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
 import { useProducts, useStoreSettings } from '@/hooks/useSupabase';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
-import poster1 from '@/assets/poster-1.jpg';
-import poster2 from '@/assets/poster-2.jpg';
-
-const defaultPosters = [
-  { image: poster1, link: '/?category=New+Dropped', subtitle: 'New Season', title: 'The Art of Dressing' },
-  { image: poster2, link: '/?category=Shirts', subtitle: 'Campaign 2026', title: 'Walk Together' },
-];
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,13 +29,7 @@ const Index = () => {
 
   // Dynamic posters from settings
   const rawPosters = settings['homepage_posters'];
-  const dynamicPosters = rawPosters ? JSON.parse(rawPosters) : [];
-  const posters = dynamicPosters.length > 0
-    ? dynamicPosters.map((p: any, i: number) => ({
-        ...p,
-        image: p.image || defaultPosters[i]?.image || '',
-      }))
-    : defaultPosters;
+  const posters = rawPosters ? JSON.parse(rawPosters) : [];
 
   return (
     <div className="min-h-screen bg-background">

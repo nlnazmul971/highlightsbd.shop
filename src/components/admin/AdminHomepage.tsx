@@ -139,11 +139,7 @@ const PosterManager = ({ posters, onSave }: {
   posters: PosterType[];
   onSave: (posters: PosterType[]) => Promise<void>;
 }) => {
-  const defaultPosters: PosterType[] = [
-    { image: '', link: '/?category=New+Dropped', subtitle: 'New Season', title: 'The Art of Dressing' },
-    { image: '', link: '/?category=Shirts', subtitle: 'Campaign 2026', title: 'Walk Together' },
-  ];
-  const [items, setItems] = useState<PosterType[]>(posters.length > 0 ? posters : defaultPosters);
+  const [items, setItems] = useState<PosterType[]>(posters);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
