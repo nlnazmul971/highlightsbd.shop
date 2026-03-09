@@ -1,4 +1,5 @@
 import { useState } from 'react';
+type DiscountType = 'fixed' | 'percentage';
 import { useCoupons, useCreateCoupon, useUpdateCoupon, useDeleteCoupon, CouponRow } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
