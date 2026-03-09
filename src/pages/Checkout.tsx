@@ -251,6 +251,20 @@ const Checkout = () => {
                               </button>
                             </div>
 
+                            {/* Sender Number Input */}
+                            <div>
+                              <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">
+                                Sender Number <span className="text-destructive">*</span>
+                              </label>
+                              <input
+                                required
+                                value={form.senderNumber}
+                                onChange={e => setForm({ ...form, senderNumber: e.target.value })}
+                                placeholder={`Enter your ${onlineProvider === 'bkash' ? 'bKash' : 'Nagad'} number`}
+                                className="luxury-input"
+                              />
+                            </div>
+
                             {/* Transaction ID Input */}
                             <div>
                               <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">
