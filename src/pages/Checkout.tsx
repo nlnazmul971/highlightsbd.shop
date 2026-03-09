@@ -222,6 +222,7 @@ const Checkout = () => {
         payment_method: payment === 'online' ? onlineProvider! : 'cod',
         payment_sender_number: form.senderNumber || null,
         transaction_id: form.transactionId || null,
+        customer_note: form.customerNote || null,
       });
       // Save address to profile if logged in
       if (user) {
