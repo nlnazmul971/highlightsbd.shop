@@ -77,7 +77,7 @@ const Header = () => {
                       </span>
                     )}
                   </Link>
-                  <Link to="/admin" className="p-1.5 hover:opacity-60 transition-opacity">
+                  <Link to="/profile" className="p-1.5 hover:opacity-60 transition-opacity">
                     <User size={15} className="sm:w-[18px] sm:h-[18px]" />
                   </Link>
                   <button onClick={() => setIsCartOpen(true)} className="p-1.5 hover:opacity-60 transition-opacity relative">

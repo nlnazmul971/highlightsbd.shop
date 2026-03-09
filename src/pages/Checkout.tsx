@@ -5,7 +5,8 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones } from '@/hooks/useSupabase';
+import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones, useProfile, useUpdateProfile } from '@/hooks/useSupabase';
+import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
@@ -59,16 +60,33 @@ const Checkout = () => {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const createOrder = useCreateOrder();
+  const updateProfile = useUpdateProfile();
   const navigate = useNavigate();
 
   const { data: zones = [] } = useDeliveryZones(false);
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
+  const { data: profile } = useProfile(user?.id);
 
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
+  const [useSavedAddress, setUseSavedAddress] = useState(true);
   const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
   const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
+
+  // Auto-fill from saved profile
+  useEffect(() => {
+    if (profile && useSavedAddress) {
+      setForm(f => ({
+        ...f,
+        name: profile.display_name || f.name,
+        phone: profile.phone || f.phone,
+        address: profile.address || f.address,
+        city: profile.city || f.city,
+      }));
+    }
+  }, [profile, useSavedAddress]);
+
 
   const deliveryOptions = useMemo(() => {
     const active = (zones || []).filter(z => z.is_active);
@@ -205,6 +223,18 @@ const Checkout = () => {
         payment_sender_number: form.senderNumber || null,
         transaction_id: form.transactionId || null,
       });
+      // Save address to profile if logged in
+      if (user) {
+        try {
+          await updateProfile.mutateAsync({
+            userId: user.id,
+            display_name: form.name,
+            phone: form.phone,
+            address: form.address,
+            city: form.city,
+          });
+        } catch { /* silently fail address save */ }
+      }
       clearCart();
       toast.success('Order placed successfully!');
       navigate('/');
@@ -225,6 +255,32 @@ const Checkout = () => {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div className="space-y-6">
               <h2 className="luxury-body text-[11px] text-foreground mb-4">Delivery Information</h2>
+              
+              {/* Saved address toggle */}
+              {user && profile?.address && (
+                <div className="flex items-center gap-3 p-3 bg-secondary/50 border border-border">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs">
+                    <input
+                      type="checkbox"
+                      checked={useSavedAddress}
+                      onChange={e => {
+                        setUseSavedAddress(e.target.checked);
+                        if (!e.target.checked) {
+                          setForm(f => ({ ...f, name: '', phone: '', address: '', city: '' }));
+                        }
+                      }}
+                      className="accent-foreground"
+                    />
+                    Use saved address
+                  </label>
+                  {useSavedAddress && (
+                    <span className="text-[10px] text-muted-foreground ml-auto">
+                      {profile.address}, {profile.city}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name" className="luxury-input" />
               <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number" className="luxury-input" />
               <input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Address" className="luxury-input" />
