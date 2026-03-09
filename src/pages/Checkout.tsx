@@ -60,15 +60,32 @@ const Checkout = () => {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const createOrder = useCreateOrder();
+  const updateProfile = useUpdateProfile();
   const navigate = useNavigate();
 
   const { data: zones = [] } = useDeliveryZones(false);
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
+  const { data: profile } = useProfile(user?.id);
 
   const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
+  const [useSavedAddress, setUseSavedAddress] = useState(true);
   const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
+  const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
+
+  // Auto-fill from saved profile
+  useEffect(() => {
+    if (profile && useSavedAddress) {
+      setForm(f => ({
+        ...f,
+        name: profile.display_name || f.name,
+        phone: profile.phone || f.phone,
+        address: profile.address || f.address,
+        city: profile.city || f.city,
+      }));
+    }
+  }, [profile, useSavedAddress]);
   const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
 
   const deliveryOptions = useMemo(() => {
