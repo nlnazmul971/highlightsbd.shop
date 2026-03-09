@@ -35,7 +35,8 @@ const Hero = () => {
           key={i}
           src={s.image}
           alt={`HIGHLIGHTS ${s.title} Collection`}
-          className={`w-full h-auto block transition-opacity duration-700 ${i === current ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+          className={`w-full min-h-[60vh] sm:min-h-0 sm:h-auto object-cover sm:object-contain block transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+        />
         />
       ))}
 
