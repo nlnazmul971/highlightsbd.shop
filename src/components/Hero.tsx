@@ -24,6 +24,8 @@ const Hero = () => {
     return () => clearInterval(timer);
   }, [next]);
 
+  if (slides.length === 0) return null;
+
   const slide = slides[current];
 
   return (
