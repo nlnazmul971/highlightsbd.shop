@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useStoreSettings, useUpdateStoreSetting } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { Upload, X, Image as ImageIcon, Save, Loader2 } from 'lucide-react';
@@ -40,6 +40,11 @@ const SliderManager = ({ slides, onSave }: {
   onSave: (slides: any[]) => Promise<void>;
 }) => {
   const [items, setItems] = useState(slides);
+
+  // Sync when settings load
+  useEffect(() => {
+    if (slides.length > 0 && items.length === 0) setItems(slides);
+  }, [slides]);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -116,6 +121,12 @@ const PosterManager = ({ posters, onSave }: {
     { image: '', link: '/?category=New+Dropped', subtitle: 'New Season', title: 'The Art of Dressing' },
     { image: '', link: '/?category=Shirts', subtitle: 'Campaign 2026', title: 'Walk Together' },
   ]);
+
+  // Sync when settings load
+  useEffect(() => {
+    if (posters.length > 0 && items.length === 0) setItems(posters);
+  }, [posters]);
+
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
