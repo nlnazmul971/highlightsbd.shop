@@ -173,6 +173,7 @@ export const useCreateOrder = () => {
       payment_method: string;
       payment_sender_number?: string | null;
       transaction_id?: string | null;
+      customer_note?: string | null;
     }) => {
       const { data, error } = await supabase.from('orders').insert(order).select().single();
       if (error) throw error;

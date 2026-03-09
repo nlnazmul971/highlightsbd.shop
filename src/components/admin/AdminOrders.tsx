@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -52,6 +52,55 @@ const AdminOrders = () => {
   const [selectedCourier, setSelectedCourier] = useState<string>('steadfast');
 
   const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
+
+  const downloadInvoice = (order: any) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    const invoiceHtml = `
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoice #${order.id.slice(0, 8)}</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 30px; color: #1a1a1a; }
+  h1 { font-size: 24px; font-weight: 300; letter-spacing: 3px; margin-bottom: 30px; text-transform: uppercase; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 13px; color: #666; }
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-bottom: 8px; }
+  .info p { margin: 3px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; text-align: left; padding: 8px 0; border-bottom: 1px solid #eee; }
+  td { padding: 10px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+  td:last-child, th:last-child { text-align: right; }
+  .totals { margin-top: 20px; text-align: right; font-size: 13px; }
+  .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 4px 0; }
+  .totals .grand { font-size: 16px; font-weight: 600; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 8px; }
+  .note { margin-top: 20px; padding: 12px; background: #f9f9f9; font-size: 12px; color: #666; font-style: italic; }
+  @media print { body { padding: 20px; } }
+</style></head><body>
+<h1>Invoice</h1>
+<div class="meta"><span>Order #${order.id.slice(0, 8)}</span><span>${new Date(order.created_at).toLocaleDateString()}</span></div>
+<div class="section info">
+  <div class="section-title">Customer</div>
+  <p><strong>${order.customer_name}</strong></p>
+  <p>${order.customer_phone}</p>
+  <p>${order.customer_address}, ${order.customer_city}</p>
+</div>
+<div class="section info">
+  <div class="section-title">Payment & Delivery</div>
+  <p>Payment: ${order.payment_method}${order.payment_sender_number ? ' | Sender: ' + order.payment_sender_number : ''}${order.transaction_id ? ' | TxID: ' + order.transaction_id : ''}</p>
+  <p>Delivery: ${order.delivery_method}</p>
+</div>
+${order.customer_note ? '<div class="note">Note: ' + order.customer_note + '</div>' : ''}
+<table><thead><tr><th>Item</th><th>Size</th><th>Qty</th><th>Price</th></tr></thead><tbody>
+${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.quantity}</td><td>৳${((i.price || 0) * (i.quantity || 1)).toLocaleString()}</td></tr>`).join('')}
+</tbody></table>
+<div class="totals">
+  <div class="row grand"><span>Total</span><span>৳${order.total.toLocaleString()}</span></div>
+</div>
+</body></html>`;
+    const blob = new Blob([invoiceHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) { w.onload = () => { w.print(); URL.revokeObjectURL(url); }; }
+  };
 
   // Send order to Steadfast courier
   const sendToSteadfast = async (order: any) => {
@@ -467,6 +516,9 @@ const AdminOrders = () => {
                   {selectedOrder.payment_method !== 'cod' && selectedOrder.transaction_id && (
                     <p><span className="text-muted-foreground">Transaction ID:</span> <span className="font-mono font-medium">{selectedOrder.transaction_id}</span></p>
                   )}
+                  {selectedOrder.customer_note && (
+                    <p><span className="text-muted-foreground">Customer Note:</span> <span className="italic">{selectedOrder.customer_note}</span></p>
+                  )}
                 </>
               )}
               <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
@@ -581,6 +633,13 @@ const AdminOrders = () => {
                 <span>Total</span>
                 <span>৳{selectedOrder.total.toLocaleString()}</span>
               </div>
+              <button
+                onClick={() => downloadInvoice(selectedOrder)}
+                className="mt-4 w-full luxury-button-outline text-[10px] py-2 inline-flex items-center justify-center gap-1.5"
+              >
+                <Download size={12} />
+                Download Invoice
+              </button>
             </div>
           </div>
         </div>

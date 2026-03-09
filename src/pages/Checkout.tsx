@@ -67,7 +67,7 @@ const Checkout = () => {
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
   const { data: profile } = useProfile(user?.id);
 
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
   const [useSavedAddress, setUseSavedAddress] = useState(true);
   const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
@@ -222,6 +222,7 @@ const Checkout = () => {
         payment_method: payment === 'online' ? onlineProvider! : 'cod',
         payment_sender_number: form.senderNumber || null,
         transaction_id: form.transactionId || null,
+        customer_note: form.customerNote || null,
       });
       // Save address to profile if logged in
       if (user) {
@@ -283,8 +284,9 @@ const Checkout = () => {
 
               <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name" className="luxury-input" />
               <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number" className="luxury-input" />
-              <input required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Address" className="luxury-input" />
+              <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area)" className="luxury-input min-h-[100px] resize-y" rows={4} />
               <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City" className="luxury-input" />
+              <textarea value={form.customerNote} onChange={e => setForm({ ...form, customerNote: e.target.value })} placeholder="Order Note (optional)" className="luxury-input min-h-[60px] resize-y" rows={2} />
 
               {/* Delivery Zone */}
               <div>
