@@ -61,7 +61,15 @@ const AdminDashboard = () => {
     return Object.entries(statuses).map(([name, value]) => ({ name, value }));
   }, [filteredOrders]);
 
-  const PIE_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent-foreground))', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
+  const PIE_COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+  const STATUS_COLORS: Record<string, string> = {
+    Pending: '#f59e0b',
+    Processing: '#3b82f6',
+    Shipped: '#8b5cf6',
+    Delivered: '#10b981',
+    Cancelled: '#ef4444',
+    Returned: '#f43f5e',
+  };
 
   const stats = [
     { label: 'Total Orders', value: filteredOrders.length, icon: ShoppingBag, color: 'bg-accent text-accent-foreground' },
