@@ -5,9 +5,16 @@ const Hero = () => {
   const { data: settings = {} } = useStoreSettings();
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
 
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
@@ -29,27 +36,21 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
-      {slides.map((s: any, i: number) => (
-        <div
-          key={i}
-          className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
-        >
-          {/* Mobile image */}
-          {s.mobileImage && (
+      {slides.map((s: any, i: number) => {
+        const src = isMobile && s.mobileImage ? s.mobileImage : s.image;
+        return (
+          <div
+            key={`${i}-${isMobile}`}
+            className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+          >
             <img
-              src={s.mobileImage}
+              src={src}
               alt={`HIGHLIGHTS ${s.title} Collection`}
-              className="w-full h-auto block sm:hidden"
+              className="w-full h-auto block"
             />
-          )}
-          {/* PC image — hide on mobile if mobile image exists */}
-          <img
-            src={s.image}
-            alt={`HIGHLIGHTS ${s.title} Collection`}
-            className={`w-full h-auto block ${s.mobileImage ? 'hidden sm:block' : ''}`}
-          />
-        </div>
-      ))}
+          </div>
+        );
+      })}
 
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20 pointer-events-none" />
 
