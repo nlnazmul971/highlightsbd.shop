@@ -14,9 +14,9 @@ const Checkout = () => {
   const { user } = useAuth();
   const createOrder = useCreateOrder();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', transactionId: '' });
   const [delivery, setDelivery] = useState('standard');
-  const [payment] = useState('cod');
+  const [payment, setPayment] = useState('cod');
 
   const deliveryFee = delivery === 'express' ? 150 : 80;
 
