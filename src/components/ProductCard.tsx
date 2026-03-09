@@ -107,6 +107,20 @@ const ProductCard = ({ product }: { product: Product }) => {
             <span className="text-sm font-medium">৳{product.price.toLocaleString()}</span>
             {product.original_price && <span className="text-xs text-muted-foreground line-through">৳{product.original_price.toLocaleString()}</span>}
           </div>
+          {reviewStats[product.id] && (
+            <div className="flex items-center gap-1 mt-1.5">
+              <div className="flex items-center">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <Star
+                    key={star}
+                    size={12}
+                    className={star <= Math.round(reviewStats[product.id].avg) ? 'text-amber-500 fill-amber-500' : 'text-muted-foreground/30'}
+                  />
+                ))}
+              </div>
+              <span className="text-[11px] text-muted-foreground">({reviewStats[product.id].avg.toFixed(1)})</span>
+            </div>
+          )}
         </div>
       </Link>
     </div>
