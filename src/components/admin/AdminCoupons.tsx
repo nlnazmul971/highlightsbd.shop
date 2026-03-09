@@ -4,7 +4,7 @@ import { useCoupons, useCreateCoupon, useUpdateCoupon, useDeleteCoupon, CouponRo
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Tag } from 'lucide-react';
 
-const empty = { name: '', code: '', discount_type: 'fixed' as const, discount_value: 0, min_order_amount: 0, max_uses: null as number | null, is_active: true };
+const empty: { name: string; code: string; discount_type: DiscountType; discount_value: number; min_order_amount: number; max_uses: number | null; is_active: boolean } = { name: '', code: '', discount_type: 'fixed', discount_value: 0, min_order_amount: 0, max_uses: null, is_active: true };
 
 const AdminCoupons = () => {
   const { data: coupons = [], isLoading } = useCoupons();
