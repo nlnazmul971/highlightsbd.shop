@@ -81,7 +81,7 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
       </div>
 
       {/* Mobile thumbnail strip */}
-      <div className="flex sm:hidden items-center justify-center gap-1.5 overflow-x-auto py-2">
+      <div className="flex sm:hidden items-center justify-start gap-1.5 overflow-x-auto py-2">
         {images.map((img, i) => (
           <button
             key={i}
