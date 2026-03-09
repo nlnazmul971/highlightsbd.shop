@@ -70,6 +70,10 @@ const Checkout = () => {
       toast.error('Please select a payment provider');
       return;
     }
+    if (payment === 'online' && !form.senderNumber) {
+      toast.error('Please enter sender number');
+      return;
+    }
     if (payment === 'online' && !form.transactionId) {
       toast.error('Please enter transaction ID');
       return;
