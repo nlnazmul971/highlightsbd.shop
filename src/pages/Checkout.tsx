@@ -30,7 +30,7 @@ const Checkout = () => {
   const { user } = useAuth();
   const createOrder = useCreateOrder();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', transactionId: '' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
   const [delivery, setDelivery] = useState<'standard' | 'express'>('standard');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
@@ -70,6 +70,10 @@ const Checkout = () => {
       toast.error('Please select a payment provider');
       return;
     }
+    if (payment === 'online' && !form.senderNumber) {
+      toast.error('Please enter sender number');
+      return;
+    }
     if (payment === 'online' && !form.transactionId) {
       toast.error('Please enter transaction ID');
       return;
@@ -92,6 +96,7 @@ const Checkout = () => {
         customer_city: form.city,
         delivery_method: delivery,
         payment_method: payment === 'online' ? onlineProvider! : 'cod',
+        payment_sender_number: form.senderNumber || null,
         transaction_id: form.transactionId || null,
       });
       clearCart();
@@ -158,7 +163,7 @@ const Checkout = () => {
                       onChange={() => {
                         setPayment('cod');
                         setOnlineProvider(null);
-                        setForm(f => ({ ...f, transactionId: '' }));
+                        setForm(f => ({ ...f, senderNumber: '', transactionId: '' }));
                       }}
                       className="hidden"
                     />
@@ -244,6 +249,20 @@ const Checkout = () => {
                                 {copied === 'amount' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                                 <span className="text-sm">Copy</span>
                               </button>
+                            </div>
+
+                            {/* Sender Number Input */}
+                            <div>
+                              <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-2">
+                                Sender Number <span className="text-destructive">*</span>
+                              </label>
+                              <input
+                                required
+                                value={form.senderNumber}
+                                onChange={e => setForm({ ...form, senderNumber: e.target.value })}
+                                placeholder={`Enter your ${onlineProvider === 'bkash' ? 'bKash' : 'Nagad'} number`}
+                                className="luxury-input"
+                              />
                             </div>
 
                             {/* Transaction ID Input */}
