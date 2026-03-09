@@ -67,7 +67,8 @@ const Checkout = () => {
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
   const { data: profile } = useProfile(user?.id);
 
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
+  const [attempted, setAttempted] = useState(false);
   const [useSavedAddress, setUseSavedAddress] = useState(true);
   const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
@@ -90,7 +91,10 @@ const Checkout = () => {
         city: profile.city || f.city,
       }));
     }
-  }, [profile, useSavedAddress]);
+    if (user?.email) {
+      setForm(f => ({ ...f, email: f.email || user.email || '' }));
+    }
+  }, [profile, useSavedAddress, user]);
 
 
   // GTM: begin_checkout event
@@ -231,12 +235,13 @@ const Checkout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setAttempted(true);
     if (items.length === 0) {
       toast.error('Cart is empty');
       return;
     }
-    if (!form.name || !form.phone || !form.address || !form.city) {
-      toast.error('Please fill all fields');
+    if (!form.name || !form.email || !form.phone || !form.address || !form.city) {
+      toast.error('Please fill all required fields');
       return;
     }
     if (payment === 'online' && !onlineProvider) {
@@ -305,6 +310,9 @@ const Checkout = () => {
           transaction_id: new Date().getTime().toString(),
           currency: 'BDT',
           value: grandTotal,
+          shipping: deliveryFee,
+          coupon: appliedCoupon?.code || '',
+          discount: couponDiscount,
           items: items.map(i => ({
             item_id: i.product.id,
             item_name: i.product.name,
@@ -328,10 +336,19 @@ const Checkout = () => {
             billing: {
               first_name: form.name.split(' ')[0] || '',
               last_name: form.name.split(' ').slice(1).join(' ') || '',
+              email: form.email,
               phone: form.phone,
+              address: form.address,
               city: form.city,
               country: 'BD',
             },
+          },
+          delivery: {
+            method: delivery,
+            fee: deliveryFee,
+          },
+          payment: {
+            method: payment === 'online' ? onlineProvider : 'cod',
           },
         },
       });
@@ -385,10 +402,11 @@ const Checkout = () => {
                 </div>
               )}
 
-              <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name" className="luxury-input" />
-              <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number" className="luxury-input" />
-              <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area)" className="luxury-input min-h-[100px] resize-y" rows={4} />
-              <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City" className="luxury-input" />
+              <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name *" className={`luxury-input ${attempted && !form.name.trim() ? 'border-destructive' : ''}`} />
+              <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email *" className={`luxury-input ${attempted && !form.email.trim() ? 'border-destructive' : ''}`} />
+              <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number *" className={`luxury-input ${attempted && !form.phone.trim() ? 'border-destructive' : ''}`} />
+              <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area) *" className={`luxury-input min-h-[100px] resize-y ${attempted && !form.address.trim() ? 'border-destructive' : ''}`} rows={4} />
+              <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City *" className={`luxury-input ${attempted && !form.city.trim() ? 'border-destructive' : ''}`} />
               <textarea value={form.customerNote} onChange={e => setForm({ ...form, customerNote: e.target.value })} placeholder="Order Note (optional)" className="luxury-input min-h-[60px] resize-y" rows={2} />
 
               {/* Delivery Zone */}
