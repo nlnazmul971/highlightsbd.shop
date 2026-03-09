@@ -395,6 +395,17 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
                         </button>
                       )}
                       <button onClick={() => openOrder(order)} className="p-1.5 hover:bg-accent transition-colors"><Eye size={14} /></button>
+                      <button
+                        onClick={() => {
+                          if (confirm('এই অর্ডারটি ট্র্যাশে পাঠাতে চান?')) {
+                            updateOrder.mutate({ id: order.id, deleted_at: new Date().toISOString() });
+                          }
+                        }}
+                        className="p-1.5 hover:bg-destructive/10 text-destructive transition-colors"
+                        title="Move to Trash"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}
