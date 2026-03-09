@@ -103,7 +103,7 @@ const ProductDetail = () => {
   const { data: product, isLoading } = useProduct(id || '');
   const { data: reviews = [] } = useProductReviews(id || '');
   const { data: relatedProducts = [] } = useRelatedProducts(product?.category || '', id || '');
-  const { addItem } = useCart();
+  const { addItem, setShowPopup } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { addView } = useRecentlyViewed();
   const [selectedSize, setSelectedSize] = useState('');
@@ -150,7 +150,11 @@ const ProductDetail = () => {
   const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
   const handleAddToCart = () => addItem(product, size, color, quantity);
-  const handleBuyNow = () => { addItem(product, size, color, quantity); window.location.href = '/checkout'; };
+  const handleBuyNow = () => {
+    addItem(product, size, color, quantity);
+    setShowPopup(false);
+    window.location.href = '/checkout';
+  };
 
   return (
     <div className="min-h-screen bg-background">
