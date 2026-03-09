@@ -1,1 +1,10 @@
 project_id = "ruxzgxkqmlblqsmctfnh"
+
+[functions.steadfast-courier]
+verify_jwt = false
+
+[functions.pathao-courier]
+verify_jwt = false
+
+[functions.meta-capi]
+verify_jwt = false
