@@ -85,6 +85,7 @@ const Admin = () => {
           </header>
           <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
             {activeTab === 'dashboard' && <AdminDashboard />}
+            {activeTab === 'homepage' && <AdminHomepage />}
             {activeTab === 'products' && <AdminProducts />}
             {activeTab === 'orders' && <AdminOrders />}
             {activeTab === 'reviews' && <AdminReviews />}
