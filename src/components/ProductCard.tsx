@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
+  const { data: reviewStats = {} } = useAllReviewStats();
   const [showSizes, setShowSizes] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const discountPercent = product.original_price
