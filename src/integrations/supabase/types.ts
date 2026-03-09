@@ -60,6 +60,7 @@ export type Database = {
           status: string
           total: number
           tracking_code: string | null
+          transaction_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -78,6 +79,7 @@ export type Database = {
           status?: string
           total: number
           tracking_code?: string | null
+          transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -96,6 +98,7 @@ export type Database = {
           status?: string
           total?: number
           tracking_code?: string | null
+          transaction_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
