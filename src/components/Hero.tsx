@@ -29,17 +29,16 @@ const Hero = () => {
   const slide = slides[current];
 
   return (
-    <section className="relative w-full h-[85vh] sm:h-screen overflow-hidden bg-muted">
+    <section className="relative w-full overflow-hidden bg-foreground">
       {slides.map((s: any, i: number) => (
         <div
           key={i}
-          className="absolute inset-0 transition-opacity duration-700 ease-in-out"
-          style={{ opacity: i === current ? 1 : 0 }}
+          className={`w-full transition-opacity duration-700 ease-in-out ${i === current ? 'block' : 'hidden'}`}
         >
           <img
             src={s.image}
             alt={`HIGHLIGHTS ${s.title} Collection`}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-auto block"
           />
         </div>
       ))}
