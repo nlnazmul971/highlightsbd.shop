@@ -7,6 +7,7 @@ import {
   useUpdateDeliveryZone,
   useUpsertCheckoutPaymentSetting,
 } from '@/hooks/useSupabase';
+import AdminFooterSettings from './AdminFooterSettings';
 
 const AdminSettings = () => {
   const { data: zones = [], isLoading: zonesLoading } = useDeliveryZones(true);
@@ -208,6 +209,9 @@ const AdminSettings = () => {
           </div>
         )}
       </div>
+
+      {/* Footer Settings */}
+      <AdminFooterSettings />
 
       <div className="border border-border p-6 space-y-3 opacity-60">
         <div className="flex items-center gap-2">

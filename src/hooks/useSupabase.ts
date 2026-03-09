@@ -266,3 +266,30 @@ export const useUpsertCheckoutPaymentSetting = () => {
   });
 };
 
+// Store settings (key-value)
+export const useStoreSettings = () => {
+  return useQuery({
+    queryKey: ['store-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('store_settings').select('*');
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const row of data || []) map[(row as any).key] = (row as any).value;
+      return map;
+    },
+  });
+};
+
+export const useUpdateStoreSetting = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const { error } = await supabase
+        .from('store_settings')
+        .upsert({ key, value } as any, { onConflict: 'key' });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['store-settings'] }),
+  });
+};
+
