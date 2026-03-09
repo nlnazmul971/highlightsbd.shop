@@ -167,7 +167,6 @@ const Checkout = () => {
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'bkash' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
                       <BkashLogo />
-                      <span className="text-sm">bKash</span>
                     </button>
                     <button
                       type="button"
@@ -175,7 +174,6 @@ const Checkout = () => {
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'nagad' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
                       <NagadLogo />
-                      <span className="text-sm">Nagad</span>
                     </button>
                   </div>
 
