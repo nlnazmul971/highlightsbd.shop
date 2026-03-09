@@ -10,6 +10,7 @@ const statusIcons: Record<string, React.ReactNode> = {
   Processing: <Package size={16} />,
   Shipped: <Truck size={16} />,
   Delivered: <CheckCircle size={16} />,
+  Cancelled: <XCircle size={16} />,
 };
 
 const OrderTracker = ({ userId }: { userId: string }) => {
