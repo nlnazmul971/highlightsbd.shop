@@ -57,6 +57,7 @@ export type Database = {
           id: string
           items: Json
           payment_method: string
+          payment_sender_number: string | null
           status: string
           total: number
           tracking_code: string | null
@@ -76,6 +77,7 @@ export type Database = {
           id?: string
           items: Json
           payment_method?: string
+          payment_sender_number?: string | null
           status?: string
           total: number
           tracking_code?: string | null
@@ -95,6 +97,7 @@ export type Database = {
           id?: string
           items?: Json
           payment_method?: string
+          payment_sender_number?: string | null
           status?: string
           total?: number
           tracking_code?: string | null
