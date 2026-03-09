@@ -9,44 +9,10 @@ import { useCreateOrder } from '@/hooks/useSupabase';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy } from 'lucide-react';
+import bkashLogo from '@/assets/bkash-logo.png';
+import nagadLogo from '@/assets/nagad-logo.png';
 
 type PaymentMethod = 'cod' | 'bkash' | 'nagad';
-
-const BkashLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 64 64" className={className} aria-hidden="true" focusable="false">
-    <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" strokeWidth="4" />
-    <path
-      d="M24 44V20h12a8 8 0 0 1 0 16H24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M24 32h13a6 6 0 0 1 0 12H24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const NagadLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 64 64" className={className} aria-hidden="true" focusable="false">
-    <rect x="6" y="6" width="52" height="52" rx="10" fill="none" stroke="currentColor" strokeWidth="4" />
-    <path
-      d="M20 44V20l24 24V20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
@@ -193,7 +159,7 @@ const Checkout = () => {
                       onClick={() => setPayment('bkash')}
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'bkash' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
-                      <BkashLogo className="h-6 w-6 text-foreground" />
+                      <img src={bkashLogo} alt="bKash" className="h-6 object-contain" />
                       <span className="text-sm">bKash</span>
                     </button>
                     <button
@@ -201,7 +167,7 @@ const Checkout = () => {
                       onClick={() => setPayment('nagad')}
                       className={`flex items-center justify-center gap-2 p-3 border transition-colors ${payment === 'nagad' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}
                     >
-                      <NagadLogo className="h-6 w-6 text-foreground" />
+                      <img src={nagadLogo} alt="Nagad" className="h-6 object-contain" />
                       <span className="text-sm">Nagad</span>
                     </button>
                   </div>
