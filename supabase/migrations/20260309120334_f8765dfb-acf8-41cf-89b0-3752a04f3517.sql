@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Users can cancel own pending orders" ON public.orders;

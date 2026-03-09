@@ -1,8 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useState } from 'react';
 
 const statusSteps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
 const statusIcons: Record<string, React.ReactNode> = {
@@ -14,9 +12,6 @@ const statusIcons: Record<string, React.ReactNode> = {
 };
 
 const OrderTracker = ({ userId }: { userId: string }) => {
-  const queryClient = useQueryClient();
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
-
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', userId],
     queryFn: async () => {
@@ -29,27 +24,6 @@ const OrderTracker = ({ userId }: { userId: string }) => {
       return data;
     },
     enabled: !!userId,
-  });
-
-  const cancelOrder = useMutation({
-    mutationFn: async (orderId: string) => {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: 'Cancelled' })
-        .eq('id', orderId)
-        .eq('user_id', userId)
-        .eq('status', 'Pending');
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success('Order cancelled successfully');
-      queryClient.invalidateQueries({ queryKey: ['my-orders', userId] });
-      setCancellingId(null);
-    },
-    onError: () => {
-      toast.error('Failed to cancel order');
-      setCancellingId(null);
-    },
   });
 
   if (isLoading) return <p className="text-center text-sm text-muted-foreground">Loading orders...</p>;
@@ -111,35 +85,6 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 Tracking: <span className="font-medium text-foreground">{order.tracking_code}</span>
                 {order.courier_provider && ` (${order.courier_provider})`}
               </p>
-            )}
-
-            {/* Cancel button - only for Pending orders */}
-            {order.status === 'Pending' && (
-              cancellingId === order.id ? (
-                <div className="flex items-center gap-2 pt-1">
-                  <p className="text-xs text-muted-foreground">Cancel this order?</p>
-                  <button
-                    onClick={() => cancelOrder.mutate(order.id)}
-                    disabled={cancelOrder.isPending}
-                    className="text-xs text-destructive font-medium hover:underline"
-                  >
-                    {cancelOrder.isPending ? 'Cancelling...' : 'Yes, Cancel'}
-                  </button>
-                  <button
-                    onClick={() => setCancellingId(null)}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    No
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setCancellingId(order.id)}
-                  className="text-xs text-destructive hover:underline flex items-center gap-1 pt-1"
-                >
-                  <XCircle size={12} /> Cancel Order
-                </button>
-              )
             )}
           </div>
         );
