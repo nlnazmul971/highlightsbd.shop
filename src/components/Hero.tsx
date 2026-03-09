@@ -9,8 +9,7 @@ const Hero = () => {
   const rawSlides = settings['hero_slides'];
   const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
-  // Check if any slide has a mobile image
-  const hasMobileImages = slides.some((s: any) => s.mobileImage);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
@@ -20,6 +19,18 @@ const Hero = () => {
   }, [isTransitioning]);
 
   const next = useCallback(() => goTo((current + 1) % slides.length), [current, goTo, slides.length]);
+
+  useEffect(() => {
+    const detectMobile = () => {
+      const byWidth = window.matchMedia('(max-width: 767px)').matches;
+      const byUA = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+      setIsMobileDevice(byWidth || byUA);
+    };
+
+    detectMobile();
+    window.addEventListener('resize', detectMobile);
+    return () => window.removeEventListener('resize', detectMobile);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(next, 5000);
@@ -32,39 +43,22 @@ const Hero = () => {
 
   return (
     <section className="relative w-full overflow-hidden">
-      {/* CSS media query to toggle mobile/desktop images */}
-      {hasMobileImages && (
-        <style dangerouslySetInnerHTML={{ __html: `
-          @media (max-width: 639px) {
-            .hero-img-pc { display: none !important; }
-            .hero-img-mobile { display: block !important; }
-          }
-          @media (min-width: 640px) {
-            .hero-img-pc { display: block !important; }
-            .hero-img-mobile { display: none !important; }
-          }
-        `}} />
-      )}
+      {slides.map((s: any, i: number) => {
+        const imageSrc = isMobileDevice && s.mobileImage ? s.mobileImage : s.image;
 
-      {slides.map((s: any, i: number) => (
-        <div
-          key={i}
-          className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
-        >
-          {s.mobileImage && (
+        return (
+          <div
+            key={`${i}-${isMobileDevice ? 'mobile' : 'desktop'}`}
+            className={`w-full transition-opacity duration-700 ${i === current ? 'opacity-100 relative' : 'opacity-0 absolute inset-0'}`}
+          >
             <img
-              src={s.mobileImage}
+              src={imageSrc}
               alt={`HIGHLIGHTS ${s.title} Collection`}
-              className="hero-img-mobile w-full h-auto"
+              className="w-full h-[58vh] sm:h-auto object-cover block"
             />
-          )}
-          <img
-            src={s.image}
-            alt={`HIGHLIGHTS ${s.title} Collection`}
-            className={`w-full h-auto ${s.mobileImage ? 'hero-img-pc' : 'block'}`}
-          />
-        </div>
-      ))}
+          </div>
+        );
+      })}
 
       <div className="absolute inset-0 bg-gradient-to-b from-foreground/10 via-transparent to-foreground/20 pointer-events-none" />
 
