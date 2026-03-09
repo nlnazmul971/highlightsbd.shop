@@ -14,6 +14,7 @@ import {
 
 const menuItems = [
   { title: 'Dashboard', key: 'dashboard', icon: LayoutDashboard },
+  { title: 'Homepage', key: 'homepage', icon: Home },
   { title: 'Products', key: 'products', icon: Package },
   { title: 'Orders', key: 'orders', icon: ShoppingBag },
   { title: 'Reviews', key: 'reviews', icon: MessageSquare },
