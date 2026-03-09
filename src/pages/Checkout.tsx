@@ -25,7 +25,7 @@ const FALLBACK_DELIVERY_OPTIONS: { id: DeliveryZone; label: string; subtitle: st
   {
     id: 'Outside Dhaka',
     label: 'Outside Dhaka',
-    subtitle: '150TK Advance Payment Required via Bkash',
+    subtitle: 'All districts outside Dhaka',
     price: 150,
   },
 ];
