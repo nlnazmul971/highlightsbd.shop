@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, UserCheck, Shield, TrendingUp } from 'lucide-react';
+import { Users, UserCheck, Shield, TrendingUp, Trash2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -62,6 +62,36 @@ const AdminUsers = () => {
     onError: (err: any) => {
       toast.error('Failed to update role: ' + err.message);
     },
+  });
+
+  // Delete user (move to trash)
+  const deleteUserMutation = useMutation({
+    mutationFn: async (profile: any) => {
+      const currentRole = getRoleForUser(profile.user_id);
+      // Insert into trash_users
+      const { error: trashError } = await supabase.from('trash_users' as any).insert({
+        original_user_id: profile.user_id,
+        display_name: profile.display_name,
+        phone: profile.phone,
+        city: profile.city,
+        address: profile.address,
+        role: currentRole,
+      });
+      if (trashError) throw trashError;
+
+      // Delete role if exists
+      await supabase.from('user_roles').delete().eq('user_id', profile.user_id);
+      // Delete profile
+      const { error } = await supabase.from('profiles').delete().eq('user_id', profile.user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['all-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['trash-users'] });
+      toast.success('User moved to trash');
+    },
+    onError: (e: any) => toast.error('Delete failed: ' + e.message),
   });
 
   const adminCount = profiles.filter((p: any) => getRoleForUser(p.user_id) === 'admin').length;
@@ -184,6 +214,7 @@ const AdminUsers = () => {
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">City</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Role</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden lg:table-cell">Joined</th>
+                  <th className="text-right p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium w-12"></th>
                 </tr>
               </thead>
               <tbody>
@@ -213,6 +244,19 @@ const AdminUsers = () => {
                       </td>
                       <td className="p-3 text-xs text-muted-foreground hidden lg:table-cell">
                         {new Date(p.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      </td>
+                      <td className="p-3 text-right">
+                        <button
+                          onClick={() => {
+                            if (confirm(`"${p.display_name || 'this user'}" কে ট্র্যাশে পাঠাতে চান?`)) {
+                              deleteUserMutation.mutate(p);
+                            }
+                          }}
+                          className="p-1.5 hover:bg-destructive/10 text-destructive transition-colors"
+                          title="Move to Trash"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </td>
                     </tr>
                   );

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -395,6 +395,17 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
                         </button>
                       )}
                       <button onClick={() => openOrder(order)} className="p-1.5 hover:bg-accent transition-colors"><Eye size={14} /></button>
+                      <button
+                        onClick={() => {
+                          if (confirm('এই অর্ডারটি ট্র্যাশে পাঠাতে চান?')) {
+                            updateOrder.mutate({ id: order.id, deleted_at: new Date().toISOString() });
+                          }
+                        }}
+                        className="p-1.5 hover:bg-destructive/10 text-destructive transition-colors"
+                        title="Move to Trash"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </td>
                   </tr>
                 ))}
