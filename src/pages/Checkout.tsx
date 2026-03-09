@@ -25,7 +25,7 @@ const FALLBACK_DELIVERY_OPTIONS: { id: DeliveryZone; label: string; subtitle: st
   {
     id: 'Outside Dhaka',
     label: 'Outside Dhaka',
-    subtitle: '150TK Advance Payment Required via Bkash',
+    subtitle: 'All districts outside Dhaka',
     price: 150,
   },
 ];
@@ -95,7 +95,6 @@ const Checkout = () => {
   }, [delivery, deliveryOptions]);
 
   const grandTotal = total + deliveryFee;
-  const outsideDhakaRequiresBkash = delivery === 'Outside Dhaka';
 
   const paymentMap = useMemo(() => {
     const map: Record<string, { number: string; instructions: string; is_active: boolean }> = {};
@@ -116,8 +115,8 @@ const Checkout = () => {
     const base: Array<'bkash' | 'nagad'> = ['bkash', 'nagad'];
     const active = base.filter(p => getProviderSetting(p).is_active);
     const list = active.length ? active : base;
-    return outsideDhakaRequiresBkash ? ['bkash'] : list;
-  }, [getProviderSetting, outsideDhakaRequiresBkash]);
+    return list;
+  }, [getProviderSetting]);
 
   useEffect(() => {
     if (payment !== 'online') return;
@@ -150,10 +149,6 @@ const Checkout = () => {
 
   const handleDeliveryChange = (zone: DeliveryZone) => {
     setDelivery(zone);
-    if (zone === 'Outside Dhaka') {
-      setPayment('online');
-      setOnlineProvider('bkash');
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -164,10 +159,6 @@ const Checkout = () => {
     }
     if (!form.name || !form.phone || !form.address || !form.city) {
       toast.error('Please fill all fields');
-      return;
-    }
-    if (outsideDhakaRequiresBkash && (payment !== 'online' || onlineProvider !== 'bkash')) {
-      toast.error('Outside Dhaka orders require advance payment via bKash');
       return;
     }
     if (payment === 'online' && !onlineProvider) {
@@ -265,7 +256,7 @@ const Checkout = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">{d.label}</p>
                         {d.subtitle ? (
-                          <p className={`text-xs mt-0.5 ${d.id === 'Outside Dhaka' ? 'text-destructive' : 'text-muted-foreground'}`}>{d.subtitle}</p>
+                          <p className="text-xs mt-0.5 text-muted-foreground">{d.subtitle}</p>
                         ) : null}
                       </div>
                       <span className="text-sm flex-shrink-0">৳{d.price}</span>
@@ -279,8 +270,8 @@ const Checkout = () => {
               <div>
                 <h2 className="luxury-body text-[11px] text-foreground mb-3 mt-8">Payment Method</h2>
                 <div className="space-y-3">
-                  {/* Cash on Delivery — hidden for outside Dhaka */}
-                  {!outsideDhakaRequiresBkash && (
+                  {/* Cash on Delivery */}
+                  {(
                     <label className={`flex items-center justify-between p-4 border cursor-pointer transition-colors ${payment === 'cod' ? 'border-foreground' : 'border-border hover:border-muted-foreground'}`}>
                       <div className="flex items-center gap-3">
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${payment === 'cod' ? 'border-foreground' : 'border-muted-foreground'}`}>
