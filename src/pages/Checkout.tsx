@@ -67,7 +67,7 @@ const Checkout = () => {
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
   const { data: profile } = useProfile(user?.id);
 
-  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '' });
+  const [form, setForm] = useState({ name: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
   const [useSavedAddress, setUseSavedAddress] = useState(true);
   const [delivery, setDelivery] = useState<DeliveryZone>('Inside Dhaka');
   const [payment, setPayment] = useState<PaymentMethod>('cod');
