@@ -214,6 +214,7 @@ const AdminUsers = () => {
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">City</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Role</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden lg:table-cell">Joined</th>
+                  <th className="text-right p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium w-12"></th>
                 </tr>
               </thead>
               <tbody>
