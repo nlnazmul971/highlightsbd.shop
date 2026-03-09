@@ -86,7 +86,7 @@ const Checkout = () => {
       }));
     }
   }, [profile, useSavedAddress]);
-  const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
+
 
   const deliveryOptions = useMemo(() => {
     const active = (zones || []).filter(z => z.is_active);
