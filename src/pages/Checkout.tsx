@@ -112,11 +112,11 @@ const Checkout = () => {
     [paymentMap]
   );
 
-  const selectableProviders = useMemo(() => {
+  const selectableProviders = useMemo((): Array<'bkash' | 'nagad'> => {
     const base: Array<'bkash' | 'nagad'> = ['bkash', 'nagad'];
     const active = base.filter(p => getProviderSetting(p).is_active);
     const list = active.length ? active : base;
-    return outsideDhakaRequiresBkash ? (['bkash'] as const) : list;
+    return outsideDhakaRequiresBkash ? ['bkash'] : list;
   }, [getProviderSetting, outsideDhakaRequiresBkash]);
 
   useEffect(() => {
