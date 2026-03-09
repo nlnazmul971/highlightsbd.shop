@@ -576,16 +576,47 @@ const Checkout = () => {
                     </div>
                   ))}
                 </div>
+                {/* Coupon Section */}
+                <div className="mb-4">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 text-sm">
+                      <div>
+                        <span className="font-medium text-green-800">{appliedCoupon.code}</span>
+                        {appliedCoupon.name && <span className="text-green-600 ml-1">({appliedCoupon.name})</span>}
+                        <span className="text-green-700 ml-2">-৳{couponDiscount.toLocaleString()}</span>
+                      </div>
+                      <button type="button" onClick={handleRemoveCoupon} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Coupon Code"
+                        className="luxury-input flex-1 uppercase"
+                      />
+                      <button type="button" onClick={handleApplyCoupon} disabled={validateCoupon.isPending} className="luxury-button-outline text-xs px-4 whitespace-nowrap">
+                        {validateCoupon.isPending ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="luxury-divider mb-4" />
                 <div className="flex justify-between text-sm mb-2">
                   <span>Subtotal</span>
                   <span>৳{total.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-4">
+                <div className="flex justify-between text-sm mb-2">
                   <span>Delivery</span>
                   <span>৳{deliveryFee}</span>
                 </div>
-                <div className="luxury-divider mb-4" />
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm mb-2 text-green-600">
+                    <span>Coupon Discount</span>
+                    <span>-৳{couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="luxury-divider mb-4 mt-2" />
                 <div className="flex justify-between text-lg font-medium">
                   <span>Total</span>
                   <span>৳{grandTotal.toLocaleString()}</span>
