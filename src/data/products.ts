@@ -31,25 +31,6 @@ export type Review = {
 
 export const categories = ['All', 'New Dropped', 'T-Shirt', 'Winter', 'Shirts', 'Knit Polos', 'Pant', 'Panjabi', 'Kafsu'];
 
-// Map local assets to DB image_url paths for fallback
-import tshirtBlack from '@/assets/products/tshirt-black.jpg';
-import shirtWhite from '@/assets/products/shirt-white.jpg';
-import poloNavy from '@/assets/products/polo-navy.jpg';
-import pantBeige from '@/assets/products/pant-beige.jpg';
-import jacketGrey from '@/assets/products/jacket-grey.jpg';
-import panjabiDark from '@/assets/products/panjabi-dark.jpg';
-import kafsuElegant from '@/assets/products/kafsu-elegant.jpg';
-
-export const localImageMap: Record<string, string> = {
-  '/products/tshirt-black.jpg': tshirtBlack,
-  '/products/shirt-white.jpg': shirtWhite,
-  '/products/polo-navy.jpg': poloNavy,
-  '/products/pant-beige.jpg': pantBeige,
-  '/products/jacket-grey.jpg': jacketGrey,
-  '/products/panjabi-dark.jpg': panjabiDark,
-  '/products/kafsu-elegant.jpg': kafsuElegant,
-};
-
 export const getProductImage = (imageUrl: string): string => {
-  return localImageMap[imageUrl] || imageUrl;
+  return imageUrl;
 };

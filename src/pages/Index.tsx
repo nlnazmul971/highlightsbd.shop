@@ -29,13 +29,7 @@ const Index = () => {
 
   // Dynamic posters from settings
   const rawPosters = settings['homepage_posters'];
-  const dynamicPosters = rawPosters ? JSON.parse(rawPosters) : [];
-  const posters = dynamicPosters.length > 0
-    ? dynamicPosters.map((p: any, i: number) => ({
-        ...p,
-        image: p.image || defaultPosters[i]?.image || '',
-      }))
-    : defaultPosters;
+  const posters = rawPosters ? JSON.parse(rawPosters) : [];
 
   return (
     <div className="min-h-screen bg-background">

@@ -8,8 +8,7 @@ const Hero = () => {
 
   // Use dynamic slides from settings or fallback to defaults
   const rawSlides = settings['hero_slides'];
-  const dynamicSlides = rawSlides ? JSON.parse(rawSlides) : [];
-  const slides = dynamicSlides.length > 0 ? dynamicSlides : defaultSlides;
+  const slides = rawSlides ? JSON.parse(rawSlides) : [];
 
   const goTo = useCallback((index: number) => {
     if (isTransitioning) return;
