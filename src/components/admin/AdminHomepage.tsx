@@ -28,7 +28,7 @@ const AdminHomepage = () => {
         <Info size={16} className="text-muted-foreground shrink-0 mt-0.5" />
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>Image Guidelines:</strong></p>
-          <p>• Hero Slider: <strong>1920×1080px</strong> recommended (16:9 ratio), Max <strong>10MB</strong></p>
+          <p>• Hero Slider PC: <strong>1920×1080px</strong> (16:9), Mobile: <strong>1080×1920px</strong> (9:16), Max <strong>10MB</strong></p>
           <p>• Posters: <strong>800×1000px</strong> recommended (4:5 ratio), Max <strong>10MB</strong></p>
           <p>• Supported formats: JPG, PNG, WebP</p>
         </div>
@@ -47,7 +47,7 @@ const AdminHomepage = () => {
   );
 };
 
-type SlideType = { image: string; title: string; topText: string; bottomText: string };
+type SlideType = { image: string; mobileImage?: string; title: string; topText: string; bottomText: string };
 type PosterType = { image: string; link: string; subtitle: string; title: string };
 
 const SliderManager = ({ slides, onSave }: {
@@ -68,7 +68,7 @@ const SliderManager = ({ slides, onSave }: {
   };
 
   const addSlide = () => {
-    setItems([...items, { image: '', title: '', topText: '', bottomText: '' }]);
+    setItems([...items, { image: '', mobileImage: '', title: '', topText: '', bottomText: '' }]);
   };
 
   const removeSlide = (index: number) => {
@@ -110,9 +110,15 @@ const SliderManager = ({ slides, onSave }: {
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Image (1920×1080, max 10MB)</label>
-              <HomepageImageUpload value={slide.image} onChange={(url) => updateSlide(i, 'image', url)} folder="hero" />
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">🖥️ PC Image (1920×1080, max 10MB)</label>
+                <HomepageImageUpload value={slide.image} onChange={(url) => updateSlide(i, 'image', url)} folder="hero" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">📱 Mobile Image (1080×1920, max 10MB)</label>
+                <HomepageImageUpload value={slide.mobileImage || ''} onChange={(url) => updateSlide(i, 'mobileImage', url)} folder="hero-mobile" />
+              </div>
             </div>
             <div className="space-y-3">
               <div className="space-y-1">
