@@ -63,7 +63,10 @@ const AdminAPI = () => {
     setTrackingSaving(true);
     try {
       for (const [key, value] of Object.entries(trackingSettings)) {
-        await supabase.from('tracking_settings' as any).update({ value, updated_at: new Date().toISOString() } as any).eq('key', key);
+        await (supabase.from('tracking_settings' as any) as any).upsert(
+          { key, value, updated_at: new Date().toISOString() },
+          { onConflict: 'key' }
+        );
       }
       toast.success('Tracking settings saved!');
     } catch (err: any) {
