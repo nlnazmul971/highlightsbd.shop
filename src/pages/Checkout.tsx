@@ -335,6 +335,10 @@ const Checkout = () => {
           },
         },
       });
+      // Increment coupon usage
+      if (appliedCoupon) {
+        try { await incrementCouponUsage.mutateAsync(appliedCoupon.id); } catch {}
+      }
       clearCart();
       toast.success('Order placed successfully!');
       navigate('/');
