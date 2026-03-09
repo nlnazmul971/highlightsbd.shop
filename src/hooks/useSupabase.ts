@@ -194,3 +194,75 @@ export const useUserRole = (userId?: string) => {
     enabled: !!userId,
   });
 };
+
+export type DeliveryZoneRow = {
+  id: string;
+  name: string;
+  fee: number;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export const useDeliveryZones = (includeInactive = false) => {
+  return useQuery({
+    queryKey: ['delivery-zones', includeInactive],
+    queryFn: async () => {
+      let query = supabase.from('delivery_zones').select('*').order('created_at', { ascending: true });
+      if (!includeInactive) query = query.eq('is_active', true);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data || []) as unknown as DeliveryZoneRow[];
+    },
+  });
+};
+
+export const useUpdateDeliveryZone = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<DeliveryZoneRow> & { id: string }) => {
+      const { error } = await supabase.from('delivery_zones').update(updates as any).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['delivery-zones'] }),
+  });
+};
+
+export type CheckoutPaymentSettingRow = {
+  id: string;
+  provider: string;
+  number: string;
+  instructions: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export const useCheckoutPaymentSettings = () => {
+  return useQuery({
+    queryKey: ['checkout-payment-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('checkout_payment_settings')
+        .select('*')
+        .order('provider', { ascending: true });
+      if (error) throw error;
+      return (data || []) as unknown as CheckoutPaymentSettingRow[];
+    },
+  });
+};
+
+export const useUpsertCheckoutPaymentSetting = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (setting: Pick<CheckoutPaymentSettingRow, 'provider' | 'number' | 'instructions' | 'is_active'>) => {
+      const { error } = await supabase
+        .from('checkout_payment_settings')
+        .upsert(setting as any, { onConflict: 'provider' });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['checkout-payment-settings'] }),
+  });
+};
+
