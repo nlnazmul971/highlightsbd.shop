@@ -256,7 +256,7 @@ const Checkout = () => {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">{d.label}</p>
                         {d.subtitle ? (
-                          <p className={`text-xs mt-0.5 ${d.id === 'Outside Dhaka' ? 'text-destructive' : 'text-muted-foreground'}`}>{d.subtitle}</p>
+                          <p className="text-xs mt-0.5 text-muted-foreground">{d.subtitle}</p>
                         ) : null}
                       </div>
                       <span className="text-sm flex-shrink-0">৳{d.price}</span>
