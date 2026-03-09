@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct } from '@/hooks/useSupabase';
+import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct, useProductImages, useAddProductImage, useDeleteProductImage } from '@/hooks/useSupabase';
 import { Product, getProductImage } from '@/data/products';
-import { Edit, Trash2, Plus, Search } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from './ImageUpload';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminProducts = () => {
   const [search, setSearch] = useState('');
@@ -33,15 +34,17 @@ const AdminProducts = () => {
           try {
             if (showAddForm) {
               const { id, created_at, updated_at, ...rest } = p;
-              await createProduct.mutateAsync(rest);
+              const result = await createProduct.mutateAsync(rest);
               toast.success('Product added');
+              return result;
             } else {
               await updateProduct.mutateAsync(p);
               toast.success('Product updated');
+              return p;
             }
-            setEditingProduct(null); setShowAddForm(false);
-          } catch (err: any) { toast.error(err.message); }
-        }} onCancel={() => { setEditingProduct(null); setShowAddForm(false); }} />
+          } catch (err: any) { toast.error(err.message); return null; }
+        }} onCancel={() => { setEditingProduct(null); setShowAddForm(false); }}
+        onDone={() => { setEditingProduct(null); setShowAddForm(false); }} />
       )}
 
       <div className="border border-border overflow-hidden">
@@ -89,8 +92,78 @@ const AdminProducts = () => {
   );
 };
 
-const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; isNew: boolean; onSave: (p: Product) => void; onCancel: () => void }) => {
+const MultiImageUpload = ({ productId }: { productId: string }) => {
+  const { data: images = [] } = useProductImages(productId);
+  const addImage = useAddProductImage();
+  const deleteImage = useDeleteProductImage();
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) continue;
+        if (file.size > 5 * 1024 * 1024) { toast.error(`${file.name} is too large (max 5MB)`); continue; }
+
+        const ext = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file);
+        if (uploadError) { toast.error(uploadError.message); continue; }
+
+        const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
+        await addImage.mutateAsync({ product_id: productId, image_url: publicUrl, sort_order: images.length + i });
+      }
+      toast.success('Images uploaded');
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      <label className="text-xs text-muted-foreground tracking-wider uppercase">Additional Images</label>
+      <div className="flex flex-wrap gap-2">
+        {images.map((img: any) => (
+          <div key={img.id} className="relative inline-block">
+            <img src={img.image_url} alt="" className="w-20 h-24 object-cover border border-border" />
+            <button
+              onClick={async () => { await deleteImage.mutateAsync(img.id); toast.success('Image removed'); }}
+              className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5"
+            >
+              <X size={10} />
+            </button>
+          </div>
+        ))}
+        <label className="w-20 h-24 border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-foreground/50 transition-colors">
+          <ImageIcon size={16} className="text-muted-foreground mb-1" />
+          <span className="text-[9px] text-muted-foreground">{uploading ? 'Uploading...' : 'Add'}</span>
+          <input type="file" accept="image/*" multiple onChange={handleUpload} className="hidden" disabled={uploading} />
+        </label>
+      </div>
+    </div>
+  );
+};
+
+const ProductForm = ({ product, isNew, onSave, onCancel, onDone }: { product: Product; isNew: boolean; onSave: (p: Product) => Promise<any>; onCancel: () => void; onDone: () => void }) => {
   const [form, setForm] = useState(product);
+  const [savedProductId, setSavedProductId] = useState(isNew ? '' : product.id);
+
+  const handleSave = async () => {
+    const result = await onSave(form);
+    if (result && isNew && result.id) {
+      setSavedProductId(result.id);
+      toast.info('Now you can add additional images');
+    } else if (!isNew) {
+      onDone();
+    }
+  };
 
   return (
     <div className="border border-border p-6 space-y-4 bg-muted/10">
@@ -148,10 +221,16 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
         </div>
       </div>
       <div className="space-y-2">
-        <label className="text-xs text-muted-foreground tracking-wider uppercase">Product Image</label>
+        <label className="text-xs text-muted-foreground tracking-wider uppercase">Main Product Image</label>
         <ImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
         <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="Or paste image URL" className="luxury-input text-xs" />
       </div>
+
+      {/* Multiple images - only show after product is saved */}
+      {savedProductId && (
+        <MultiImageUpload productId={savedProductId} />
+      )}
+
       <div className="space-y-1">
         <label className="text-xs text-muted-foreground tracking-wider uppercase">Description</label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="luxury-input min-h-[80px]" />
@@ -163,8 +242,9 @@ const ProductForm = ({ product, isNew, onSave, onCancel }: { product: Product; i
         </label>
       </div>
       <div className="flex gap-3">
-        <button onClick={() => onSave(form)} className="luxury-button-primary text-[10px]">Save</button>
+        <button onClick={handleSave} className="luxury-button-primary text-[10px]">{isNew && !savedProductId ? 'Save & Add Images' : 'Save'}</button>
         <button onClick={onCancel} className="luxury-button-outline text-[10px]">Cancel</button>
+        {savedProductId && isNew && <button onClick={onDone} className="luxury-button-outline text-[10px]">Done</button>}
       </div>
     </div>
   );

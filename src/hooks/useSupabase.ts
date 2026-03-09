@@ -9,7 +9,6 @@ export const useProducts = (category?: string, search?: string) => {
     queryFn: async () => {
       let query = supabase.from('products').select('*').order('created_at', { ascending: false });
       if (category === 'New Dropped') {
-        // Show newest 10 products
         query = query.limit(10);
       } else if (category && category !== 'All') {
         query = query.eq('category', category);
@@ -31,6 +30,44 @@ export const useProduct = (id: string) => {
       return { ...data, colors: data.colors as unknown as ProductColor[] } as Product;
     },
     enabled: !!id,
+  });
+};
+
+export const useProductImages = (productId: string) => {
+  return useQuery({
+    queryKey: ['product-images', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_images')
+        .select('*')
+        .eq('product_id', productId)
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!productId,
+  });
+};
+
+export const useAddProductImage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ product_id, image_url, sort_order }: { product_id: string; image_url: string; sort_order: number }) => {
+      const { error } = await supabase.from('product_images').insert({ product_id, image_url, sort_order } as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['product-images'] }),
+  });
+};
+
+export const useDeleteProductImage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('product_images').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['product-images'] }),
   });
 };
 
@@ -292,4 +329,3 @@ export const useUpdateStoreSetting = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['store-settings'] }),
   });
 };
-

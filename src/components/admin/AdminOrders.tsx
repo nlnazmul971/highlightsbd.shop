@@ -461,6 +461,12 @@ const AdminOrders = () => {
                   <p><span className="text-muted-foreground">City:</span> {selectedOrder.customer_city}</p>
                   <p><span className="text-muted-foreground">Delivery:</span> {selectedOrder.delivery_method}</p>
                   <p><span className="text-muted-foreground">Payment:</span> {selectedOrder.payment_method}</p>
+                  {selectedOrder.payment_method !== 'cod' && selectedOrder.payment_sender_number && (
+                    <p><span className="text-muted-foreground">Sender Number:</span> <span className="font-medium">{selectedOrder.payment_sender_number}</span></p>
+                  )}
+                  {selectedOrder.payment_method !== 'cod' && selectedOrder.transaction_id && (
+                    <p><span className="text-muted-foreground">Transaction ID:</span> <span className="font-mono font-medium">{selectedOrder.transaction_id}</span></p>
+                  )}
                 </>
               )}
               <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
