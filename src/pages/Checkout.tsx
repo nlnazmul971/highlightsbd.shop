@@ -43,6 +43,7 @@ const Checkout = () => {
         customer_city: form.city,
         delivery_method: delivery,
         payment_method: payment,
+        transaction_id: form.transactionId || null,
       });
       clearCart();
       toast.success('Order placed successfully!');
