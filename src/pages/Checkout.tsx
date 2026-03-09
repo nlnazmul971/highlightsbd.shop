@@ -95,7 +95,6 @@ const Checkout = () => {
   }, [delivery, deliveryOptions]);
 
   const grandTotal = total + deliveryFee;
-  const outsideDhakaRequiresBkash = delivery === 'Outside Dhaka';
 
   const paymentMap = useMemo(() => {
     const map: Record<string, { number: string; instructions: string; is_active: boolean }> = {};
