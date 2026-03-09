@@ -115,6 +115,33 @@ const ProductDetail = () => {
   }, [product?.id, addView]);
 
   useEffect(() => {
+    if (!product) return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: 'view_item',
+      ecommerce: {
+        currency: 'BDT',
+        value: product.price,
+        detail: {
+          products: [{
+            id: product.id,
+            name: product.name,
+            category: product.category,
+            price: product.price,
+          }],
+        },
+        items: [{
+          item_id: product.id,
+          item_name: product.name,
+          category: product.category,
+          price: product.price,
+        }],
+      },
+    });
+  }, [product?.id]);
+
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
 
