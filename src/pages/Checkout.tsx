@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones, useProfile, useUpdateProfile } from '@/hooks/useSupabase';
+import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones, useProfile, useUpdateProfile, useValidateCoupon, useIncrementCouponUsage, CouponRow } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
@@ -73,6 +73,11 @@ const Checkout = () => {
   const [payment, setPayment] = useState<PaymentMethod>('cod');
   const [onlineProvider, setOnlineProvider] = useState<OnlineProvider>(null);
   const [copied, setCopied] = useState<'number' | 'amount' | null>(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponRow | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const validateCoupon = useValidateCoupon();
+  const incrementCouponUsage = useIncrementCouponUsage();
 
   // Auto-fill from saved profile
   useEffect(() => {
@@ -144,7 +149,30 @@ const Checkout = () => {
     return selected?.price ?? 0;
   }, [delivery, deliveryOptions]);
 
-  const grandTotal = total + deliveryFee;
+  const grandTotal = Math.max(0, total + deliveryFee - couponDiscount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) { toast.error('Enter a coupon code'); return; }
+    try {
+      const coupon = await validateCoupon.mutateAsync({ code: couponCode, orderTotal: total });
+      setAppliedCoupon(coupon);
+      const discount = coupon.discount_type === 'percentage'
+        ? Math.round(total * coupon.discount_value / 100)
+        : coupon.discount_value;
+      setCouponDiscount(Math.min(discount, total));
+      toast.success(`Coupon applied! ৳${Math.min(discount, total)} off`);
+    } catch (err: any) {
+      toast.error(err.message || 'Invalid coupon');
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponCode('');
+  };
 
   const paymentMap = useMemo(() => {
     const map: Record<string, { number: string; instructions: string; is_active: boolean }> = {};
@@ -307,6 +335,10 @@ const Checkout = () => {
           },
         },
       });
+      // Increment coupon usage
+      if (appliedCoupon) {
+        try { await incrementCouponUsage.mutateAsync(appliedCoupon.id); } catch {}
+      }
       clearCart();
       toast.success('Order placed successfully!');
       navigate('/');
@@ -548,16 +580,47 @@ const Checkout = () => {
                     </div>
                   ))}
                 </div>
+                {/* Coupon Section */}
+                <div className="mb-4">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 text-sm">
+                      <div>
+                        <span className="font-medium text-green-800">{appliedCoupon.code}</span>
+                        {appliedCoupon.name && <span className="text-green-600 ml-1">({appliedCoupon.name})</span>}
+                        <span className="text-green-700 ml-2">-৳{couponDiscount.toLocaleString()}</span>
+                      </div>
+                      <button type="button" onClick={handleRemoveCoupon} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="Coupon Code"
+                        className="luxury-input flex-1 uppercase"
+                      />
+                      <button type="button" onClick={handleApplyCoupon} disabled={validateCoupon.isPending} className="luxury-button-outline text-xs px-4 whitespace-nowrap">
+                        {validateCoupon.isPending ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <div className="luxury-divider mb-4" />
                 <div className="flex justify-between text-sm mb-2">
                   <span>Subtotal</span>
                   <span>৳{total.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-sm mb-4">
+                <div className="flex justify-between text-sm mb-2">
                   <span>Delivery</span>
                   <span>৳{deliveryFee}</span>
                 </div>
-                <div className="luxury-divider mb-4" />
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between text-sm mb-2 text-green-600">
+                    <span>Coupon Discount</span>
+                    <span>-৳{couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="luxury-divider mb-4 mt-2" />
                 <div className="flex justify-between text-lg font-medium">
                   <span>Total</span>
                   <span>৳{grandTotal.toLocaleString()}</span>

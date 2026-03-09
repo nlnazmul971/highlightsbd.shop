@@ -348,6 +348,96 @@ export const useUpsertCheckoutPaymentSetting = () => {
   });
 };
 
+// Coupons
+export type CouponRow = {
+  id: string;
+  name: string;
+  code: string;
+  discount_type: 'fixed' | 'percentage';
+  discount_value: number;
+  min_order_amount: number;
+  max_uses: number | null;
+  used_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export const useCoupons = () => {
+  return useQuery({
+    queryKey: ['coupons'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as CouponRow[];
+    },
+  });
+};
+
+export const useCreateCoupon = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (coupon: Pick<CouponRow, 'name' | 'code' | 'discount_type' | 'discount_value' | 'min_order_amount' | 'max_uses' | 'is_active'>) => {
+      const { error } = await supabase.from('coupons').insert(coupon as any);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
+  });
+};
+
+export const useUpdateCoupon = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<CouponRow> & { id: string }) => {
+      const { error } = await supabase.from('coupons').update(updates as any).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
+  });
+};
+
+export const useDeleteCoupon = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('coupons').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
+  });
+};
+
+export const useValidateCoupon = () => {
+  return useMutation({
+    mutationFn: async ({ code, orderTotal }: { code: string; orderTotal: number }) => {
+      const { data, error } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', code.toUpperCase().trim())
+        .eq('is_active', true)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error('Invalid coupon code');
+      const coupon = data as unknown as CouponRow;
+      if (coupon.max_uses && coupon.used_count >= coupon.max_uses) throw new Error('Coupon usage limit reached');
+      if (orderTotal < coupon.min_order_amount) throw new Error(`Minimum order ৳${coupon.min_order_amount} required`);
+      return coupon;
+    },
+  });
+};
+
+export const useIncrementCouponUsage = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data: coupon } = await supabase.from('coupons').select('used_count').eq('id', id).single();
+      if (!coupon) return;
+      await supabase.from('coupons').update({ used_count: (coupon as any).used_count + 1 } as any).eq('id', id);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
+  });
+};
+
 // Store settings (key-value)
 export const useStoreSettings = () => {
   return useQuery({
