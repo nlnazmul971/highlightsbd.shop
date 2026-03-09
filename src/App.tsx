@@ -11,6 +11,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Checkout from "./pages/Checkout";
 import Wishlist from "./pages/Wishlist";
 import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AddToCartPopup from "./components/AddToCartPopup";
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
