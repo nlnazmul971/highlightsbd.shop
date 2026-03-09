@@ -184,15 +184,9 @@ const Checkout = () => {
       toast.error('Please enter transaction ID');
       return;
     }
-    if (!user) {
-      toast.error('Please sign in to place an order');
-      navigate('/auth');
-      return;
-    }
-
     try {
       await createOrder.mutateAsync({
-        user_id: user.id,
+        user_id: user?.id || null,
         items: items.map(i => ({
           product_id: i.product.id,
           name: i.product.name,

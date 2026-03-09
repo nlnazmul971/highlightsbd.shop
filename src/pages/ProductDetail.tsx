@@ -321,16 +321,6 @@ const ReviewForm = ({ productId }: { productId: string }) => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="border border-border p-4 mb-4 text-center">
-        <p className="text-xs text-muted-foreground">
-          <Link to="/admin" className="text-foreground underline">Sign in</Link> to leave a review
-        </p>
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={handleSubmit} className="border border-border p-4 space-y-3 mb-4">
       <p className="text-xs tracking-wider uppercase text-muted-foreground font-medium">Write a Review</p>
