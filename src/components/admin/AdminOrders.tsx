@@ -196,6 +196,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       });
       setSelectedOrder((prev: any) => prev ? { ...prev, status: 'Processing', ...courierData } : null);
       toast.success(`Courier order created! Tracking: ${courierData.tracking_code || courierData.consignment_id}`);
+      sendStatusEmail({ ...order, tracking_code: courierData.tracking_code, courier_provider: courierData.courier_provider }, 'Processing');
     } catch (err: any) {
       toast.error('Failed to send to courier: ' + err.message);
     } finally {
