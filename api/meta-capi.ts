@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, adminDb, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAdmin, getAdminDb, corsHeaders } from './_lib/firebase-admin';
 
 const META_GRAPH_URL = 'https://graph.facebook.com/v18.0';
 
@@ -14,8 +14,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { action, data } = req.body;
 
+    const db = getAdminDb();
+    if (!db) {
+      return res.json({ success: false, error: 'Firebase Admin not initialized - check FIREBASE_SERVICE_ACCOUNT_KEY' });
+    }
+
     // Get tracking settings from Firestore
-    const settingsSnap = await adminDb.collection('tracking_settings').get();
+    const settingsSnap = await db.collection('tracking_settings').get();
     const settingsMap: Record<string, string> = {};
     settingsSnap.forEach((doc) => {
       const d = doc.data();

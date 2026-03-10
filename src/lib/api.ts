@@ -25,7 +25,13 @@ export async function callApi(endpoint: string, body: any, options?: { formData?
     body: fetchBody,
   });
 
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Server returned non-JSON response (${res.status}): ${text.substring(0, 100)}`);
+  }
   if (!res.ok && !data.success) {
     throw new Error(data.error || `API call failed (${res.status})`);
   }
