@@ -50,6 +50,18 @@ const Admin = () => {
               <input type="email" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} placeholder="Email" className="luxury-input" required />
               <input type="password" value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} placeholder="Password" className="luxury-input" required />
               <button type="submit" className="luxury-button-primary w-full">Sign In</button>
+              <button type="button" onClick={async () => {
+                if (!authForm.email.trim()) { toast.error('Please enter your email first'); return; }
+                try {
+                  const { error } = await supabase.auth.resetPasswordForEmail(authForm.email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) throw error;
+                  toast.success('Password reset link sent to your email!');
+                } catch (err: any) { toast.error(err.message); }
+              }} className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1">
+                Forgot Password?
+              </button>
             </form>
           ) : (
             <>
