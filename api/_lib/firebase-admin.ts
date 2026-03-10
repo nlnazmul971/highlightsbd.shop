@@ -1,85 +1,88 @@
-import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
-import { getAuth, type Auth } from 'firebase-admin/auth';
-import { getFirestore, type Firestore } from 'firebase-admin/firestore';
+// Firebase REST API based auth - NO firebase-admin needed
+// Uses the public Firebase API key to verify tokens and check roles
 
-let adminApp: App | null = null;
-let adminAuth: Auth | null = null;
-let adminDb: Firestore | null = null;
-let initError: string | null = null;
+const FIREBASE_API_KEY = 'AIzaSyCI7G9NeylLhmuXDQlbOJWlYt5gOcApvaE';
+const FIREBASE_PROJECT_ID = 'my-web-highlights-5e3c3';
 
-function ensureInitialized() {
-  if (adminApp) return;
-  if (initError) return;
-
-  try {
-    const raw = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!raw) {
-      initError = 'FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set';
-      return;
-    }
-
-    let serviceAccount: any;
-    try {
-      serviceAccount = JSON.parse(raw);
-    } catch {
-      initError = 'FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON. Make sure the entire JSON is pasted correctly.';
-      return;
-    }
-
-    if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
-      initError = 'FIREBASE_SERVICE_ACCOUNT_KEY is missing required fields (project_id, private_key, client_email)';
-      return;
-    }
-
-    if (!getApps().length) {
-      adminApp = initializeApp({ credential: cert(serviceAccount) });
-    } else {
-      adminApp = getApps()[0];
-    }
-
-    adminAuth = getAuth(adminApp);
-    adminDb = getFirestore(adminApp);
-  } catch (err: any) {
-    initError = `Firebase Admin initialization failed: ${err.message}`;
-  }
-}
-
-export { adminDb };
-
-export async function verifyFirebaseAdmin(authHeader: string | null): Promise<{ authorized: boolean; uid?: string; error?: string }> {
-  ensureInitialized();
-
-  if (initError) {
-    return { authorized: false, error: initError };
-  }
-
-  if (!adminAuth || !adminDb) {
-    return { authorized: false, error: 'Firebase Admin not initialized' };
-  }
-
+/**
+ * Verify Firebase ID token using Google Identity Toolkit REST API
+ * and check admin role from Firestore
+ */
+export async function verifyFirebaseAuth(authHeader: string | null): Promise<{ authorized: boolean; uid?: string; error?: string }> {
   if (!authHeader?.startsWith('Bearer ')) {
     return { authorized: false, error: 'Missing authorization header' };
   }
 
   try {
-    const token = authHeader.replace('Bearer ', '');
-    const decoded = await adminAuth.verifyIdToken(token);
-    const uid = decoded.uid;
+    const idToken = authHeader.replace('Bearer ', '');
 
-    const roleDoc = await adminDb.collection('user_roles').doc(uid).get();
-    if (!roleDoc.exists || roleDoc.data()?.role !== 'admin') {
+    // Step 1: Verify the ID token via Google Identity Toolkit
+    const verifyRes = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      }
+    );
+
+    const verifyData = await verifyRes.json();
+
+    if (!verifyRes.ok || !verifyData.users || verifyData.users.length === 0) {
+      return { authorized: false, error: verifyData.error?.message || 'Invalid token' };
+    }
+
+    const uid = verifyData.users[0].localId;
+
+    // Step 2: Check admin role from Firestore REST API
+    const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/user_roles/${uid}`;
+    const roleRes = await fetch(firestoreUrl);
+
+    if (!roleRes.ok) {
+      return { authorized: false, error: 'Admin access required' };
+    }
+
+    const roleDoc = await roleRes.json();
+    const roleField = roleDoc.fields?.role?.stringValue;
+
+    if (roleField !== 'admin') {
       return { authorized: false, error: 'Admin access required' };
     }
 
     return { authorized: true, uid };
   } catch (err: any) {
-    return { authorized: false, error: err.message || 'Invalid token' };
+    return { authorized: false, error: err.message || 'Authentication failed' };
   }
 }
 
-export function getAdminDb(): Firestore | null {
-  ensureInitialized();
-  return adminDb;
+/**
+ * Read a Firestore collection using REST API (no admin SDK)
+ */
+export async function firestoreGet(collection: string): Promise<any[]> {
+  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${collection}`;
+  const res = await fetch(url);
+
+  if (!res.ok) return [];
+
+  const data = await res.json();
+  if (!data.documents) return [];
+
+  return data.documents.map((doc: any) => {
+    const fields: Record<string, any> = {};
+    for (const [key, val] of Object.entries(doc.fields || {})) {
+      const v = val as any;
+      if (v.stringValue !== undefined) fields[key] = v.stringValue;
+      else if (v.integerValue !== undefined) fields[key] = Number(v.integerValue);
+      else if (v.doubleValue !== undefined) fields[key] = v.doubleValue;
+      else if (v.booleanValue !== undefined) fields[key] = v.booleanValue;
+      else if (v.timestampValue !== undefined) fields[key] = v.timestampValue;
+      else if (v.arrayValue !== undefined) fields[key] = v.arrayValue;
+      else if (v.mapValue !== undefined) fields[key] = v.mapValue;
+      else fields[key] = v;
+    }
+    const docId = doc.name.split('/').pop();
+    return { id: docId, ...fields };
+  });
 }
 
 export function corsHeaders() {
