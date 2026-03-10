@@ -274,6 +274,10 @@ const Checkout = () => {
       toast.error('Please fill all required fields');
       return;
     }
+    if (!isValidEmail(form.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     if (!isValidBDPhone(form.phone)) {
       toast.error('Please enter a valid Bangladesh phone number');
       return;
