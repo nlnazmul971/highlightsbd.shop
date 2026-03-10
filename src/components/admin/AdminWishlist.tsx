@@ -21,7 +21,8 @@ const AdminWishlist = () => {
     },
   });
 
-  const productStats = (wishlistData || []).reduce((acc: Record<string, { name: string; price: number; count: number; image_url: string }>, item: any) => {
+  type ProductStat = { name: string; price: number; count: number; image_url: string };
+  const productStats = (wishlistData || []).reduce((acc: Record<string, ProductStat>, item: any) => {
     const pid = item.product_id;
     if (!acc[pid]) {
       acc[pid] = { name: item.products?.name || 'Unknown', price: item.products?.price || 0, image_url: item.products?.image_url || '', count: 0 };
@@ -30,7 +31,7 @@ const AdminWishlist = () => {
     return acc;
   }, {});
 
-  const sorted = Object.entries(productStats).sort((a, b) => b[1].count - a[1].count);
+  const sorted: [string, ProductStat][] = Object.entries(productStats).sort((a, b) => b[1].count - a[1].count);
 
   if (isLoading) return <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
