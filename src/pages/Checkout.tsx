@@ -316,46 +316,39 @@ const Checkout = () => {
         customer_note: form.customerNote ? sanitizeInput(form.customerNote, 500) : null,
         customer_email: form.email ? form.email.trim() : null,
       } as any);
-      // Send order confirmation email (fire & forget)
+      // Send order confirmation email (true fire & forget - no await)
       if (form.email) {
-        try {
-          await sendOrderEmail({
-            to: form.email,
-            customerName: form.name,
-            orderId: orderResult?.id || crypto.randomUUID(),
-            items: items.map(i => ({
-              name: i.product.name,
-              quantity: i.quantity,
-              price: i.product.price,
-              size: i.size,
-              color: i.color,
-            })),
-            subtotal: total,
-            deliveryFee,
-            discount: couponDiscount,
-            total: grandTotal,
-            deliveryMethod: delivery,
-            paymentMethod: payment === 'online' ? onlineProvider : 'cod',
-            address: form.address,
-            city: form.city,
-            phone: form.phone,
-          });
-        } catch {
-          // Silently fail - don't block order success
-          console.warn('Order confirmation email failed to send');
-        }
+        sendOrderEmail({
+          to: form.email,
+          customerName: form.name,
+          orderId: orderResult?.id || crypto.randomUUID(),
+          items: items.map(i => ({
+            name: i.product.name,
+            quantity: i.quantity,
+            price: i.product.price,
+            size: i.size,
+            color: i.color,
+          })),
+          subtotal: total,
+          deliveryFee,
+          discount: couponDiscount,
+          total: grandTotal,
+          deliveryMethod: delivery,
+          paymentMethod: payment === 'online' ? onlineProvider : 'cod',
+          address: form.address,
+          city: form.city,
+          phone: form.phone,
+        }).catch(() => console.warn('Order confirmation email failed to send'));
       }
-      // Save address to profile if logged in
+      // Save address to profile (fire & forget)
       if (user) {
-        try {
-          await updateProfile.mutateAsync({
-            userId: user.uid,
-            display_name: form.name,
-            phone: form.phone,
-            address: form.address,
-            city: form.city,
-          });
-        } catch { /* silently fail address save */ }
+        updateProfile.mutateAsync({
+          userId: user.uid,
+          display_name: form.name,
+          phone: form.phone,
+          address: form.address,
+          city: form.city,
+        }).catch(() => {});
       }
       // GTM: purchase event
       window.dataLayer = window.dataLayer || [];
