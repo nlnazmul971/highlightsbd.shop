@@ -136,29 +136,22 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const items = Array.isArray(order.items) ? order.items : [];
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
 
-    const { data: result, error } = await supabase.functions.invoke('pathao-courier', {
-      body: {
-        action: 'create_order',
-        data: {
-          store_id: 1, // Default store - may need configuration
-          merchant_order_id: order.id.slice(0, 8),
-          recipient_name: order.customer_name,
-          recipient_phone: order.customer_phone,
-          recipient_address: order.customer_address,
-          recipient_city: 1, // Default - Dhaka
-          recipient_zone: 1, // Default zone
-          delivery_type: 48, // Normal delivery
-          item_type: 2, // Parcel
-          special_instruction: itemDesc,
-          item_quantity: items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0),
-          item_weight: 0.5,
-          amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
-          item_description: itemDesc,
-        },
-      },
+    const result = await callCourier('pathao', 'create_order', {
+      store_id: 1,
+      merchant_order_id: order.id.slice(0, 8),
+      recipient_name: order.customer_name,
+      recipient_phone: order.customer_phone,
+      recipient_address: order.customer_address,
+      recipient_city: 1,
+      recipient_zone: 1,
+      delivery_type: 48,
+      item_type: 2,
+      special_instruction: itemDesc,
+      item_quantity: items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0),
+      item_weight: 0.5,
+      amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
+      item_description: itemDesc,
     });
-
-    if (error) throw error;
 
     if (result.success && result.data?.data) {
       const c = result.data.data;
