@@ -319,28 +319,26 @@ const Checkout = () => {
       // Send order confirmation email (fire & forget)
       if (form.email) {
         try {
-          await supabase.functions.invoke('send-order-email', {
-            body: {
-              to: form.email,
-              customerName: form.name,
-              orderId: orderResult?.id || crypto.randomUUID(),
-              items: items.map(i => ({
-                name: i.product.name,
-                quantity: i.quantity,
-                price: i.product.price,
-                size: i.size,
-                color: i.color,
-              })),
-              subtotal: total,
-              deliveryFee,
-              discount: couponDiscount,
-              total: grandTotal,
-              deliveryMethod: delivery,
-              paymentMethod: payment === 'online' ? onlineProvider : 'cod',
-              address: form.address,
-              city: form.city,
-              phone: form.phone,
-            },
+          await sendOrderEmail({
+            to: form.email,
+            customerName: form.name,
+            orderId: orderResult?.id || crypto.randomUUID(),
+            items: items.map(i => ({
+              name: i.product.name,
+              quantity: i.quantity,
+              price: i.product.price,
+              size: i.size,
+              color: i.color,
+            })),
+            subtotal: total,
+            deliveryFee,
+            discount: couponDiscount,
+            total: grandTotal,
+            deliveryMethod: delivery,
+            paymentMethod: payment === 'online' ? onlineProvider : 'cod',
+            address: form.address,
+            city: form.city,
+            phone: form.phone,
           });
         } catch {
           // Silently fail - don't block order success
