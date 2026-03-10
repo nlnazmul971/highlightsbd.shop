@@ -10,18 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
-import { isHoneypotFilled, isFormFilledTooFast, isRateLimited, recordOrderTimestamp, isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
-
-declare global {
-  interface Window {
-    grecaptcha: {
-      ready: (cb: () => void) => void;
-      execute: (siteKey: string, options: { action: string }) => Promise<string>;
-    };
-  }
-}
-
-const RECAPTCHA_SITE_KEY = '6LeeyYUsAAAAAAfJMZwQSmc7zwu4gnrlq9dGrIMC';
+import { isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
 
 type PaymentMethod = 'cod' | 'online';
 type OnlineProvider = 'bkash' | 'nagad' | null;
