@@ -208,7 +208,9 @@ const HomepageImageUpload = ({ value, onChange, folder }: { value: string; onCha
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { toast.error('শুধুমাত্র image file দিন (JPG, PNG, WebP)'); return; }
+    const validExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.svg'];
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    if (!file.type.startsWith('image/') && !validExts.includes(ext)) { toast.error('শুধুমাত্র image file দিন (JPG, PNG, WebP)'); return; }
     if (file.size > 10 * 1024 * 1024) { toast.error('Max 10MB! আপনার ছবি ' + (file.size / (1024 * 1024)).toFixed(1) + 'MB'); return; }
 
     setUploading(true);
