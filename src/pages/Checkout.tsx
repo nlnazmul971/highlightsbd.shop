@@ -65,7 +65,7 @@ const Checkout = () => {
 
   const { data: zones = [] } = useDeliveryZones(false);
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
-  const { data: profile } = useProfile(user?.id);
+  const { data: profile } = useProfile(user?.uid);
 
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
   const [attempted, setAttempted] = useState(false);
@@ -294,7 +294,7 @@ const Checkout = () => {
     }
     try {
       const orderResult = await createOrder.mutateAsync({
-        user_id: user?.id || null,
+        user_id: user?.uid || null,
         items: items.map(i => ({
           product_id: i.product.id,
           name: sanitizeInput(i.product.name, 200),
@@ -302,7 +302,7 @@ const Checkout = () => {
           price: i.product.price,
           size: i.size,
           color: i.color,
-        })) as unknown as Json,
+        })) as any,
         total: grandTotal,
         customer_name: sanitizeInput(form.name, 100),
         customer_phone: form.phone.replace(/[^\d+\-\s]/g, '').slice(0, 20),
@@ -350,7 +350,7 @@ const Checkout = () => {
       if (user) {
         try {
           await updateProfile.mutateAsync({
-            userId: user.id,
+            userId: user.uid,
             display_name: form.name,
             phone: form.phone,
             address: form.address,
