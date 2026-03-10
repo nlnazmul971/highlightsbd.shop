@@ -1,5 +1,4 @@
-import { db } from '@/lib/firebase';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
 
@@ -16,9 +15,9 @@ const OrderTracker = ({ userId }: { userId: string }) => {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', userId],
     queryFn: async () => {
-      const q = query(collection(db, 'orders'), where('user_id', '==', userId), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!userId,
   });
@@ -29,7 +28,7 @@ const OrderTracker = ({ userId }: { userId: string }) => {
   return (
     <div className="space-y-4">
       <h2 className="luxury-heading text-lg tracking-[0.1em] text-center">My Orders</h2>
-      {orders.map((order) => {
+      {orders.map((order: any) => {
         const isCancelled = order.status === 'Cancelled';
         const currentStep = isCancelled ? -1 : statusSteps.indexOf(order.status);
         const items = (order.items as any[]) || [];

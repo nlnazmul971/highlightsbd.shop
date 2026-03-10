@@ -1,23 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, orderBy, query } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Heart } from 'lucide-react';
 
 const AdminWishlist = () => {
   const { data: wishlistData, isLoading } = useQuery({
     queryKey: ['admin-wishlist'],
     queryFn: async () => {
-      const q = query(collection(db, 'wishlist_items'), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-      const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      // Fetch products
-      const productIds = [...new Set(items.map(i => i.product_id))];
-      const products: Record<string, any> = {};
-      for (const pid of productIds) {
-        const pSnap = await getDoc(doc(db, 'products', pid));
-        if (pSnap.exists()) products[pid] = { id: pSnap.id, ...pSnap.data() };
-      }
-      return items.map(i => ({ ...i, products: products[i.product_id] || null }));
+      const { data, error } = await supabase.from('wishlist_items').select('*, products(*)').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
