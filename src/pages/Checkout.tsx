@@ -327,7 +327,7 @@ const Checkout = () => {
         }
       }
 
-      await createOrder.mutateAsync({
+      const orderResult = await createOrder.mutateAsync({
         user_id: user?.id || null,
         items: items.map(i => ({
           product_id: i.product.id,
@@ -348,6 +348,37 @@ const Checkout = () => {
         transaction_id: form.transactionId ? sanitizeInput(form.transactionId, 50) : null,
         customer_note: form.customerNote ? sanitizeInput(form.customerNote, 500) : null,
       });
+      // Send order confirmation email (fire & forget)
+      if (form.email) {
+        try {
+          await supabase.functions.invoke('send-order-email', {
+            body: {
+              to: form.email,
+              customerName: form.name,
+              orderId: orderResult?.id || crypto.randomUUID(),
+              items: items.map(i => ({
+                name: i.product.name,
+                quantity: i.quantity,
+                price: i.product.price,
+                size: i.size,
+                color: i.color,
+              })),
+              subtotal: total,
+              deliveryFee,
+              discount: couponDiscount,
+              total: grandTotal,
+              deliveryMethod: delivery,
+              paymentMethod: payment === 'online' ? onlineProvider : 'cod',
+              address: form.address,
+              city: form.city,
+              phone: form.phone,
+            },
+          });
+        } catch {
+          // Silently fail - don't block order success
+          console.warn('Order confirmation email failed to send');
+        }
+      }
       // Save address to profile if logged in
       if (user) {
         try {
