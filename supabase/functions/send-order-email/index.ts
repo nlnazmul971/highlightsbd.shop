@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         text,
         purpose: 'transactional',
       },
-      { apiKey }
+      { apiKey, apiBaseUrl: 'https://api.lovable.dev' }
     )
 
     console.log('Order confirmation email sent', { orderId, to, message_id: result.message_id })
