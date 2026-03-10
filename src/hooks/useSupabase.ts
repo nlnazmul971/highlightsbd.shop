@@ -1,22 +1,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/firebase';
+import {
+  collection, doc, getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc,
+  query, where, orderBy, limit as firestoreLimit,
+} from 'firebase/firestore';
 import { Product, ProductColor, Review } from '@/data/products';
-import type { Json } from '@/integrations/supabase/types';
+
+const toObj = <T>(snap: any): T => ({ id: snap.id, ...snap.data() } as T);
 
 export const useProducts = (category?: string, search?: string) => {
   return useQuery({
     queryKey: ['products', category, search],
     queryFn: async () => {
-      let query = supabase.from('products').select('*').order('created_at', { ascending: false });
+      let q;
       if (category === 'New Dropped') {
-        query = query.limit(10);
+        q = query(collection(db, 'products'), orderBy('created_at', 'desc'), firestoreLimit(10));
       } else if (category && category !== 'All') {
-        query = query.eq('category', category);
+        q = query(collection(db, 'products'), where('category', '==', category), orderBy('created_at', 'desc'));
+      } else {
+        q = query(collection(db, 'products'), orderBy('created_at', 'desc'));
       }
-      if (search) query = query.ilike('name', `%${search}%`);
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []).map(p => ({ ...p, colors: p.colors as unknown as ProductColor[] })) as Product[];
+      const snap = await getDocs(q);
+      let data = snap.docs.map(d => toObj<Product>(d));
+      if (search) {
+        const s = search.toLowerCase();
+        data = data.filter(p => p.name.toLowerCase().includes(s));
+      }
+      return data;
     },
   });
 };
@@ -25,9 +35,9 @@ export const useProduct = (id: string) => {
   return useQuery({
     queryKey: ['product', id],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
-      if (error) throw error;
-      return { ...data, colors: data.colors as unknown as ProductColor[] } as Product;
+      const snap = await getDoc(doc(db, 'products', id));
+      if (!snap.exists()) throw new Error('Product not found');
+      return toObj<Product>(snap);
     },
     enabled: !!id,
   });
@@ -37,13 +47,9 @@ export const useProductImages = (productId: string) => {
   return useQuery({
     queryKey: ['product-images', productId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('product_images')
-        .select('*')
-        .eq('product_id', productId)
-        .order('sort_order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      const q = query(collection(db, 'product_images'), where('product_id', '==', productId), orderBy('sort_order', 'asc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => toObj<any>(d));
     },
     enabled: !!productId,
   });
@@ -53,8 +59,7 @@ export const useAddProductImage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ product_id, image_url, sort_order }: { product_id: string; image_url: string; sort_order: number }) => {
-      const { error } = await supabase.from('product_images').insert({ product_id, image_url, sort_order } as any);
-      if (error) throw error;
+      await addDoc(collection(db, 'product_images'), { product_id, image_url, sort_order, created_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['product-images'] }),
   });
@@ -64,8 +69,7 @@ export const useDeleteProductImage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('product_images').delete().eq('id', id);
-      if (error) throw error;
+      await deleteDoc(doc(db, 'product_images', id));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['product-images'] }),
   });
@@ -75,14 +79,9 @@ export const useRelatedProducts = (category: string, excludeId: string) => {
   return useQuery({
     queryKey: ['related-products', category, excludeId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('category', category)
-        .neq('id', excludeId)
-        .limit(4);
-      if (error) throw error;
-      return (data || []).map(p => ({ ...p, colors: p.colors as unknown as ProductColor[] })) as Product[];
+      const q = query(collection(db, 'products'), where('category', '==', category), firestoreLimit(5));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => toObj<Product>(d)).filter(p => p.id !== excludeId).slice(0, 4);
     },
     enabled: !!category && !!excludeId,
   });
@@ -92,9 +91,9 @@ export const useProductReviews = (productId: string) => {
   return useQuery({
     queryKey: ['reviews', productId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('reviews').select('*').eq('product_id', productId).order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as Review[];
+      const q = query(collection(db, 'reviews'), where('product_id', '==', productId), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => toObj<Review>(d));
     },
     enabled: !!productId,
   });
@@ -104,10 +103,10 @@ export const useAllReviewStats = () => {
   return useQuery({
     queryKey: ['review-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('reviews').select('product_id, rating');
-      if (error) throw error;
+      const snap = await getDocs(collection(db, 'reviews'));
       const stats: Record<string, { avg: number; count: number }> = {};
-      for (const r of data || []) {
+      for (const d of snap.docs) {
+        const r = d.data();
         if (!stats[r.product_id]) stats[r.product_id] = { avg: 0, count: 0 };
         stats[r.product_id].count++;
         stats[r.product_id].avg += r.rating;
@@ -124,10 +123,9 @@ export const useCreateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at'>) => {
-      const { colors, ...rest } = product;
-      const { data, error } = await supabase.from('products').insert({ ...rest, colors: colors as unknown as Json }).select().single();
-      if (error) throw error;
-      return data;
+      const now = new Date().toISOString();
+      const ref = await addDoc(collection(db, 'products'), { ...product, created_at: now, updated_at: now });
+      return { id: ref.id, ...product, created_at: now, updated_at: now };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
   });
@@ -137,11 +135,7 @@ export const useUpdateProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
-      const payload: Record<string, unknown> = { ...updates };
-      if (updates.colors) payload.colors = updates.colors as unknown as Json;
-      delete payload.id;
-      const { error } = await supabase.from('products').update(payload as any).eq('id', id);
-      if (error) throw error;
+      await updateDoc(doc(db, 'products', id), { ...updates, updated_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
   });
@@ -151,8 +145,7 @@ export const useDeleteProduct = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      await deleteDoc(doc(db, 'products', id));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
   });
@@ -163,7 +156,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: async (order: {
       user_id: string | null;
-      items: Json;
+      items: any;
       total: number;
       customer_name: string;
       customer_phone: string;
@@ -174,10 +167,21 @@ export const useCreateOrder = () => {
       payment_sender_number?: string | null;
       transaction_id?: string | null;
       customer_note?: string | null;
+      customer_email?: string | null;
     }) => {
-      const { data, error } = await supabase.from('orders').insert(order).select().single();
-      if (error) throw error;
-      return data;
+      const now = new Date().toISOString();
+      const ref = await addDoc(collection(db, 'orders'), {
+        ...order,
+        status: 'Pending',
+        deleted_at: null,
+        consignment_id: null,
+        courier_provider: null,
+        tracking_code: null,
+        order_token: crypto.randomUUID(),
+        created_at: now,
+        updated_at: now,
+      });
+      return { id: ref.id, ...order };
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
   });
@@ -188,9 +192,9 @@ export const useProfile = (userId?: string) => {
     queryKey: ['profile', userId],
     queryFn: async () => {
       if (!userId) return null;
-      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-      if (error) throw error;
-      return data;
+      const snap = await getDoc(doc(db, 'profiles', userId));
+      if (!snap.exists()) return null;
+      return { id: snap.id, ...snap.data() } as any;
     },
     enabled: !!userId,
   });
@@ -200,8 +204,7 @@ export const useUpdateProfile = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, ...updates }: { userId: string; display_name?: string; phone?: string; address?: string; city?: string }) => {
-      const { error } = await supabase.from('profiles').update(updates).eq('user_id', userId);
-      if (error) throw error;
+      await updateDoc(doc(db, 'profiles', userId), { ...updates, updated_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['profile'] }),
   });
@@ -211,9 +214,9 @@ export const useOrders = () => {
   return useQuery({
     queryKey: ['orders'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('orders').select('*').is('deleted_at', null).order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      const q = query(collection(db, 'orders'), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => toObj<any>(d)).filter(o => !o.deleted_at);
     },
   });
 };
@@ -222,8 +225,7 @@ export const useUpdateOrder = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; [key: string]: any }) => {
-      const { error } = await supabase.from('orders').update(updates).eq('id', id);
-      if (error) throw error;
+      await updateDoc(doc(db, 'orders', id), { ...updates, updated_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['orders'] }),
   });
@@ -234,9 +236,17 @@ export const useWishlistItems = (userId?: string) => {
     queryKey: ['wishlist', userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data, error } = await supabase.from('wishlist_items').select('*, products(*)').eq('user_id', userId);
-      if (error) throw error;
-      return data;
+      const q = query(collection(db, 'wishlist_items'), where('user_id', '==', userId));
+      const snap = await getDocs(q);
+      const items = snap.docs.map(d => toObj<any>(d));
+      // Fetch products
+      const productIds = [...new Set(items.map(i => i.product_id))];
+      const products: Record<string, any> = {};
+      for (const pid of productIds) {
+        const pSnap = await getDoc(doc(db, 'products', pid));
+        if (pSnap.exists()) products[pid] = { id: pSnap.id, ...pSnap.data() };
+      }
+      return items.map(i => ({ ...i, products: products[i.product_id] || null }));
     },
     enabled: !!userId,
   });
@@ -246,8 +256,7 @@ export const useAddWishlistItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, productId }: { userId: string; productId: string }) => {
-      const { error } = await supabase.from('wishlist_items').insert({ user_id: userId, product_id: productId });
-      if (error) throw error;
+      await addDoc(collection(db, 'wishlist_items'), { user_id: userId, product_id: productId, created_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wishlist'] }),
   });
@@ -257,8 +266,9 @@ export const useRemoveWishlistItem = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ userId, productId }: { userId: string; productId: string }) => {
-      const { error } = await supabase.from('wishlist_items').delete().eq('user_id', userId).eq('product_id', productId);
-      if (error) throw error;
+      const q = query(collection(db, 'wishlist_items'), where('user_id', '==', userId), where('product_id', '==', productId));
+      const snap = await getDocs(q);
+      for (const d of snap.docs) await deleteDoc(d.ref);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wishlist'] }),
   });
@@ -269,14 +279,15 @@ export const useUserRole = (userId?: string) => {
     queryKey: ['user-role', userId],
     queryFn: async () => {
       if (!userId) return null;
-      const { data, error } = await supabase.from('user_roles').select('role').eq('user_id', userId).maybeSingle();
-      if (error) throw error;
-      return data?.role || null;
+      const snap = await getDoc(doc(db, 'user_roles', userId));
+      if (!snap.exists()) return null;
+      return snap.data()?.role || null;
     },
     enabled: !!userId,
   });
 };
 
+// Delivery Zones
 export type DeliveryZoneRow = {
   id: string;
   name: string;
@@ -291,11 +302,11 @@ export const useDeliveryZones = (includeInactive = false) => {
   return useQuery({
     queryKey: ['delivery-zones', includeInactive],
     queryFn: async () => {
-      let query = supabase.from('delivery_zones').select('*').order('created_at', { ascending: true });
-      if (!includeInactive) query = query.eq('is_active', true);
-      const { data, error } = await query;
-      if (error) throw error;
-      return (data || []) as unknown as DeliveryZoneRow[];
+      const q = query(collection(db, 'delivery_zones'), orderBy('created_at', 'asc'));
+      const snap = await getDocs(q);
+      let data = snap.docs.map(d => toObj<DeliveryZoneRow>(d));
+      if (!includeInactive) data = data.filter(z => z.is_active);
+      return data;
     },
   });
 };
@@ -304,13 +315,13 @@ export const useUpdateDeliveryZone = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<DeliveryZoneRow> & { id: string }) => {
-      const { error } = await supabase.from('delivery_zones').update(updates as any).eq('id', id);
-      if (error) throw error;
+      await updateDoc(doc(db, 'delivery_zones', id), { ...updates, updated_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['delivery-zones'] }),
   });
 };
 
+// Checkout Payment Settings
 export type CheckoutPaymentSettingRow = {
   id: string;
   provider: string;
@@ -325,12 +336,8 @@ export const useCheckoutPaymentSettings = () => {
   return useQuery({
     queryKey: ['checkout-payment-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('checkout_payment_settings')
-        .select('*')
-        .order('provider', { ascending: true });
-      if (error) throw error;
-      return (data || []) as unknown as CheckoutPaymentSettingRow[];
+      const snap = await getDocs(collection(db, 'checkout_payment_settings'));
+      return snap.docs.map(d => toObj<CheckoutPaymentSettingRow>(d)).sort((a, b) => a.provider.localeCompare(b.provider));
     },
   });
 };
@@ -339,10 +346,11 @@ export const useUpsertCheckoutPaymentSetting = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (setting: Pick<CheckoutPaymentSettingRow, 'provider' | 'number' | 'instructions' | 'is_active'>) => {
-      const { error } = await supabase
-        .from('checkout_payment_settings')
-        .upsert(setting as any, { onConflict: 'provider' });
-      if (error) throw error;
+      await setDoc(doc(db, 'checkout_payment_settings', setting.provider), {
+        ...setting,
+        updated_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      }, { merge: true });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['checkout-payment-settings'] }),
   });
@@ -367,9 +375,9 @@ export const useCoupons = () => {
   return useQuery({
     queryKey: ['coupons'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('coupons').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data || []) as unknown as CouponRow[];
+      const q = query(collection(db, 'coupons'), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => toObj<CouponRow>(d));
     },
   });
 };
@@ -378,8 +386,8 @@ export const useCreateCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (coupon: Pick<CouponRow, 'name' | 'code' | 'discount_type' | 'discount_value' | 'min_order_amount' | 'max_uses' | 'is_active'>) => {
-      const { error } = await supabase.from('coupons').insert(coupon as any);
-      if (error) throw error;
+      const now = new Date().toISOString();
+      await addDoc(collection(db, 'coupons'), { ...coupon, used_count: 0, created_at: now, updated_at: now });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
   });
@@ -389,8 +397,7 @@ export const useUpdateCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<CouponRow> & { id: string }) => {
-      const { error } = await supabase.from('coupons').update(updates as any).eq('id', id);
-      if (error) throw error;
+      await updateDoc(doc(db, 'coupons', id), { ...updates, updated_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
   });
@@ -400,8 +407,7 @@ export const useDeleteCoupon = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('coupons').delete().eq('id', id);
-      if (error) throw error;
+      await deleteDoc(doc(db, 'coupons', id));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
   });
@@ -410,15 +416,10 @@ export const useDeleteCoupon = () => {
 export const useValidateCoupon = () => {
   return useMutation({
     mutationFn: async ({ code, orderTotal }: { code: string; orderTotal: number }) => {
-      const { data, error } = await supabase
-        .from('coupons')
-        .select('*')
-        .eq('code', code.toUpperCase().trim())
-        .eq('is_active', true)
-        .maybeSingle();
-      if (error) throw error;
-      if (!data) throw new Error('Invalid coupon code');
-      const coupon = data as unknown as CouponRow;
+      const q = query(collection(db, 'coupons'), where('code', '==', code.toUpperCase().trim()), where('is_active', '==', true));
+      const snap = await getDocs(q);
+      if (snap.empty) throw new Error('Invalid coupon code');
+      const coupon = toObj<CouponRow>(snap.docs[0]);
       if (coupon.max_uses && coupon.used_count >= coupon.max_uses) throw new Error('Coupon usage limit reached');
       if (orderTotal < coupon.min_order_amount) throw new Error(`Minimum order ৳${coupon.min_order_amount} required`);
       return coupon;
@@ -430,9 +431,10 @@ export const useIncrementCouponUsage = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { data: coupon } = await supabase.from('coupons').select('used_count').eq('id', id).single();
-      if (!coupon) return;
-      await supabase.from('coupons').update({ used_count: (coupon as any).used_count + 1 } as any).eq('id', id);
+      const snap = await getDoc(doc(db, 'coupons', id));
+      if (!snap.exists()) return;
+      const current = snap.data().used_count || 0;
+      await updateDoc(doc(db, 'coupons', id), { used_count: current + 1 });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['coupons'] }),
   });
@@ -443,10 +445,12 @@ export const useStoreSettings = () => {
   return useQuery({
     queryKey: ['store-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('store_settings').select('*');
-      if (error) throw error;
+      const snap = await getDocs(collection(db, 'store_settings'));
       const map: Record<string, string> = {};
-      for (const row of data || []) map[(row as any).key] = (row as any).value;
+      snap.docs.forEach(d => {
+        const data = d.data();
+        map[data.key || d.id] = data.value;
+      });
       return map;
     },
   });
@@ -456,10 +460,7 @@ export const useUpdateStoreSetting = () => {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
-      const { error } = await supabase
-        .from('store_settings')
-        .upsert({ key, value } as any, { onConflict: 'key' });
-      if (error) throw error;
+      await setDoc(doc(db, 'store_settings', key), { key, value, updated_at: new Date().toISOString() });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['store-settings'] }),
   });
