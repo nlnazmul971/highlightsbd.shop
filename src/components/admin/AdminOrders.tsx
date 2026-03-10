@@ -229,6 +229,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
           await updateOrder.mutateAsync({ id: order.id, status: mappedStatus });
           setSelectedOrder((prev: any) => prev ? { ...prev, status: mappedStatus } : null);
           toast.success(`Status synced: ${deliveryStatus} → ${mappedStatus}`);
+          sendStatusEmail(order, mappedStatus);
         } else {
           toast.info(`Courier status: ${deliveryStatus} (no change)`);
         }
