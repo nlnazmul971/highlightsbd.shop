@@ -6,21 +6,16 @@ export const uploadToCloudinary = async (file: File, folder: string = 'products'
 
   const token = await user.getIdToken();
 
-  // Convert file to base64 data URI for JSON transport
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('folder', folder);
 
   const res = await fetch('/api/cloudinary-upload', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ file: base64, fileName: file.name, folder }),
+    body: formData,
   });
 
   const result = await res.json();

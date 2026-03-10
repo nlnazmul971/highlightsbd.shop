@@ -1,6 +1,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { verifyFirebaseAdmin, corsHeaders } from './_lib/firebase-admin';
 import * as crypto from 'crypto';
+import { IncomingForm } from 'formidable';
+import fs from 'fs';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+function parseForm(req: VercelRequest): Promise<{ fields: any; files: any }> {
+  return new Promise((resolve, reject) => {
+    const form = new IncomingForm({ maxFileSize: 10 * 1024 * 1024 });
+    form.parse(req as any, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const cors = corsHeaders();
@@ -14,17 +32,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!auth.authorized) return res.status(403).json({ error: auth.error });
 
   try {
-    const contentType = req.headers['content-type'] || '';
-    if (!contentType.includes('multipart/form-data')) {
-      return res.status(400).json({ error: 'Expected multipart/form-data' });
-    }
+    const { fields, files } = await parseForm(req);
 
-    // For Vercel, we need to handle the raw body
-    // Since Vercel parses multipart automatically with body parser disabled, 
-    // we'll use a different approach: receive base64 encoded file
-    const { file, fileName, folder = 'products' } = req.body;
+    const uploadedFile = Array.isArray(files.file) ? files.file[0] : files.file;
+    if (!uploadedFile) return res.status(400).json({ error: 'No file provided' });
 
-    if (!file) return res.status(400).json({ error: 'No file provided' });
+    const folder = (Array.isArray(fields.folder) ? fields.folder[0] : fields.folder) || 'products';
 
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME!;
     const apiKey = process.env.CLOUDINARY_API_KEY!;
@@ -34,8 +47,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const paramsToSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
     const signature = crypto.createHash('sha1').update(paramsToSign).digest('hex');
 
+    const fileBuffer = fs.readFileSync(uploadedFile.filepath);
+    const blob = new Blob([fileBuffer], { type: uploadedFile.mimetype || 'image/jpeg' });
+
     const formData = new FormData();
-    formData.append('file', file); // base64 data URI
+    formData.append('file', blob, uploadedFile.originalFilename || 'upload.jpg');
     formData.append('api_key', apiKey);
     formData.append('timestamp', timestamp);
     formData.append('signature', signature);
