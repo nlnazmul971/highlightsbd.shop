@@ -1,6 +1,7 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { OrderConfirmationEmail } from '../_shared/email-templates/order-confirmation.tsx'
+import { AdminOrderNotification } from '../_shared/email-templates/admin-order-notification.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,9 +40,9 @@ Deno.serve(async (req) => {
       phone,
     } = body
 
-    if (!to || !orderId) {
+    if (!orderId) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: to, orderId' }),
+        JSON.stringify({ error: 'Missing required field: orderId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -61,39 +62,71 @@ Deno.serve(async (req) => {
       phone: phone || '',
     }
 
-    const html = await renderAsync(React.createElement(OrderConfirmationEmail, templateProps))
+    const results: { customer?: string; admin?: string } = {}
 
-    // Send via Resend API
-    const resendResponse = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: FROM_EMAIL,
-        to: [to],
-        subject: `Order Confirmed — HIGHLIGHTS #${orderId.slice(0, 8).toUpperCase()}`,
-        html,
-      }),
-    })
-
-    const resendData = await resendResponse.json()
-
-    if (!resendResponse.ok) {
-      console.error('Resend API error:', resendData)
-      throw new Error(resendData?.message || `Resend API error [${resendResponse.status}]`)
+    // 1. Send customer confirmation email
+    if (to) {
+      const customerHtml = await renderAsync(React.createElement(OrderConfirmationEmail, templateProps))
+      const customerRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: [to],
+          subject: `Order Confirmed — HIGHLIGHTS #${orderId.slice(0, 8).toUpperCase()}`,
+          html: customerHtml,
+        }),
+      })
+      const customerData = await customerRes.json()
+      if (!customerRes.ok) {
+        console.error('Resend customer email error:', customerData)
+      } else {
+        results.customer = customerData.id
+        console.log('Customer email sent', { orderId, to, id: customerData.id })
+      }
     }
 
-    console.log('Order confirmation email sent via Resend', { orderId, to, id: resendData.id })
+    // 2. Send admin notification email
+    const adminEmail = Deno.env.get('ADMIN_NOTIFICATION_EMAIL')
+    if (adminEmail) {
+      const adminHtml = await renderAsync(
+        React.createElement(AdminOrderNotification, {
+          ...templateProps,
+          customerEmail: to || undefined,
+        })
+      )
+      const adminRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: [adminEmail],
+          subject: `🛒 New Order #${orderId.slice(0, 8).toUpperCase()} — ৳${total || 0}`,
+          html: adminHtml,
+        }),
+      })
+      const adminData = await adminRes.json()
+      if (!adminRes.ok) {
+        console.error('Resend admin email error:', adminData)
+      } else {
+        results.admin = adminData.id
+        console.log('Admin notification sent', { orderId, adminEmail, id: adminData.id })
+      }
+    }
 
     return new Response(
-      JSON.stringify({ success: true, id: resendData.id }),
+      JSON.stringify({ success: true, ...results }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error('Failed to send order confirmation email:', message)
+    console.error('Failed to send order emails:', message)
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
