@@ -96,22 +96,23 @@ const Footer = () => {
             <h4 className="luxury-body text-[11px] mb-1.5 sm:mb-4 text-foreground">Information</h4>
             <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-muted-foreground uppercase tracking-wider">
               <Link to="/" className="block hover:text-foreground transition-colors">Home</Link>
-              <p className="hover:text-foreground cursor-pointer transition-colors">About Us</p>
-              <p className="hover:text-foreground cursor-pointer transition-colors">Contact</p>
-              <p className="hover:text-foreground cursor-pointer transition-colors">Blog</p>
+              <Link to="/about" className="block hover:text-foreground transition-colors">About Us</Link>
+              <Link to="/contact" className="block hover:text-foreground transition-colors">Contact</Link>
+              <Link to="/shop" className="block hover:text-foreground transition-colors">Shop</Link>
             </div>
           </div>
           <div>
             <h4 className="luxury-body text-[11px] mb-1.5 sm:mb-4 text-foreground">Policies</h4>
             <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-muted-foreground uppercase tracking-wider">
-              <p className="hover:text-foreground cursor-pointer transition-colors">Privacy Policy</p>
-              <p className="hover:text-foreground cursor-pointer transition-colors">Terms & Conditions</p>
-              <p className="hover:text-foreground cursor-pointer transition-colors">Refund Policy</p>
-              <p className="hover:text-foreground cursor-pointer transition-colors">Guidelines</p>
+              <Link to="/privacy-policy" className="block hover:text-foreground transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="block hover:text-foreground transition-colors">Terms & Conditions</Link>
+              <Link to="/refund-policy" className="block hover:text-foreground transition-colors">Refund Policy</Link>
+              <Link to="/shipping-policy" className="block hover:text-foreground transition-colors">Shipping Policy</Link>
             </div>
           </div>
           <div className="col-span-2 sm:col-span-1">
             <h4 className="luxury-body text-[11px] mb-1.5 sm:mb-4 text-foreground">Newsletter</h4>
+            <p className="text-xs text-muted-foreground mb-2">Subscribe to get updates on new arrivals & exclusive offers.</p>
             <form onSubmit={handleNewsletter} className="flex">
               <input
                 type="email"
