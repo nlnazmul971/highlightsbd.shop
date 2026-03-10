@@ -453,11 +453,7 @@ const Checkout = () => {
           <p className="text-center text-muted-foreground">Your cart is empty.</p>
         ) : (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Honeypot - hidden from real users, bots will fill this */}
-            <div className="absolute opacity-0 pointer-events-none" style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true" tabIndex={-1}>
-              <label htmlFor="website_url">Website</label>
-              <input type="text" id="website_url" name="website_url" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
-            </div>
+            
             <div className="space-y-6">
               <h2 className="luxury-body text-[11px] text-foreground mb-4">Delivery Information</h2>
               
