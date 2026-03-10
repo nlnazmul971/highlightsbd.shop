@@ -468,11 +468,28 @@ const Checkout = () => {
                 </div>
               )}
 
-              <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name *" className={`luxury-input ${attempted && !form.name.trim() ? 'border-destructive' : ''}`} />
-              <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email *" className={`luxury-input ${attempted && !form.email.trim() ? 'border-destructive' : ''}`} />
-              <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number *" className={`luxury-input ${attempted && !form.phone.trim() ? 'border-destructive' : ''}`} />
-              <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area) *" className={`luxury-input min-h-[100px] resize-y ${attempted && !form.address.trim() ? 'border-destructive' : ''}`} rows={4} />
-              <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City *" className={`luxury-input ${attempted && !form.city.trim() ? 'border-destructive' : ''}`} />
+              <div>
+                <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full Name *" className={`luxury-input ${attempted && !form.name.trim() ? 'border-destructive' : ''}`} />
+                {attempted && !form.name.trim() && <p className="text-destructive text-xs mt-1">নাম লিখুন (Full Name দিন)</p>}
+              </div>
+              <div>
+                <input required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email *" className={`luxury-input ${attempted && (!form.email.trim() || !isValidEmail(form.email)) ? 'border-destructive' : ''}`} />
+                {attempted && !form.email.trim() && <p className="text-destructive text-xs mt-1">ইমেইল লিখুন (example@gmail.com)</p>}
+                {attempted && form.email.trim() && !isValidEmail(form.email) && <p className="text-destructive text-xs mt-1">সঠিক ইমেইল দিন (example@gmail.com ফরম্যাটে)</p>}
+              </div>
+              <div>
+                <input required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number *" className={`luxury-input ${attempted && (!form.phone.trim() || !isValidBDPhone(form.phone)) ? 'border-destructive' : ''}`} />
+                {attempted && !form.phone.trim() && <p className="text-destructive text-xs mt-1">ফোন নম্বর লিখুন (01XXXXXXXXX)</p>}
+                {attempted && form.phone.trim() && !isValidBDPhone(form.phone) && <p className="text-destructive text-xs mt-1">সঠিক বাংলাদেশি ফোন নম্বর দিন (01XXXXXXXXX ফরম্যাটে)</p>}
+              </div>
+              <div>
+                <textarea required value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Full Address (House, Road, Area) *" className={`luxury-input min-h-[100px] resize-y ${attempted && !form.address.trim() ? 'border-destructive' : ''}`} rows={4} />
+                {attempted && !form.address.trim() && <p className="text-destructive text-xs mt-1">সম্পূর্ণ ঠিকানা লিখুন (বাড়ি, রোড, এলাকা)</p>}
+              </div>
+              <div>
+                <input required value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} placeholder="City *" className={`luxury-input ${attempted && !form.city.trim() ? 'border-destructive' : ''}`} />
+                {attempted && !form.city.trim() && <p className="text-destructive text-xs mt-1">শহরের নাম লিখুন (যেমন: Dhaka)</p>}
+              </div>
               <textarea value={form.customerNote} onChange={e => setForm({ ...form, customerNote: e.target.value })} placeholder="Order Note (optional)" className="luxury-input min-h-[60px] resize-y" rows={2} />
 
               {/* Delivery Zone */}
