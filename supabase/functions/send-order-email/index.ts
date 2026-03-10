@@ -2,6 +2,7 @@ import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
 import { OrderConfirmationEmail } from '../_shared/email-templates/order-confirmation.tsx'
 import { AdminOrderNotification } from '../_shared/email-templates/admin-order-notification.tsx'
+import { OrderStatusEmail } from '../_shared/email-templates/order-status-update.tsx'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,6 +62,30 @@ Delivery: ${props.deliveryMethod}
 Payment: ${(props.paymentMethod as string)?.toUpperCase()}`
 }
 
+function generateStatusPlainText(props: { customerName: string; orderId: string; status: string; trackingCode?: string; courierProvider?: string }): string {
+  const shortId = props.orderId?.slice(0, 8).toUpperCase() || ''
+  const statusMessages: Record<string, string> = {
+    Processing: 'Your order is now being processed and will be shipped soon.',
+    Shipped: 'Your order has been shipped and is on its way to you.',
+    Delivered: 'Your order has been delivered. Thank you for shopping with us!',
+    Cancelled: 'Your order has been cancelled. If you have any questions, please contact our support.',
+  }
+  const message = statusMessages[props.status] || `Your order status has been updated to: ${props.status}.`
+
+  return `HIGHLIGHTS - Order Update
+
+Hi ${props.customerName},
+
+${message}
+
+Order #${shortId}
+Status: ${props.status}
+${props.trackingCode ? `Tracking Code: ${props.trackingCode}${props.courierProvider ? ` (${props.courierProvider})` : ''}\n` : ''}
+If you have any questions, reply to this email or contact us at support@highlightsbd.shop
+
+Thank you for shopping with HIGHLIGHTS.`
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -73,20 +98,48 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
+    const { type } = body
+
+    // Handle status update emails
+    if (type === 'status_update') {
+      const { to, customerName, orderId, status, trackingCode, courierProvider } = body
+      if (!to || !orderId || !status) {
+        return new Response(
+          JSON.stringify({ error: 'Missing required fields: to, orderId, status' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const statusProps = { customerName: customerName || 'Customer', orderId, status, trackingCode, courierProvider }
+      const html = await renderAsync(React.createElement(OrderStatusEmail, statusProps))
+      const text = generateStatusPlainText(statusProps)
+      const shortId = orderId.slice(0, 8).toUpperCase()
+
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: FROM_EMAIL,
+          to: [to],
+          reply_to: REPLY_TO,
+          subject: `Order #${shortId} - ${status}`,
+          html,
+          text,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        console.error('Status email error:', JSON.stringify(data))
+        return new Response(JSON.stringify({ error: data }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+      console.log('Status update email sent', { orderId, to, status, id: data.id })
+      return new Response(JSON.stringify({ success: true, id: data.id }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    // Handle order confirmation emails (default)
     const {
-      to,
-      customerName,
-      orderId,
-      items,
-      subtotal,
-      deliveryFee,
-      discount,
-      total,
-      deliveryMethod,
-      paymentMethod,
-      address,
-      city,
-      phone,
+      to, customerName, orderId, items, subtotal, deliveryFee, discount,
+      total, deliveryMethod, paymentMethod, address, city, phone,
     } = body
 
     if (!orderId) {
@@ -98,17 +151,11 @@ Deno.serve(async (req) => {
 
     const templateProps = {
       customerName: customerName || 'Customer',
-      orderId,
-      items: items || [],
-      subtotal: subtotal || 0,
-      deliveryFee: deliveryFee || 0,
-      discount: discount || 0,
-      total: total || 0,
-      deliveryMethod: deliveryMethod || 'Standard',
-      paymentMethod: paymentMethod || 'COD',
-      address: address || '',
-      city: city || '',
-      phone: phone || '',
+      orderId, items: items || [], subtotal: subtotal || 0,
+      deliveryFee: deliveryFee || 0, discount: discount || 0,
+      total: total || 0, deliveryMethod: deliveryMethod || 'Standard',
+      paymentMethod: paymentMethod || 'COD', address: address || '',
+      city: city || '', phone: phone || '',
     }
 
     const results: { customer?: string; admin?: string } = {}
@@ -120,17 +167,11 @@ Deno.serve(async (req) => {
       const customerText = generatePlainText(templateProps)
       const customerRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: FROM_EMAIL,
-          to: [to],
-          reply_to: REPLY_TO,
+          from: FROM_EMAIL, to: [to], reply_to: REPLY_TO,
           subject: `Your HIGHLIGHTS order #${shortId}`,
-          html: customerHtml,
-          text: customerText,
+          html: customerHtml, text: customerText,
         }),
       })
       const customerData = await customerRes.json()
@@ -150,17 +191,11 @@ Deno.serve(async (req) => {
       const adminText = generateAdminPlainText(adminProps)
       const adminRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${resendApiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: FROM_EMAIL,
-          to: [adminEmail],
-          reply_to: REPLY_TO,
+          from: FROM_EMAIL, to: [adminEmail], reply_to: REPLY_TO,
           subject: `New order #${shortId} - BDT ${total || 0}`,
-          html: adminHtml,
-          text: adminText,
+          html: adminHtml, text: adminText,
         }),
       })
       const adminData = await adminRes.json()
