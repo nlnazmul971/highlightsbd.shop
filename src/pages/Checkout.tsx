@@ -315,6 +315,7 @@ const Checkout = () => {
         transaction_id: form.transactionId ? sanitizeInput(form.transactionId, 50) : null,
         customer_note: form.customerNote ? sanitizeInput(form.customerNote, 500) : null,
         customer_email: form.email ? form.email.trim() : null,
+      } as any);
       });
       // Send order confirmation email (fire & forget)
       if (form.email) {
