@@ -213,11 +213,7 @@ const HomepageImageUpload = ({ value, onChange, folder }: { value: string; onCha
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const fileName = `homepage/${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-      const { error } = await supabase.storage.from('product-images').upload(fileName, file);
-      if (error) throw error;
-      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName);
+      const publicUrl = await uploadToCloudinary(file, `homepage/${folder}`);
       onChange(publicUrl);
       toast.success('Image uploaded!');
     } catch (err: any) {
