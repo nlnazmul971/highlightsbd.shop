@@ -31,7 +31,9 @@ serve(async (req) => {
     const verifyRes = await fetch(verifyUrl, { method: 'POST' });
     const verifyData = await verifyRes.json();
 
-    const success = verifyData.success && verifyData.score >= 0.5;
+    console.log('reCAPTCHA verify response:', JSON.stringify(verifyData));
+    
+    const success = verifyData.success && (verifyData.score ?? 0) >= 0.3;
 
     return new Response(JSON.stringify({
       success,
