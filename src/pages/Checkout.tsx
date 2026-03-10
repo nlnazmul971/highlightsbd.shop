@@ -314,6 +314,7 @@ const Checkout = () => {
         payment_sender_number: form.senderNumber ? form.senderNumber.replace(/[^\d+\-\s]/g, '').slice(0, 20) : null,
         transaction_id: form.transactionId ? sanitizeInput(form.transactionId, 50) : null,
         customer_note: form.customerNote ? sanitizeInput(form.customerNote, 500) : null,
+        customer_email: form.email ? form.email.trim() : null,
       });
       // Send order confirmation email (fire & forget)
       if (form.email) {
