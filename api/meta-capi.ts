@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, getAdminDb, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAuth, firestoreGet, corsHeaders } from './_lib/firebase-admin';
 
 const META_GRAPH_URL = 'https://graph.facebook.com/v18.0';
 
@@ -8,23 +8,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Headers', 'authorization, content-type').status(200).end();
   Object.entries(cors).forEach(([k, v]) => res.setHeader(k, v));
 
-  const auth = await verifyFirebaseAdmin(req.headers.authorization || null);
+  const auth = await verifyFirebaseAuth(req.headers.authorization || null);
   if (!auth.authorized) return res.status(403).json({ success: false, error: auth.error });
 
   try {
     const { action, data } = req.body;
 
-    const db = getAdminDb();
-    if (!db) {
-      return res.json({ success: false, error: 'Firebase Admin not initialized - check FIREBASE_SERVICE_ACCOUNT_KEY' });
-    }
-
-    // Get tracking settings from Firestore
-    const settingsSnap = await db.collection('tracking_settings').get();
+    // Get tracking settings from Firestore REST API
+    const docs = await firestoreGet('tracking_settings');
     const settingsMap: Record<string, string> = {};
-    settingsSnap.forEach((doc) => {
-      const d = doc.data();
-      settingsMap[d.key || doc.id] = d.value;
+    docs.forEach((doc: any) => {
+      settingsMap[doc.key || doc.id] = doc.value;
     });
 
     const pixelId = settingsMap['meta_pixel_id'];
