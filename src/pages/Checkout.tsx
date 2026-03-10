@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
-import { isHoneypotFilled, isFormFilledTooFast, isRateLimited, recordOrderTimestamp, isValidBDPhone } from '@/lib/botProtection';
+import { isHoneypotFilled, isFormFilledTooFast, isRateLimited, recordOrderTimestamp, isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
 
 declare global {
   interface Window {
@@ -274,6 +274,10 @@ const Checkout = () => {
       toast.error('Please fill all required fields');
       return;
     }
+    if (!isValidEmail(form.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     if (!isValidBDPhone(form.phone)) {
       toast.error('Please enter a valid Bangladesh phone number');
       return;
@@ -327,22 +331,22 @@ const Checkout = () => {
         user_id: user?.id || null,
         items: items.map(i => ({
           product_id: i.product.id,
-          name: i.product.name,
+          name: sanitizeInput(i.product.name, 200),
           quantity: i.quantity,
           price: i.product.price,
           size: i.size,
           color: i.color,
         })) as unknown as Json,
         total: grandTotal,
-        customer_name: form.name,
-        customer_phone: form.phone,
-        customer_address: form.address,
-        customer_city: form.city,
+        customer_name: sanitizeInput(form.name, 100),
+        customer_phone: form.phone.replace(/[^\d+\-\s]/g, '').slice(0, 20),
+        customer_address: sanitizeInput(form.address, 500),
+        customer_city: sanitizeInput(form.city, 100),
         delivery_method: delivery,
         payment_method: payment === 'online' ? onlineProvider! : 'cod',
-        payment_sender_number: form.senderNumber || null,
-        transaction_id: form.transactionId || null,
-        customer_note: form.customerNote || null,
+        payment_sender_number: form.senderNumber ? form.senderNumber.replace(/[^\d+\-\s]/g, '').slice(0, 20) : null,
+        transaction_id: form.transactionId ? sanitizeInput(form.transactionId, 50) : null,
+        customer_note: form.customerNote ? sanitizeInput(form.customerNote, 500) : null,
       });
       // Save address to profile if logged in
       if (user) {
