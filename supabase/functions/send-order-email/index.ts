@@ -1,6 +1,5 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
-import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { OrderConfirmationEmail } from '../_shared/email-templates/order-confirmation.tsx'
 
 const corsHeaders = {
@@ -10,8 +9,7 @@ const corsHeaders = {
 }
 
 const SITE_NAME = 'HIGHLIGHTS'
-const SENDER_DOMAIN = 'notify.highlightsbd.shop'
-const FROM_DOMAIN = 'highlightsbd.shop'
+const FROM_EMAIL = `${SITE_NAME} <noreply@highlightsbd.shop>`
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -19,9 +17,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const apiKey = Deno.env.get('LOVABLE_API_KEY')
-    if (!apiKey) {
-      throw new Error('LOVABLE_API_KEY not configured')
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY not configured')
     }
 
     const body = await req.json()
@@ -64,28 +62,33 @@ Deno.serve(async (req) => {
     }
 
     const html = await renderAsync(React.createElement(OrderConfirmationEmail, templateProps))
-    const text = await renderAsync(React.createElement(OrderConfirmationEmail, templateProps), {
-      plainText: true,
-    })
 
-    const result = await sendLovableEmail(
-      {
-        run_id: crypto.randomUUID(),
-        to,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
+    // Send via Resend API
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: [to],
         subject: `Order Confirmed — HIGHLIGHTS #${orderId.slice(0, 8).toUpperCase()}`,
         html,
-        text,
-        purpose: 'transactional',
-      },
-      { apiKey, apiBaseUrl: 'https://api.lovable.dev' }
-    )
+      }),
+    })
 
-    console.log('Order confirmation email sent', { orderId, to, message_id: result.message_id })
+    const resendData = await resendResponse.json()
+
+    if (!resendResponse.ok) {
+      console.error('Resend API error:', resendData)
+      throw new Error(resendData?.message || `Resend API error [${resendResponse.status}]`)
+    }
+
+    console.log('Order confirmation email sent via Resend', { orderId, to, id: resendData.id })
 
     return new Response(
-      JSON.stringify({ success: true, message_id: result.message_id }),
+      JSON.stringify({ success: true, id: resendData.id }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
