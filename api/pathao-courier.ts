@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAuth, corsHeaders } from './_lib/firebase-admin';
 
 const PATHAO_BASE_URL = 'https://api-hermes.pathao.com';
 
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.setHeader('Access-Control-Allow-Origin', '*').setHeader('Access-Control-Allow-Headers', 'authorization, content-type').status(200).end();
   Object.entries(cors).forEach(([k, v]) => res.setHeader(k, v));
 
-  const auth = await verifyFirebaseAdmin(req.headers.authorization || null);
+  const auth = await verifyFirebaseAuth(req.headers.authorization || null);
   if (!auth.authorized) return res.status(403).json({ success: false, error: auth.error });
 
   const { PATHAO_CLIENT_ID, PATHAO_CLIENT_SECRET, PATHAO_USERNAME, PATHAO_PASSWORD } = process.env;

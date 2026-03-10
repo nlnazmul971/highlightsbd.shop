@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAuth, corsHeaders } from './_lib/firebase-admin';
 import * as crypto from 'crypto';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const auth = await verifyFirebaseAdmin(req.headers.authorization || null);
+  const auth = await verifyFirebaseAuth(req.headers.authorization || null);
   if (!auth.authorized) return res.status(403).json({ error: auth.error });
 
   try {
