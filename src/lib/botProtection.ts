@@ -53,6 +53,23 @@ export const recordOrderTimestamp = (): void => {
  */
 export const isValidBDPhone = (phone: string): boolean => {
   const cleaned = phone.replace(/[\s\-\+]/g, '');
-  // Must be 11 digits starting with 01, or 13 digits starting with 880
   return /^01[3-9]\d{8}$/.test(cleaned) || /^8801[3-9]\d{8}$/.test(cleaned);
+};
+
+/**
+ * Sanitize text input - strip HTML tags and limit length
+ */
+export const sanitizeInput = (input: string, maxLength = 500): string => {
+  return input
+    .replace(/<[^>]*>/g, '') // Strip HTML tags
+    .replace(/[<>"'&]/g, '') // Remove dangerous chars
+    .trim()
+    .slice(0, maxLength);
+};
+
+/**
+ * Validate email format
+ */
+export const isValidEmail = (email: string): boolean => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 255;
 };
