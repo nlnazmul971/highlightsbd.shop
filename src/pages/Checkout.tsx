@@ -239,12 +239,32 @@ const Checkout = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAttempted(true);
+
+    // Bot protection checks
+    if (isHoneypotFilled(honeypot)) {
+      // Silently reject - don't tell bots why
+      toast.success('Order placed successfully!');
+      return;
+    }
+    if (isFormFilledTooFast(formOpenedAt.current)) {
+      toast.error('Please take a moment to review your order');
+      return;
+    }
+    if (isRateLimited()) {
+      toast.error('Too many orders placed recently. Please try again later.');
+      return;
+    }
+
     if (items.length === 0) {
       toast.error('Cart is empty');
       return;
     }
     if (!form.name || !form.email || !form.phone || !form.address || !form.city) {
       toast.error('Please fill all required fields');
+      return;
+    }
+    if (!isValidBDPhone(form.phone)) {
+      toast.error('Please enter a valid Bangladesh phone number');
       return;
     }
     if (payment === 'online' && !onlineProvider) {
