@@ -430,8 +430,7 @@ const Checkout = () => {
           },
         },
       });
-      // Record for rate limiting
-      recordOrderTimestamp();
+      
       // Increment coupon usage
       if (appliedCoupon) {
         try { await incrementCouponUsage.mutateAsync(appliedCoupon.id); } catch {}
