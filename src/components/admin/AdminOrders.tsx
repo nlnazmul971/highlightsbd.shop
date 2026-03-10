@@ -324,9 +324,9 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       const totalSpent = localOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
       let steadfastInfo = null;
-      try { const { data: sfResult } = await supabase.functions.invoke('steadfast-courier', { body: { action: 'check_status', data: { consignment_id: phone } } }); if (sfResult?.success) steadfastInfo = sfResult.data; } catch {}
+      try { const sfResult = await callCourier('steadfast', 'check_status', { consignment_id: phone }); if (sfResult?.success) steadfastInfo = sfResult.data; } catch {}
       let pathaoInfo = null;
-      try { const { data: ptResult } = await supabase.functions.invoke('pathao-courier', { body: { action: 'view_order', data: { consignment_id: phone } } }); if (ptResult?.success) pathaoInfo = ptResult.data; } catch {}
+      try { const ptResult = await callCourier('pathao', 'view_order', { consignment_id: phone }); if (ptResult?.success) pathaoInfo = ptResult.data; } catch {}
 
       let riskLevel: 'low' | 'medium' | 'high' = 'low';
       if (cancelRate > 50 || (totalOrders >= 3 && cancelRate > 40)) riskLevel = 'high';
