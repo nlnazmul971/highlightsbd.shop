@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 type Props = {
   value: string;
   onChange: (url: string) => void;
-  bucket?: string;
+  folder?: string;
 };
 
-const ImageUpload = ({ value, onChange, bucket = 'product-images' }: Props) => {
+const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,21 +29,8 @@ const ImageUpload = ({ value, onChange, bucket = 'product-images' }: Props) => {
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-      const filePath = `${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath);
-
-      onChange(publicUrl);
+      const url = await uploadToCloudinary(file, folder);
+      onChange(url);
       toast.success('Image uploaded');
     } catch (err: any) {
       toast.error(err.message || 'Upload failed');
