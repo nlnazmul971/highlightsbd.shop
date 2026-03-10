@@ -17,8 +17,11 @@ const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+    const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.svg'];
+    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    const isValidType = file.type.startsWith('image/') || validExtensions.includes(ext);
+    if (!isValidType) {
+      toast.error('Please select an image file (JPG, PNG, WebP)');
       return;
     }
 
