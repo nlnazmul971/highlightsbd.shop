@@ -252,16 +252,14 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const email = (order as any).customer_email;
     if (!email) return;
     try {
-      await supabase.functions.invoke('send-order-email', {
-        body: {
-          type: 'status_update',
-          to: email,
-          customerName: order.customer_name,
-          orderId: order.id,
-          status: newStatus,
-          trackingCode: order.tracking_code,
-          courierProvider: order.courier_provider,
-        },
+      await sendOrderEmail({
+        type: 'status_update',
+        to: email,
+        customerName: order.customer_name,
+        orderId: order.id,
+        status: newStatus,
+        trackingCode: order.tracking_code,
+        courierProvider: order.courier_provider,
       });
     } catch {
       console.warn('Status email failed to send');
