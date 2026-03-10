@@ -10,7 +10,56 @@ const corsHeaders = {
 }
 
 const SITE_NAME = 'HIGHLIGHTS'
-const FROM_EMAIL = `${SITE_NAME} <noreply@highlightsbd.shop>`
+const FROM_EMAIL = `${SITE_NAME} <orders@highlightsbd.shop>`
+const REPLY_TO = 'support@highlightsbd.shop'
+
+function generatePlainText(props: Record<string, unknown>): string {
+  const items = (props.items as Array<{ name: string; quantity: number; price: number; size?: string; color?: string }>) || []
+  const itemLines = items.map(
+    (item) => `  ${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` / ${item.color}` : ''} x${item.quantity} - BDT ${item.price * item.quantity}`
+  ).join('\n')
+
+  return `HIGHLIGHTS - Order Confirmation
+
+Order #${(props.orderId as string)?.slice(0, 8).toUpperCase()}
+
+Thank you, ${props.customerName}. Your order has been placed.
+
+Items:
+${itemLines}
+
+Subtotal: BDT ${props.subtotal}
+Delivery (${props.deliveryMethod}): BDT ${props.deliveryFee}
+${(props.discount as number) > 0 ? `Discount: -BDT ${props.discount}\n` : ''}Total: BDT ${props.total}
+
+Delivery Address: ${props.address}, ${props.city}
+Phone: ${props.phone}
+Payment: ${(props.paymentMethod as string)?.toUpperCase()}
+
+Thank you for shopping with HIGHLIGHTS.`
+}
+
+function generateAdminPlainText(props: Record<string, unknown>): string {
+  const items = (props.items as Array<{ name: string; quantity: number; price: number; size?: string; color?: string }>) || []
+  const itemLines = items.map(
+    (item) => `  ${item.name}${item.size ? ` (${item.size})` : ''}${item.color ? ` / ${item.color}` : ''} x${item.quantity} - BDT ${item.price * item.quantity}`
+  ).join('\n')
+
+  return `New Order Received - HIGHLIGHTS
+
+Order #${(props.orderId as string)?.slice(0, 8).toUpperCase()}
+
+Customer: ${props.customerName}
+Phone: ${props.phone}
+${props.customerEmail ? `Email: ${props.customerEmail}\n` : ''}Address: ${props.address}, ${props.city}
+
+Items:
+${itemLines}
+
+Total: BDT ${props.total}
+Delivery: ${props.deliveryMethod}
+Payment: ${(props.paymentMethod as string)?.toUpperCase()}`
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -63,10 +112,12 @@ Deno.serve(async (req) => {
     }
 
     const results: { customer?: string; admin?: string } = {}
+    const shortId = orderId.slice(0, 8).toUpperCase()
 
     // 1. Send customer confirmation email
     if (to) {
       const customerHtml = await renderAsync(React.createElement(OrderConfirmationEmail, templateProps))
+      const customerText = generatePlainText(templateProps)
       const customerRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -76,13 +127,15 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: FROM_EMAIL,
           to: [to],
-          subject: `Order Confirmed — HIGHLIGHTS #${orderId.slice(0, 8).toUpperCase()}`,
+          reply_to: REPLY_TO,
+          subject: `Your HIGHLIGHTS order #${shortId}`,
           html: customerHtml,
+          text: customerText,
         }),
       })
       const customerData = await customerRes.json()
       if (!customerRes.ok) {
-        console.error('Resend customer email error:', customerData)
+        console.error('Resend customer email error:', JSON.stringify(customerData))
       } else {
         results.customer = customerData.id
         console.log('Customer email sent', { orderId, to, id: customerData.id })
@@ -92,12 +145,9 @@ Deno.serve(async (req) => {
     // 2. Send admin notification email
     const adminEmail = Deno.env.get('ADMIN_NOTIFICATION_EMAIL')
     if (adminEmail) {
-      const adminHtml = await renderAsync(
-        React.createElement(AdminOrderNotification, {
-          ...templateProps,
-          customerEmail: to || undefined,
-        })
-      )
+      const adminProps = { ...templateProps, customerEmail: to || undefined }
+      const adminHtml = await renderAsync(React.createElement(AdminOrderNotification, adminProps))
+      const adminText = generateAdminPlainText(adminProps)
       const adminRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -107,13 +157,15 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           from: FROM_EMAIL,
           to: [adminEmail],
-          subject: `🛒 New Order #${orderId.slice(0, 8).toUpperCase()} — ৳${total || 0}`,
+          reply_to: REPLY_TO,
+          subject: `New order #${shortId} - BDT ${total || 0}`,
           html: adminHtml,
+          text: adminText,
         }),
       })
       const adminData = await adminRes.json()
       if (!adminRes.ok) {
-        console.error('Resend admin email error:', adminData)
+        console.error('Resend admin email error:', JSON.stringify(adminData))
       } else {
         results.admin = adminData.id
         console.log('Admin notification sent', { orderId, adminEmail, id: adminData.id })
