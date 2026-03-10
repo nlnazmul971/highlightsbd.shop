@@ -740,7 +740,21 @@ const Checkout = () => {
                   <span>Total</span>
                   <span>৳{grandTotal.toLocaleString()}</span>
                 </div>
-                <button type="submit" disabled={createOrder.isPending} className="luxury-button-primary w-full mt-6">
+                {/* Simple CAPTCHA */}
+                <div className="mt-4 p-4 border border-border bg-background">
+                  <label className="text-xs text-muted-foreground block mb-2">
+                    🔒 নিরাপত্তা যাচাই: <span className="font-semibold text-foreground">{captchaQuestion.a} + {captchaQuestion.b} = ?</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={captchaAnswer}
+                    onChange={e => setCaptchaAnswer(e.target.value)}
+                    placeholder="উত্তর লিখুন"
+                    className="luxury-input w-full"
+                    required
+                  />
+                </div>
+                <button type="submit" disabled={createOrder.isPending} className="luxury-button-primary w-full mt-4">
                   {createOrder.isPending ? 'Placing Order...' : 'Place Order'}
                 </button>
               </div>
