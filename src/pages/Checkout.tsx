@@ -294,7 +294,7 @@ const Checkout = () => {
     }
     try {
       const orderResult = await createOrder.mutateAsync({
-        user_id: user?.id || null,
+        user_id: user?.uid || null,
         items: items.map(i => ({
           product_id: i.product.id,
           name: sanitizeInput(i.product.name, 200),
@@ -302,7 +302,7 @@ const Checkout = () => {
           price: i.product.price,
           size: i.size,
           color: i.color,
-        })) as unknown as Json,
+        })) as any,
         total: grandTotal,
         customer_name: sanitizeInput(form.name, 100),
         customer_phone: form.phone.replace(/[^\d+\-\s]/g, '').slice(0, 20),
