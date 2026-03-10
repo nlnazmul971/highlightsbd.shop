@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones, useProfile, useUpdateProfile, useValidateCoupon, useIncrementCouponUsage, CouponRow } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
+import { sendOrderEmail } from '@/lib/api';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
 import { isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
