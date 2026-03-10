@@ -10,18 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
-import { isHoneypotFilled, isFormFilledTooFast, isRateLimited, recordOrderTimestamp, isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
-
-declare global {
-  interface Window {
-    grecaptcha: {
-      ready: (cb: () => void) => void;
-      execute: (siteKey: string, options: { action: string }) => Promise<string>;
-    };
-  }
-}
-
-const RECAPTCHA_SITE_KEY = '6LeeyYUsAAAAAAfJMZwQSmc7zwu4gnrlq9dGrIMC';
+import { isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
 
 type PaymentMethod = 'cod' | 'online';
 type OnlineProvider = 'bkash' | 'nagad' | null;
@@ -89,8 +78,12 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<CouponRow | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [honeypot, setHoneypot] = useState('');
-  const formOpenedAt = useRef(Date.now());
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState(() => {
+    const a = Math.floor(Math.random() * 9) + 1;
+    const b = Math.floor(Math.random() * 9) + 1;
+    return { a, b, answer: a + b };
+  });
   const validateCoupon = useValidateCoupon();
   const incrementCouponUsage = useIncrementCouponUsage();
 
@@ -251,18 +244,13 @@ const Checkout = () => {
     e.preventDefault();
     setAttempted(true);
 
-    // Bot protection checks
-    if (isHoneypotFilled(honeypot)) {
-      // Silently reject - don't tell bots why
-      toast.success('Order placed successfully!');
-      return;
-    }
-    if (isFormFilledTooFast(formOpenedAt.current)) {
-      toast.error('Please take a moment to review your order');
-      return;
-    }
-    if (isRateLimited()) {
-      toast.error('Too many orders placed recently. Please try again later.');
+    // Simple CAPTCHA check
+    if (parseInt(captchaAnswer) !== captchaQuestion.answer) {
+      toast.error('ক্যাপচা উত্তর সঠিক নয়। আবার চেষ্টা করুন।');
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      setCaptchaQuestion({ a, b, answer: a + b });
+      setCaptchaAnswer('');
       return;
     }
 
@@ -306,27 +294,6 @@ const Checkout = () => {
       return;
     }
     try {
-      // reCAPTCHA v3 verification
-      if (window.grecaptcha) {
-        try {
-          const recaptchaToken = await new Promise<string>((resolve, reject) => {
-            window.grecaptcha.ready(() => {
-              window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'place_order' }).then(resolve).catch(reject);
-            });
-          });
-          const { data: verifyResult } = await supabase.functions.invoke('verify-recaptcha', {
-            body: { token: recaptchaToken },
-          });
-          if (!verifyResult?.success) {
-            toast.error('Security verification failed. Please try again.');
-            return;
-          }
-        } catch {
-          // If reCAPTCHA fails, still allow order (graceful degradation)
-          console.warn('reCAPTCHA verification skipped');
-        }
-      }
-
       const orderResult = await createOrder.mutateAsync({
         user_id: user?.id || null,
         items: items.map(i => ({
@@ -442,8 +409,7 @@ const Checkout = () => {
           },
         },
       });
-      // Record for rate limiting
-      recordOrderTimestamp();
+      
       // Increment coupon usage
       if (appliedCoupon) {
         try { await incrementCouponUsage.mutateAsync(appliedCoupon.id); } catch {}
@@ -466,11 +432,7 @@ const Checkout = () => {
           <p className="text-center text-muted-foreground">Your cart is empty.</p>
         ) : (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Honeypot - hidden from real users, bots will fill this */}
-            <div className="absolute opacity-0 pointer-events-none" style={{ position: 'absolute', left: '-9999px' }} aria-hidden="true" tabIndex={-1}>
-              <label htmlFor="website_url">Website</label>
-              <input type="text" id="website_url" name="website_url" value={honeypot} onChange={e => setHoneypot(e.target.value)} autoComplete="off" tabIndex={-1} />
-            </div>
+            
             <div className="space-y-6">
               <h2 className="luxury-body text-[11px] text-foreground mb-4">Delivery Information</h2>
               
@@ -757,7 +719,21 @@ const Checkout = () => {
                   <span>Total</span>
                   <span>৳{grandTotal.toLocaleString()}</span>
                 </div>
-                <button type="submit" disabled={createOrder.isPending} className="luxury-button-primary w-full mt-6">
+                {/* Simple CAPTCHA */}
+                <div className="mt-4 p-4 border border-border bg-background">
+                  <label className="text-xs text-muted-foreground block mb-2">
+                    🔒 নিরাপত্তা যাচাই: <span className="font-semibold text-foreground">{captchaQuestion.a} + {captchaQuestion.b} = ?</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={captchaAnswer}
+                    onChange={e => setCaptchaAnswer(e.target.value)}
+                    placeholder="উত্তর লিখুন"
+                    className="luxury-input w-full"
+                    required
+                  />
+                </div>
+                <button type="submit" disabled={createOrder.isPending} className="luxury-button-primary w-full mt-4">
                   {createOrder.isPending ? 'Placing Order...' : 'Place Order'}
                 </button>
               </div>
