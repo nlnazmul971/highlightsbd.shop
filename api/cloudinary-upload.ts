@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAuth, corsHeaders } from './_lib/firebase-admin';
 import * as crypto from 'crypto';
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
