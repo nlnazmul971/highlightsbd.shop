@@ -196,6 +196,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       });
       setSelectedOrder((prev: any) => prev ? { ...prev, status: 'Processing', ...courierData } : null);
       toast.success(`Courier order created! Tracking: ${courierData.tracking_code || courierData.consignment_id}`);
+      sendStatusEmail({ ...order, tracking_code: courierData.tracking_code, courier_provider: courierData.courier_provider }, 'Processing');
     } catch (err: any) {
       toast.error('Failed to send to courier: ' + err.message);
     } finally {
@@ -228,6 +229,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
           await updateOrder.mutateAsync({ id: order.id, status: mappedStatus });
           setSelectedOrder((prev: any) => prev ? { ...prev, status: mappedStatus } : null);
           toast.success(`Status synced: ${deliveryStatus} → ${mappedStatus}`);
+          sendStatusEmail(order, mappedStatus);
         } else {
           toast.info(`Courier status: ${deliveryStatus} (no change)`);
         }
@@ -265,6 +267,26 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     }
   };
 
+  const sendStatusEmail = async (order: any, newStatus: string) => {
+    const email = (order as any).customer_email;
+    if (!email) return;
+    try {
+      await supabase.functions.invoke('send-order-email', {
+        body: {
+          type: 'status_update',
+          to: email,
+          customerName: order.customer_name,
+          orderId: order.id,
+          status: newStatus,
+          trackingCode: order.tracking_code,
+          courierProvider: order.courier_provider,
+        },
+      });
+    } catch {
+      console.warn('Status email failed to send');
+    }
+  };
+
   const handleStatusChange = async (id: string, newStatus: string, order: any) => {
     try {
       // Show courier selection when changing to Processing (if not already sent)
@@ -274,6 +296,8 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       } else {
         await updateOrder.mutateAsync({ id, status: newStatus });
         toast.success(`Order status updated to ${newStatus}`);
+        // Send status update email (fire & forget)
+        sendStatusEmail(order, newStatus);
       }
     } catch (err: any) { toast.error(err.message); }
   };
