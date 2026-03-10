@@ -234,10 +234,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     
     setReturnLoading(order.id);
     try {
-      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-        body: { action: 'create_return_request', data: { consignment_id: order.consignment_id, reason: 'Customer requested return' } },
-      });
-      if (error) throw error;
+      const result = await callCourier('steadfast', 'create_return_request', { consignment_id: order.consignment_id, reason: 'Customer requested return' });
 
       if (result.success) {
         toast.success('Return request created successfully!');
