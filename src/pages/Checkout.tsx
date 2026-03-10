@@ -316,7 +316,6 @@ const Checkout = () => {
         customer_note: form.customerNote ? sanitizeInput(form.customerNote, 500) : null,
         customer_email: form.email ? form.email.trim() : null,
       } as any);
-      });
       // Send order confirmation email (fire & forget)
       if (form.email) {
         try {
