@@ -78,6 +78,8 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<CouponRow | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [honeypot, setHoneypot] = useState('');
+  const formOpenedAt = useRef(Date.now());
   const validateCoupon = useValidateCoupon();
   const incrementCouponUsage = useIncrementCouponUsage();
 
