@@ -11,3 +11,5 @@ project_id = "ruxzgxkqmlblqsmctfnh"
     verify_jwt = false
   [functions.verify-recaptcha]
     verify_jwt = false
+  [functions.send-order-email]
+    verify_jwt = false
