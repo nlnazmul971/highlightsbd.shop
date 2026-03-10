@@ -119,8 +119,7 @@ const AdminAPI = () => {
   const checkMetaCapi = async () => {
     setMetaStatus('checking');
     try {
-      const { data: result, error } = await supabase.functions.invoke('meta-capi', { body: { action: 'check_connection' } });
-      if (error) throw error;
+      const result = await callMetaCapi('check_connection');
       if (result.success) { setMetaStatus('connected'); toast.success('Meta CAPI connected!'); }
       else { setMetaStatus('error'); toast.error('Meta: ' + (result.error || 'Connection failed')); }
     } catch (err: any) { setMetaStatus('error'); toast.error('Meta: ' + err.message); }
