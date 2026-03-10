@@ -1,18 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, db } from '@/lib/firebase';
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  sendPasswordResetEmail,
-  updatePassword as firebaseUpdatePassword,
-  type User,
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
+
+type AuthUser = User & { uid: string };
 
 type AuthContextType = {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
   signUp: (email: string, password: string, displayName?: string, phone?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -24,45 +17,64 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const wrapUser = (u: User | null): AuthUser | null => {
+    if (!u) return null;
+    return Object.assign(u, { uid: u.id }) as AuthUser;
+  };
+
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(wrapUser(session?.user ?? null));
       setLoading(false);
     });
-    return () => unsub();
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(wrapUser(session?.user ?? null));
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string, phone?: string) => {
-    const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
-    await setDoc(doc(db, 'profiles', newUser.uid), {
-      user_id: newUser.uid,
-      display_name: displayName || email,
-      phone: phone || null,
-      address: null,
-      city: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: displayName || email },
+      },
     });
+    if (error) throw error;
+    // Profile is created automatically by the database trigger handle_new_user
+    // Update profile with phone if provided
+    if (data.user && phone) {
+      await supabase.from('profiles').update({ phone }).eq('user_id', data.user.id);
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
   };
 
   const signOut = async () => {
-    await firebaseSignOut(auth);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw error;
   };
 
   const changePassword = async (newPassword: string) => {
-    if (!auth.currentUser) throw new Error('Not authenticated');
-    await firebaseUpdatePassword(auth.currentUser, newPassword);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
   };
 
   return (
