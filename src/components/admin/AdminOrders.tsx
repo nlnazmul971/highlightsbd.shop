@@ -108,23 +108,16 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const items = Array.isArray(order.items) ? order.items : [];
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
 
-    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-      body: {
-        action: 'create_order',
-        data: {
-          invoice: order.id.slice(0, 8),
-          recipient_name: order.customer_name,
-          recipient_phone: order.customer_phone,
-          recipient_address: `${order.customer_address}, ${order.customer_city}`,
-          cod_amount: order.payment_method === 'cod' ? order.total : 0,
-          note: `Order #${order.id.slice(0, 8)}`,
-          item_description: itemDesc,
-          delivery_type: 0,
-        },
-      },
+    const result = await callCourier('steadfast', 'create_order', {
+      invoice: order.id.slice(0, 8),
+      recipient_name: order.customer_name,
+      recipient_phone: order.customer_phone,
+      recipient_address: `${order.customer_address}, ${order.customer_city}`,
+      cod_amount: order.payment_method === 'cod' ? order.total : 0,
+      note: `Order #${order.id.slice(0, 8)}`,
+      item_description: itemDesc,
+      delivery_type: 0,
     });
-
-    if (error) throw error;
 
     if (result.success && result.data?.consignment) {
       const c = result.data.consignment;
