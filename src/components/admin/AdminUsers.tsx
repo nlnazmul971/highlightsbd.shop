@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, addDoc, updateDoc, orderBy, query } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import { Users, UserCheck, Shield, TrendingUp, Trash2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,31 +14,37 @@ const AdminUsers = () => {
   const { data: profiles = [], isLoading: profilesLoading } = useQuery({
     queryKey: ['all-profiles'],
     queryFn: async () => {
-      const q = query(collection(db, 'profiles'), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
   const { data: roles = [] } = useQuery({
     queryKey: ['all-roles'],
     queryFn: async () => {
-      const snap = await getDocs(collection(db, 'user_roles'));
-      return snap.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+      const { data, error } = await supabase.from('user_roles').select('*');
+      if (error) throw error;
+      return data || [];
     },
   });
 
   const getRoleForUser = (userId: string) => {
-    const r = roles.find((r: any) => r.user_id === userId || r.id === userId);
+    const r = roles.find((r: any) => r.user_id === userId);
     return r ? r.role : 'user';
   };
 
   const changeRoleMutation = useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: AppRole }) => {
       if (newRole === 'user') {
-        await deleteDoc(doc(db, 'user_roles', userId));
+        await supabase.from('user_roles').delete().eq('user_id', userId);
       } else {
-        await setDoc(doc(db, 'user_roles', userId), { user_id: userId, role: newRole });
+        const { data: existing } = await supabase.from('user_roles').select('id').eq('user_id', userId).maybeSingle();
+        if (existing) {
+          await supabase.from('user_roles').update({ role: newRole } as any).eq('user_id', userId);
+        } else {
+          await supabase.from('user_roles').insert({ user_id: userId, role: newRole } as any);
+        }
       }
     },
     onSuccess: () => {
@@ -52,17 +57,16 @@ const AdminUsers = () => {
   const deleteUserMutation = useMutation({
     mutationFn: async (profile: any) => {
       const currentRole = getRoleForUser(profile.user_id);
-      await addDoc(collection(db, 'trash_users'), {
+      await supabase.from('trash_users').insert({
         original_user_id: profile.user_id,
         display_name: profile.display_name,
         phone: profile.phone,
         city: profile.city,
         address: profile.address,
         role: currentRole,
-        deleted_at: new Date().toISOString(),
       });
-      await deleteDoc(doc(db, 'user_roles', profile.user_id));
-      await deleteDoc(doc(db, 'profiles', profile.user_id));
+      await supabase.from('user_roles').delete().eq('user_id', profile.user_id);
+      await supabase.from('profiles').delete().eq('user_id', profile.user_id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-profiles'] });

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, deleteDoc, orderBy, query } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Trash2, Mail, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -10,15 +9,16 @@ const AdminNewsletter = () => {
   const { data: subscribers, isLoading } = useQuery({
     queryKey: ['admin-newsletter'],
     queryFn: async () => {
-      const q = query(collection(db, 'newsletter_subscribers'), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      const { data, error } = await supabase.from('newsletter_subscribers').select('*').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'newsletter_subscribers', id));
+      const { error } = await supabase.from('newsletter_subscribers').delete().eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-newsletter'] }); toast.success('Subscriber removed'); },
     onError: (err: any) => toast.error(err.message),
@@ -26,7 +26,7 @@ const AdminNewsletter = () => {
 
   const handleExport = () => {
     if (!subscribers?.length) return;
-    const csv = 'Email,Subscribed At\n' + subscribers.map(s => `${s.email},${new Date(s.created_at).toLocaleDateString()}`).join('\n');
+    const csv = 'Email,Subscribed At\n' + subscribers.map((s: any) => `${s.email},${new Date(s.created_at).toLocaleDateString()}`).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'newsletter-subscribers.csv'; a.click();
@@ -51,7 +51,7 @@ const AdminNewsletter = () => {
       ) : (
         <div className="border border-border">
           <div className="grid grid-cols-[1fr_auto_auto] gap-3 p-3 border-b border-border bg-secondary/30 text-xs text-muted-foreground tracking-wider uppercase"><span>Email</span><span>Date</span><span></span></div>
-          {subscribers.map(sub => (
+          {subscribers.map((sub: any) => (
             <div key={sub.id} className="grid grid-cols-[1fr_auto_auto] gap-3 p-3 border-b border-border last:border-0 items-center">
               <span className="text-sm truncate">{sub.email}</span>
               <span className="text-xs text-muted-foreground">{new Date(sub.created_at).toLocaleDateString()}</span>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 
 const GA4_ID_REGEX = /^G-[A-Z0-9]+$/;
 const GTM_ID_REGEX = /^GTM-[A-Z0-9]+$/;
@@ -11,11 +10,10 @@ const TrackingScripts = () => {
 
   useEffect(() => {
     const load = async () => {
-      const snap = await getDocs(collection(db, 'tracking_settings'));
+      const { data } = await supabase.from('tracking_settings' as any).select('key, value');
       const map: Record<string, string> = {};
-      snap.docs.forEach(d => {
-        const data = d.data();
-        if (data.value) map[data.key || d.id] = data.value;
+      (data as any[] || []).forEach((d: any) => {
+        if (d.value) map[d.key] = d.value;
       });
       setSettings(map);
     };

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, deleteDoc, orderBy, query } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import { Star, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -10,23 +9,16 @@ const AdminReviews = () => {
   const { data: reviews = [] } = useQuery({
     queryKey: ['all-reviews'],
     queryFn: async () => {
-      const q = query(collection(db, 'reviews'), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-      const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-      // Fetch product names
-      const productIds = [...new Set(items.map(i => i.product_id))];
-      const products: Record<string, string> = {};
-      for (const pid of productIds) {
-        const pSnap = await getDoc(doc(db, 'products', pid));
-        if (pSnap.exists()) products[pid] = pSnap.data().name;
-      }
-      return items.map(i => ({ ...i, products: { name: products[i.product_id] || 'Unknown product' } }));
+      const { data, error } = await supabase.from('reviews').select('*, products(name)').order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
   const deleteReview = useMutation({
     mutationFn: async (id: string) => {
-      await deleteDoc(doc(db, 'reviews', id));
+      const { error } = await supabase.from('reviews').delete().eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['all-reviews'] }),
   });

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, deleteDoc, updateDoc, addDoc, setDoc, orderBy, query, where } from 'firebase/firestore';
+import { supabase } from '@/integrations/supabase/client';
 import { Trash2, RotateCcw, AlertTriangle, ShoppingBag, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -12,50 +11,52 @@ const AdminTrash = () => {
   const { data: deletedOrders = [] } = useQuery({
     queryKey: ['trash-orders'],
     queryFn: async () => {
-      const q = query(collection(db, 'orders'), orderBy('created_at', 'desc'));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any)).filter(o => o.deleted_at);
+      const { data, error } = await supabase.from('orders').select('*').not('deleted_at', 'is', null).order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
   const { data: deletedUsers = [] } = useQuery({
     queryKey: ['trash-users'],
     queryFn: async () => {
-      const q = query(collection(db, 'trash_users'), orderBy('deleted_at', 'desc'));
-      const snap = await getDocs(q);
-      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+      const { data, error } = await supabase.from('trash_users').select('*').order('deleted_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
     },
   });
 
   const restoreOrder = useMutation({
     mutationFn: async (id: string) => {
-      await updateDoc(doc(db, 'orders', id), { deleted_at: null });
+      const { error } = await supabase.from('orders').update({ deleted_at: null }).eq('id', id);
+      if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['trash-orders'] }); queryClient.invalidateQueries({ queryKey: ['orders'] }); toast.success('Order restored'); },
     onError: (e: any) => toast.error(e.message),
   });
 
   const permanentDeleteOrder = useMutation({
-    mutationFn: async (id: string) => { await deleteDoc(doc(db, 'orders', id)); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('orders').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['trash-orders'] }); toast.success('Order permanently deleted'); },
     onError: (e: any) => toast.error(e.message),
   });
 
   const restoreUser = useMutation({
     mutationFn: async (trashUser: any) => {
-      await setDoc(doc(db, 'profiles', trashUser.original_user_id), {
+      await supabase.from('profiles').insert({
         user_id: trashUser.original_user_id,
         display_name: trashUser.display_name,
         phone: trashUser.phone,
         city: trashUser.city,
         address: trashUser.address,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       });
       if (trashUser.role && trashUser.role !== 'user') {
-        await setDoc(doc(db, 'user_roles', trashUser.original_user_id), { user_id: trashUser.original_user_id, role: trashUser.role });
+        await supabase.from('user_roles').insert({ user_id: trashUser.original_user_id, role: trashUser.role } as any);
       }
-      await deleteDoc(doc(db, 'trash_users', trashUser.id));
+      await supabase.from('trash_users').delete().eq('id', trashUser.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trash-users'] });
@@ -67,7 +68,10 @@ const AdminTrash = () => {
   });
 
   const permanentDeleteUser = useMutation({
-    mutationFn: async (id: string) => { await deleteDoc(doc(db, 'trash_users', id)); },
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('trash_users').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['trash-users'] }); toast.success('User permanently deleted from trash'); },
     onError: (e: any) => toast.error(e.message),
   });
