@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, adminDb, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAdmin, getAdminDb, corsHeaders } from './_lib/firebase-admin';
 
 const META_GRAPH_URL = 'https://graph.facebook.com/v18.0';
 
