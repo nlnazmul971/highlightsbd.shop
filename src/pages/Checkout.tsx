@@ -244,18 +244,13 @@ const Checkout = () => {
     e.preventDefault();
     setAttempted(true);
 
-    // Bot protection checks
-    if (isHoneypotFilled(honeypot)) {
-      // Silently reject - don't tell bots why
-      toast.success('Order placed successfully!');
-      return;
-    }
-    if (isFormFilledTooFast(formOpenedAt.current)) {
-      toast.error('Please take a moment to review your order');
-      return;
-    }
-    if (isRateLimited()) {
-      toast.error('Too many orders placed recently. Please try again later.');
+    // Simple CAPTCHA check
+    if (parseInt(captchaAnswer) !== captchaQuestion.answer) {
+      toast.error('ক্যাপচা উত্তর সঠিক নয়। আবার চেষ্টা করুন।');
+      const a = Math.floor(Math.random() * 9) + 1;
+      const b = Math.floor(Math.random() * 9) + 1;
+      setCaptchaQuestion({ a, b, answer: a + b });
+      setCaptchaAnswer('');
       return;
     }
 
