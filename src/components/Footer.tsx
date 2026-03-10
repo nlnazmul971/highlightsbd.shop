@@ -26,13 +26,12 @@ const Footer = () => {
     setSubscribing(true);
     try {
       const emailLower = email.trim().toLowerCase();
-      // Check for duplicate
-      const q = query(collection(db, 'newsletter_subscribers'), where('email', '==', emailLower));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
+      const { data: existing } = await supabase.from('newsletter_subscribers').select('id').eq('email', emailLower).maybeSingle();
+      if (existing) {
         toast.info('You are already subscribed!');
       } else {
-        await addDoc(collection(db, 'newsletter_subscribers'), { email: emailLower, created_at: new Date().toISOString() });
+        const { error } = await supabase.from('newsletter_subscribers').insert({ email: emailLower });
+        if (error) throw error;
         toast.success('Subscribed successfully!');
       }
       setEmail('');
