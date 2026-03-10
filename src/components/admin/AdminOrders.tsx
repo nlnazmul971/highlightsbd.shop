@@ -197,13 +197,10 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     if (!order.consignment_id) { toast.error('No consignment ID'); return; }
     setSyncingStatus(order.id);
     try {
-      const courierFunc = order.courier_provider === 'pathao' ? 'pathao-courier' : 'steadfast-courier';
+      const provider = order.courier_provider === 'pathao' ? 'pathao' : 'steadfast';
       const actionName = order.courier_provider === 'pathao' ? 'view_order' : 'check_status';
       
-      const { data: result, error } = await supabase.functions.invoke(courierFunc, {
-        body: { action: actionName, data: { consignment_id: order.consignment_id } },
-      });
-      if (error) throw error;
+      const result = await callCourier(provider as any, actionName, { consignment_id: order.consignment_id });
 
       const deliveryStatus = order.courier_provider === 'pathao' 
         ? result.data?.data?.order_status?.toLowerCase() 
