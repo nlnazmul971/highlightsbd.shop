@@ -58,7 +58,7 @@ const Admin = () => {
                     redirectTo: `${window.location.origin}/reset-password`,
                   });
                   if (error) throw error;
-                  toast.success('Password reset link sent to your email!');
+                  toast.success('Password reset link sent! If not in inbox, please check your Spam/Junk folder.');
                 } catch (err: any) { toast.error(err.message); }
               }} className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-1">
                 Forgot Password?
