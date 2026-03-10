@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { callCourier, callMetaCapi } from '@/lib/api';
 import { supabase } from '@/integrations/supabase/client';
 import { Plug, CheckCircle, XCircle, Loader2, Wallet, Search, Truck, BarChart3, Eye, Save } from 'lucide-react';
 import { toast } from 'sonner';
@@ -77,15 +78,11 @@ const AdminAPI = () => {
   };
 
   const callSteadfast = async (action: string, data?: any) => {
-    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', { body: { action, data } });
-    if (error) throw error;
-    return result;
+    return callCourier('steadfast', action, data);
   };
 
   const callPathao = async (action: string, data?: any) => {
-    const { data: result, error } = await supabase.functions.invoke('pathao-courier', { body: { action, data } });
-    if (error) throw error;
-    return result;
+    return callCourier('pathao', action, data);
   };
 
   const checkSteadfast = async () => {
@@ -122,8 +119,7 @@ const AdminAPI = () => {
   const checkMetaCapi = async () => {
     setMetaStatus('checking');
     try {
-      const { data: result, error } = await supabase.functions.invoke('meta-capi', { body: { action: 'check_connection' } });
-      if (error) throw error;
+      const result = await callMetaCapi('check_connection');
       if (result.success) { setMetaStatus('connected'); toast.success('Meta CAPI connected!'); }
       else { setMetaStatus('error'); toast.error('Meta: ' + (result.error || 'Connection failed')); }
     } catch (err: any) { setMetaStatus('error'); toast.error('Meta: ' + err.message); }

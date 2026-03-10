@@ -7,6 +7,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCheckoutPaymentSettings, useCreateOrder, useDeliveryZones, useProfile, useUpdateProfile, useValidateCoupon, useIncrementCouponUsage, CouponRow } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
+import { sendOrderEmail } from '@/lib/api';
 import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
 import { isValidBDPhone, sanitizeInput, isValidEmail } from '@/lib/botProtection';
@@ -318,28 +319,26 @@ const Checkout = () => {
       // Send order confirmation email (fire & forget)
       if (form.email) {
         try {
-          await supabase.functions.invoke('send-order-email', {
-            body: {
-              to: form.email,
-              customerName: form.name,
-              orderId: orderResult?.id || crypto.randomUUID(),
-              items: items.map(i => ({
-                name: i.product.name,
-                quantity: i.quantity,
-                price: i.product.price,
-                size: i.size,
-                color: i.color,
-              })),
-              subtotal: total,
-              deliveryFee,
-              discount: couponDiscount,
-              total: grandTotal,
-              deliveryMethod: delivery,
-              paymentMethod: payment === 'online' ? onlineProvider : 'cod',
-              address: form.address,
-              city: form.city,
-              phone: form.phone,
-            },
+          await sendOrderEmail({
+            to: form.email,
+            customerName: form.name,
+            orderId: orderResult?.id || crypto.randomUUID(),
+            items: items.map(i => ({
+              name: i.product.name,
+              quantity: i.quantity,
+              price: i.product.price,
+              size: i.size,
+              color: i.color,
+            })),
+            subtotal: total,
+            deliveryFee,
+            discount: couponDiscount,
+            total: grandTotal,
+            deliveryMethod: delivery,
+            paymentMethod: payment === 'online' ? onlineProvider : 'cod',
+            address: form.address,
+            city: form.city,
+            phone: form.phone,
           });
         } catch {
           // Silently fail - don't block order success

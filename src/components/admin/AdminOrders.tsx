@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
+import { callCourier, sendOrderEmail } from '@/lib/api';
 import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -107,23 +108,16 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const items = Array.isArray(order.items) ? order.items : [];
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
 
-    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-      body: {
-        action: 'create_order',
-        data: {
-          invoice: order.id.slice(0, 8),
-          recipient_name: order.customer_name,
-          recipient_phone: order.customer_phone,
-          recipient_address: `${order.customer_address}, ${order.customer_city}`,
-          cod_amount: order.payment_method === 'cod' ? order.total : 0,
-          note: `Order #${order.id.slice(0, 8)}`,
-          item_description: itemDesc,
-          delivery_type: 0,
-        },
-      },
+    const result = await callCourier('steadfast', 'create_order', {
+      invoice: order.id.slice(0, 8),
+      recipient_name: order.customer_name,
+      recipient_phone: order.customer_phone,
+      recipient_address: `${order.customer_address}, ${order.customer_city}`,
+      cod_amount: order.payment_method === 'cod' ? order.total : 0,
+      note: `Order #${order.id.slice(0, 8)}`,
+      item_description: itemDesc,
+      delivery_type: 0,
     });
-
-    if (error) throw error;
 
     if (result.success && result.data?.consignment) {
       const c = result.data.consignment;
@@ -142,29 +136,22 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const items = Array.isArray(order.items) ? order.items : [];
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
 
-    const { data: result, error } = await supabase.functions.invoke('pathao-courier', {
-      body: {
-        action: 'create_order',
-        data: {
-          store_id: 1, // Default store - may need configuration
-          merchant_order_id: order.id.slice(0, 8),
-          recipient_name: order.customer_name,
-          recipient_phone: order.customer_phone,
-          recipient_address: order.customer_address,
-          recipient_city: 1, // Default - Dhaka
-          recipient_zone: 1, // Default zone
-          delivery_type: 48, // Normal delivery
-          item_type: 2, // Parcel
-          special_instruction: itemDesc,
-          item_quantity: items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0),
-          item_weight: 0.5,
-          amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
-          item_description: itemDesc,
-        },
-      },
+    const result = await callCourier('pathao', 'create_order', {
+      store_id: 1,
+      merchant_order_id: order.id.slice(0, 8),
+      recipient_name: order.customer_name,
+      recipient_phone: order.customer_phone,
+      recipient_address: order.customer_address,
+      recipient_city: 1,
+      recipient_zone: 1,
+      delivery_type: 48,
+      item_type: 2,
+      special_instruction: itemDesc,
+      item_quantity: items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0),
+      item_weight: 0.5,
+      amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
+      item_description: itemDesc,
     });
-
-    if (error) throw error;
 
     if (result.success && result.data?.data) {
       const c = result.data.data;
@@ -210,13 +197,10 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     if (!order.consignment_id) { toast.error('No consignment ID'); return; }
     setSyncingStatus(order.id);
     try {
-      const courierFunc = order.courier_provider === 'pathao' ? 'pathao-courier' : 'steadfast-courier';
+      const provider = order.courier_provider === 'pathao' ? 'pathao' : 'steadfast';
       const actionName = order.courier_provider === 'pathao' ? 'view_order' : 'check_status';
       
-      const { data: result, error } = await supabase.functions.invoke(courierFunc, {
-        body: { action: actionName, data: { consignment_id: order.consignment_id } },
-      });
-      if (error) throw error;
+      const result = await callCourier(provider as any, actionName, { consignment_id: order.consignment_id });
 
       const deliveryStatus = order.courier_provider === 'pathao' 
         ? result.data?.data?.order_status?.toLowerCase() 
@@ -250,10 +234,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     
     setReturnLoading(order.id);
     try {
-      const { data: result, error } = await supabase.functions.invoke('steadfast-courier', {
-        body: { action: 'create_return_request', data: { consignment_id: order.consignment_id, reason: 'Customer requested return' } },
-      });
-      if (error) throw error;
+      const result = await callCourier('steadfast', 'create_return_request', { consignment_id: order.consignment_id, reason: 'Customer requested return' });
 
       if (result.success) {
         toast.success('Return request created successfully!');
@@ -271,16 +252,14 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const email = (order as any).customer_email;
     if (!email) return;
     try {
-      await supabase.functions.invoke('send-order-email', {
-        body: {
-          type: 'status_update',
-          to: email,
-          customerName: order.customer_name,
-          orderId: order.id,
-          status: newStatus,
-          trackingCode: order.tracking_code,
-          courierProvider: order.courier_provider,
-        },
+      await sendOrderEmail({
+        type: 'status_update',
+        to: email,
+        customerName: order.customer_name,
+        orderId: order.id,
+        status: newStatus,
+        trackingCode: order.tracking_code,
+        courierProvider: order.courier_provider,
       });
     } catch {
       console.warn('Status email failed to send');
@@ -345,9 +324,9 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       const totalSpent = localOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
       let steadfastInfo = null;
-      try { const { data: sfResult } = await supabase.functions.invoke('steadfast-courier', { body: { action: 'check_status', data: { consignment_id: phone } } }); if (sfResult?.success) steadfastInfo = sfResult.data; } catch {}
+      try { const sfResult = await callCourier('steadfast', 'check_status', { consignment_id: phone }); if (sfResult?.success) steadfastInfo = sfResult.data; } catch {}
       let pathaoInfo = null;
-      try { const { data: ptResult } = await supabase.functions.invoke('pathao-courier', { body: { action: 'view_order', data: { consignment_id: phone } } }); if (ptResult?.success) pathaoInfo = ptResult.data; } catch {}
+      try { const ptResult = await callCourier('pathao', 'view_order', { consignment_id: phone }); if (ptResult?.success) pathaoInfo = ptResult.data; } catch {}
 
       let riskLevel: 'low' | 'medium' | 'high' = 'low';
       if (cancelRate > 50 || (totalOrders >= 3 && cancelRate > 40)) riskLevel = 'high';
