@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { verifyFirebaseAdmin, corsHeaders } from './_lib/firebase-admin';
+import { verifyFirebaseAuth, corsHeaders } from './_lib/firebase-admin';
 
 const PATHAO_BASE_URL = 'https://api-hermes.pathao.com';
 
