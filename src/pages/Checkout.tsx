@@ -78,8 +78,12 @@ const Checkout = () => {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<CouponRow | null>(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [honeypot, setHoneypot] = useState('');
-  const formOpenedAt = useRef(Date.now());
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState(() => {
+    const a = Math.floor(Math.random() * 9) + 1;
+    const b = Math.floor(Math.random() * 9) + 1;
+    return { a, b, answer: a + b };
+  });
   const validateCoupon = useValidateCoupon();
   const incrementCouponUsage = useIncrementCouponUsage();
 
