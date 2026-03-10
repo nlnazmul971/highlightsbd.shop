@@ -78,15 +78,11 @@ const AdminAPI = () => {
   };
 
   const callSteadfast = async (action: string, data?: any) => {
-    const { data: result, error } = await supabase.functions.invoke('steadfast-courier', { body: { action, data } });
-    if (error) throw error;
-    return result;
+    return callCourier('steadfast', action, data);
   };
 
   const callPathao = async (action: string, data?: any) => {
-    const { data: result, error } = await supabase.functions.invoke('pathao-courier', { body: { action, data } });
-    if (error) throw error;
-    return result;
+    return callCourier('pathao', action, data);
   };
 
   const checkSteadfast = async () => {
