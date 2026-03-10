@@ -1,5 +1,6 @@
 import * as React from 'npm:react@18.3.1'
 import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
 import { OrderConfirmationEmail } from '../_shared/email-templates/order-confirmation.tsx'
 
 const corsHeaders = {
@@ -11,7 +12,6 @@ const corsHeaders = {
 const SITE_NAME = 'HIGHLIGHTS'
 const SENDER_DOMAIN = 'notify.highlightsbd.shop'
 const FROM_DOMAIN = 'highlightsbd.shop'
-const API_BASE_URL = 'https://api.lovable.dev'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -68,39 +68,24 @@ Deno.serve(async (req) => {
       plainText: true,
     })
 
-    const subject = `Order Confirmed — HIGHLIGHTS #${orderId.slice(0, 8).toUpperCase()}`
-
-    // Send via Lovable Email API directly
-    const emailResponse = await fetch(`${API_BASE_URL}/api/v1/email/send`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
+    const result = await sendLovableEmail(
+      {
+        run_id: crypto.randomUUID(),
         to,
         from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
         sender_domain: SENDER_DOMAIN,
-        subject,
+        subject: `Order Confirmed — HIGHLIGHTS #${orderId.slice(0, 8).toUpperCase()}`,
         html,
         text,
         purpose: 'transactional',
-      }),
-    })
+      },
+      { apiKey, apiBaseUrl: 'https://api.lovable.dev' }
+    )
 
-    const responseText = await emailResponse.text()
-
-    if (!emailResponse.ok) {
-      console.error('Email API error:', emailResponse.status, responseText)
-      throw new Error(`Email API error: ${emailResponse.status} ${responseText}`)
-    }
-
-    let result = {}
-    try { result = JSON.parse(responseText) } catch { /* ok */ }
-    console.log('Order confirmation email sent', { orderId, to, status: emailResponse.status })
+    console.log('Order confirmation email sent', { orderId, to, message_id: result.message_id })
 
     return new Response(
-      JSON.stringify({ success: true, ...result }),
+      JSON.stringify({ success: true, message_id: result.message_id }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
