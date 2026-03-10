@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useStoreSettings, useUpdateStoreSetting } from '@/hooks/useSupabase';
-import { supabase } from '@/integrations/supabase/client';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 import { Upload, X, Save, Loader2, Trash2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
