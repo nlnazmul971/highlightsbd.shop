@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const GA4_ID_REGEX = /^G-[A-Z0-9]+$/;
 const GTM_ID_REGEX = /^GTM-[A-Z0-9]+$/;
@@ -10,35 +11,31 @@ const TrackingScripts = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from('tracking_settings').select('key, value');
-      if (data) {
-        const map: Record<string, string> = {};
-        (data as any[]).forEach((s: any) => { if (s.value) map[s.key] = s.value; });
-        setSettings(map);
-      }
+      const snap = await getDocs(collection(db, 'tracking_settings'));
+      const map: Record<string, string> = {};
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (data.value) map[data.key || d.id] = data.value;
+      });
+      setSettings(map);
     };
     load();
   }, []);
 
   useEffect(() => {
-    // GA4
     if (settings.ga4_measurement_id) {
       const id = settings.ga4_measurement_id;
       if (GA4_ID_REGEX.test(id) && !document.getElementById('ga4-script')) {
         const s = document.createElement('script');
-        s.id = 'ga4-script';
-        s.async = true;
+        s.id = 'ga4-script'; s.async = true;
         s.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
         document.head.appendChild(s);
-
         const s2 = document.createElement('script');
         s2.id = 'ga4-config';
         s2.textContent = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${id}');`;
         document.head.appendChild(s2);
       }
     }
-
-    // GTM
     if (settings.gtm_container_id) {
       const id = settings.gtm_container_id;
       if (GTM_ID_REGEX.test(id) && !document.getElementById('gtm-script')) {
@@ -48,8 +45,6 @@ const TrackingScripts = () => {
         document.head.appendChild(s);
       }
     }
-
-    // Meta Pixel
     if (settings.meta_pixel_id) {
       const id = settings.meta_pixel_id;
       if (META_PIXEL_REGEX.test(id) && !document.getElementById('meta-pixel-script')) {

@@ -1,15 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import type { User } from '@supabase/supabase-js';
+import { auth, db } from '@/lib/firebase';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  sendPasswordResetEmail,
+  updatePassword as firebaseUpdatePassword,
+  type User,
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 type AuthContextType = {
   user: User | null;
   loading: boolean;
   signUp: (email: string, password: string, displayName?: string, phone?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signInWithPhone: (phone: string) => Promise<void>;
-  verifyOtp: (phone: string, token: string) => Promise<void>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  changePassword: (newPassword: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,52 +28,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
       setLoading(false);
     });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => unsub();
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string, phone?: string) => {
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: {
-        data: { display_name: displayName, phone },
-        emailRedirectTo: window.location.origin,
-      },
+    const { user: newUser } = await createUserWithEmailAndPassword(auth, email, password);
+    await setDoc(doc(db, 'profiles', newUser.uid), {
+      user_id: newUser.uid,
+      display_name: displayName || email,
+      phone: phone || null,
+      address: null,
+      city: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     });
-    if (error) throw error;
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-  };
-
-  const signInWithPhone = async (phone: string) => {
-    const { error } = await supabase.auth.signInWithOtp({ phone });
-    if (error) throw error;
-  };
-
-  const verifyOtp = async (phone: string, token: string) => {
-    const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
-    if (error) throw error;
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await firebaseSignOut(auth);
+  };
+
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
+  const changePassword = async (newPassword: string) => {
+    if (!auth.currentUser) throw new Error('Not authenticated');
+    await firebaseUpdatePassword(auth.currentUser, newPassword);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signUp, signIn, signInWithPhone, verifyOtp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut, resetPassword, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,5 @@
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/firebase';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useQuery } from '@tanstack/react-query';
 import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
 
@@ -15,13 +16,9 @@ const OrderTracker = ({ userId }: { userId: string }) => {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['my-orders', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
+      const q = query(collection(db, 'orders'), where('user_id', '==', userId), orderBy('created_at', 'desc'));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
     },
     enabled: !!userId,
   });
@@ -52,8 +49,6 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 )}
               </div>
             </div>
-
-            {/* Items */}
             <div className="space-y-1">
               {items.map((item: any, idx: number) => (
                 <p key={idx} className="text-xs text-muted-foreground">
@@ -61,8 +56,6 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 </p>
               ))}
             </div>
-
-            {/* Status tracker */}
             {!isCancelled && (
               <div className="flex items-center justify-between gap-1 pt-2">
                 {statusSteps.map((step, i) => (
@@ -79,7 +72,6 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 ))}
               </div>
             )}
-
             {order.tracking_code && (
               <p className="text-xs text-muted-foreground">
                 Tracking: <span className="font-medium text-foreground">{order.tracking_code}</span>

@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { useStoreSettings } from '@/hooks/useSupabase';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 const Footer = () => {
   const [email, setEmail] = useState('');
@@ -25,14 +26,14 @@ const Footer = () => {
     if (!email.trim()) return;
     setSubscribing(true);
     try {
-      const { error } = await supabase.from('newsletter_subscribers').insert({ email: email.trim().toLowerCase() });
-      if (error) {
-        if (error.code === '23505') {
-          toast.info('You are already subscribed!');
-        } else {
-          throw error;
-        }
+      const emailLower = email.trim().toLowerCase();
+      // Check for duplicate
+      const q = query(collection(db, 'newsletter_subscribers'), where('email', '==', emailLower));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        toast.info('You are already subscribed!');
       } else {
+        await addDoc(collection(db, 'newsletter_subscribers'), { email: emailLower, created_at: new Date().toISOString() });
         toast.success('Subscribed successfully!');
       }
       setEmail('');
