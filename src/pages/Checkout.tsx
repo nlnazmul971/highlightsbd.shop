@@ -294,27 +294,6 @@ const Checkout = () => {
       return;
     }
     try {
-      // reCAPTCHA v3 verification
-      if (window.grecaptcha) {
-        try {
-          const recaptchaToken = await new Promise<string>((resolve, reject) => {
-            window.grecaptcha.ready(() => {
-              window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'place_order' }).then(resolve).catch(reject);
-            });
-          });
-          const { data: verifyResult } = await supabase.functions.invoke('verify-recaptcha', {
-            body: { token: recaptchaToken },
-          });
-          if (!verifyResult?.success) {
-            toast.error('Security verification failed. Please try again.');
-            return;
-          }
-        } catch {
-          // If reCAPTCHA fails, still allow order (graceful degradation)
-          console.warn('reCAPTCHA verification skipped');
-        }
-      }
-
       const orderResult = await createOrder.mutateAsync({
         user_id: user?.id || null,
         items: items.map(i => ({
