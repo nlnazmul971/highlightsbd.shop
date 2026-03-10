@@ -65,7 +65,7 @@ const Checkout = () => {
 
   const { data: zones = [] } = useDeliveryZones(false);
   const { data: paymentSettings = [] } = useCheckoutPaymentSettings();
-  const { data: profile } = useProfile(user?.id);
+  const { data: profile } = useProfile(user?.uid);
 
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '', city: '', senderNumber: '', transactionId: '', customerNote: '' });
   const [attempted, setAttempted] = useState(false);
