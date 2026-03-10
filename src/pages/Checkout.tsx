@@ -350,7 +350,7 @@ const Checkout = () => {
       if (user) {
         try {
           await updateProfile.mutateAsync({
-            userId: user.id,
+            userId: user.uid,
             display_name: form.name,
             phone: form.phone,
             address: form.address,
