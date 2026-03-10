@@ -12,6 +12,17 @@ import { toast } from 'sonner';
 import { Check, Copy, ChevronDown } from 'lucide-react';
 import { isHoneypotFilled, isFormFilledTooFast, isRateLimited, recordOrderTimestamp, isValidBDPhone } from '@/lib/botProtection';
 
+declare global {
+  interface Window {
+    grecaptcha: {
+      ready: (cb: () => void) => void;
+      execute: (siteKey: string, options: { action: string }) => Promise<string>;
+    };
+  }
+}
+
+const RECAPTCHA_SITE_KEY = '6LeeyYUsAAAAAAfJMZwQSmc7zwu4gnrlq9dGrIMC';
+
 type PaymentMethod = 'cod' | 'online';
 type OnlineProvider = 'bkash' | 'nagad' | null;
 type DeliveryZone = string;
@@ -291,6 +302,27 @@ const Checkout = () => {
       return;
     }
     try {
+      // reCAPTCHA v3 verification
+      if (window.grecaptcha) {
+        try {
+          const recaptchaToken = await new Promise<string>((resolve, reject) => {
+            window.grecaptcha.ready(() => {
+              window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'place_order' }).then(resolve).catch(reject);
+            });
+          });
+          const { data: verifyResult } = await supabase.functions.invoke('verify-recaptcha', {
+            body: { token: recaptchaToken },
+          });
+          if (!verifyResult?.success) {
+            toast.error('Security verification failed. Please try again.');
+            return;
+          }
+        } catch {
+          // If reCAPTCHA fails, still allow order (graceful degradation)
+          console.warn('reCAPTCHA verification skipped');
+        }
+      }
+
       await createOrder.mutateAsync({
         user_id: user?.id || null,
         items: items.map(i => ({
