@@ -81,7 +81,7 @@ const ProductCard = ({ product }: { product: Product }) => {
 
           {/* Discount badge with subtle shadow */}
           {discountPercent && (
-            <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-foreground bg-transparent drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)]">
+            <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-foreground bg-foreground/10 backdrop-blur-sm">
               -{discountPercent}%
             </span>
           )}
