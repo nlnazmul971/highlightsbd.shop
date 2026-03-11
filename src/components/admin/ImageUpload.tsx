@@ -32,7 +32,7 @@ const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
 
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file, folder);
+      const url = await uploadImage(file, folder);
       onChange(url);
       toast.success('Image uploaded');
     } catch (err: any) {

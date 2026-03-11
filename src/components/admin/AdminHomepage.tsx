@@ -215,7 +215,7 @@ const HomepageImageUpload = ({ value, onChange, folder }: { value: string; onCha
 
     setUploading(true);
     try {
-      const publicUrl = await uploadToCloudinary(file, `homepage/${folder}`);
+      const publicUrl = await uploadImage(file, `homepage/${folder}`);
       onChange(publicUrl);
       toast.success('Image uploaded!');
     } catch (err: any) {
