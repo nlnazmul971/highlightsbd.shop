@@ -53,15 +53,15 @@ const ProductCard = ({ product }: { product: Product }) => {
       <Link to={`/product/${product.id}`}>
         <div className="relative overflow-hidden aspect-[3/4]">
           <img src={getProductImage(product.image_url)} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          {discountPercent && <span className="luxury-badge absolute top-3 left-3">-{discountPercent}%</span>}
+          {discountPercent && <span className="absolute top-3 left-3 text-[10px] tracking-[0.2em] uppercase font-medium px-3 py-1 bg-background/70 backdrop-blur-sm text-foreground">-{discountPercent}%</span>}
           <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/5 transition-colors duration-300" />
 
           {/* Wishlist + Quick view */}
           <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <button onClick={handleWishlist} className={`p-1.5 sm:p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+            <button onClick={handleWishlist} className={`p-1.5 sm:p-2.5 bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
               <Heart size={13} className="sm:w-4 sm:h-4" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
             </button>
-            <Link to={`/product/${product.id}`} onClick={e => e.stopPropagation()} className="p-1.5 sm:p-2.5 bg-background/90 backdrop-blur-sm hover:bg-background transition-colors">
+            <Link to={`/product/${product.id}`} onClick={e => e.stopPropagation()} className="p-1.5 sm:p-2.5 bg-background/70 backdrop-blur-sm hover:bg-background/90 transition-colors">
               <Eye size={13} className="sm:w-4 sm:h-4" />
             </Link>
           </div>
@@ -94,7 +94,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           {/* Add to cart button */}
           {!showSizes && (
             <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-              <button onClick={handleOpenSizes} className="w-full py-2 sm:py-3 text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 sm:gap-2 bg-foreground/70 sm:bg-foreground text-background backdrop-blur-sm sm:backdrop-blur-none tracking-[0.15em] uppercase transition-colors hover:bg-foreground" style={{ fontFamily: 'var(--font-body)' }}>
+              <button onClick={handleOpenSizes} className="w-full py-2 sm:py-3 text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 sm:gap-2 bg-foreground/60 text-background backdrop-blur-sm tracking-[0.15em] uppercase transition-colors hover:bg-foreground/80" style={{ fontFamily: 'var(--font-body)' }}>
                 <ShoppingBag size={11} className="sm:w-[13px] sm:h-[13px]" />
                 Add to Cart
               </button>
