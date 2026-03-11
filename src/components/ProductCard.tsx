@@ -56,7 +56,7 @@ const ProductCard = ({ product }: { product: Product }) => {
     <div className="group animate-fade-in">
       <Link to={`/product/${product.id}`}>
         <div
-          className="relative overflow-hidden aspect-[3/5]"
+          className="relative overflow-hidden aspect-[3/4]"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
