@@ -4,6 +4,9 @@ export const uploadImage = async (file: File, folder: string = 'products'): Prom
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) throw new Error('Not authenticated');
 
+  const maxSize = 25 * 1024 * 1024; // 25MB
+  if (file.size > maxSize) throw new Error('Image must be less than 25MB');
+
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
   const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
