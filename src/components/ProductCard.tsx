@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Product, getProductImage } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useAllReviewStats } from '@/hooks/useSupabase';
+import { useAllReviewStats, useProductImages } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 
 const ProductCard = ({ product }: { product: Product }) => {
