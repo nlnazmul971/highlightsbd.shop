@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { uploadToCloudinary } from '@/lib/cloudinary';
+import { uploadImage } from '@/lib/upload';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,7 +32,7 @@ const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
 
     setUploading(true);
     try {
-      const url = await uploadToCloudinary(file, folder);
+      const url = await uploadImage(file, folder);
       onChange(url);
       toast.success('Image uploaded');
     } catch (err: any) {
