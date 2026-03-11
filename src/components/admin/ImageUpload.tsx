@@ -6,35 +6,51 @@ import { toast } from 'sonner';
 type Props = {
   value: string;
   onChange: (url: string) => void;
+  onMultiUpload?: (urls: string[]) => void;
   folder?: string;
+  multiple?: boolean;
 };
 
-const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
+const ImageUpload = ({ value, onChange, onMultiUpload, folder = 'products', multiple = false }: Props) => {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
     const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.svg'];
-    const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-    const isValidType = file.type.startsWith('image/') || validExtensions.includes(ext);
-    if (!isValidType) {
-      toast.error('Please select an image file (JPG, PNG, WebP)');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be less than 5MB');
-      return;
-    }
+    const maxSize = 25 * 1024 * 1024; // 25MB
 
     setUploading(true);
+    const uploadedUrls: string[] = [];
+
     try {
-      const url = await uploadImage(file, folder);
-      onChange(url);
-      toast.success('Image uploaded');
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        const isValidType = file.type.startsWith('image/') || validExtensions.includes(ext);
+        if (!isValidType) {
+          toast.error(`${file.name}: Invalid image format`);
+          continue;
+        }
+        if (file.size > maxSize) {
+          toast.error(`${file.name}: Image must be less than 25MB`);
+          continue;
+        }
+
+        const url = await uploadImage(file, folder);
+        uploadedUrls.push(url);
+      }
+
+      if (uploadedUrls.length > 0) {
+        if (multiple && onMultiUpload) {
+          onMultiUpload(uploadedUrls);
+        } else {
+          onChange(uploadedUrls[0]);
+        }
+        toast.success(`${uploadedUrls.length} image(s) uploaded`);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Upload failed');
     } finally {
@@ -49,6 +65,7 @@ const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
         ref={inputRef}
         type="file"
         accept="image/*"
+        multiple={multiple}
         onChange={handleUpload}
         className="hidden"
         id="image-upload"
@@ -82,7 +99,7 @@ const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
           className="luxury-button-outline text-[10px] py-2 px-3 inline-flex items-center gap-1"
         >
           <Upload size={12} />
-          {uploading ? 'Uploading...' : 'Upload Image'}
+          {uploading ? 'Uploading...' : multiple ? 'Upload Images' : 'Upload Image'}
         </button>
       </div>
     </div>
