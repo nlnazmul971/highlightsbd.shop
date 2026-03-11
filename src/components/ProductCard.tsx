@@ -51,29 +51,13 @@ const ProductCard = ({ product }: { product: Product }) => {
   return (
     <div className="group animate-fade-in">
       <Link to={`/product/${product.id}`}>
-        <div
-          className="relative overflow-hidden aspect-[3/4]"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <div className="relative overflow-hidden aspect-[3/4]">
           {/* Main image */}
           <img
             src={getProductImage(product.image_url)}
             alt={product.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-              isHovered && hoverImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-            }`}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          {/* Hover image */}
-          {hoverImage && (
-            <img
-              src={hoverImage}
-              alt={`${product.name} alternate`}
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-              }`}
-            />
-          )}
 
           {/* Bottom white gradient shade */}
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/50 via-background/20 to-transparent pointer-events-none" />
