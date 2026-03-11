@@ -74,6 +74,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             <img
               src={hoverImage}
               alt={`${product.name} alternate`}
+              loading="lazy"
               className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
                 isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
               }`}
