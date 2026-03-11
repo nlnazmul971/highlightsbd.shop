@@ -59,8 +59,6 @@ const ProductCard = ({ product }: { product: Product }) => {
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
 
-          {/* Bottom white gradient shade */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/50 via-background/20 to-transparent pointer-events-none" />
 
           {/* Discount badge - fully transparent */}
           {discountPercent && (
