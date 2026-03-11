@@ -150,7 +150,7 @@ const ProductDetail = () => {
       <Header /><CartDrawer />
       <div className="pt-36 sm:pt-44 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12">
-          <div className="aspect-[3/4] bg-muted animate-pulse" />
+          <div className="aspect-[3/5] bg-muted animate-pulse" />
           <div className="space-y-4 py-4">
             <div className="h-4 bg-muted rounded w-20 animate-pulse" />
             <div className="h-8 bg-muted rounded w-3/4 animate-pulse" />
