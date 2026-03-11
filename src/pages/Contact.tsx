@@ -1,7 +1,7 @@
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import CartDrawer from '@/components/CartDrawer';
-import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import CartDrawer from "@/components/CartDrawer";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 const Contact = () => (
   <div className="min-h-screen bg-background">
@@ -13,7 +13,8 @@ const Contact = () => (
 
       <div className="space-y-6 text-sm sm:text-base text-muted-foreground leading-relaxed">
         <p>
-          We'd love to hear from you! Whether you have a question about our products, need help with an order, or just want to say hello — feel free to reach out.
+          We'd love to hear from you! Whether you have a question about our products, need help with an order, or just
+          want to say hello — feel free to reach out.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-8">
@@ -22,7 +23,7 @@ const Contact = () => (
               <MapPin size={18} className="text-foreground shrink-0" />
               <div>
                 <p className="text-xs uppercase tracking-wider text-foreground font-medium">Address</p>
-                <p className="text-sm text-muted-foreground">House 12, Road 5, Sector 3, Uttara, Dhaka-1230</p>
+                <p className="text-sm text-muted-foreground">Mirpur - 1, Sha Ali Thana, Dhaka 1216.</p>
               </div>
             </div>
           </div>
@@ -32,7 +33,7 @@ const Contact = () => (
               <Phone size={18} className="text-foreground shrink-0" />
               <div>
                 <p className="text-xs uppercase tracking-wider text-foreground font-medium">Phone</p>
-                <p className="text-sm text-muted-foreground">+880 1234 567890</p>
+                <p className="text-sm text-muted-foreground">+8801338918891</p>
               </div>
             </div>
           </div>
@@ -42,7 +43,7 @@ const Contact = () => (
               <Mail size={18} className="text-foreground shrink-0" />
               <div>
                 <p className="text-xs uppercase tracking-wider text-foreground font-medium">Email</p>
-                <p className="text-sm text-muted-foreground">info@highlightbd.com</p>
+                <p className="text-sm text-muted-foreground">highlightsbdofficial@gmail.com</p>
               </div>
             </div>
           </div>
