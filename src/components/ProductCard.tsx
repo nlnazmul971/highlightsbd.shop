@@ -19,6 +19,8 @@ const ProductCard = ({ product }: { product: Product }) => {
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
 
+  const hoverImage = productImages.length > 1 ? productImages[1].image_url : null;
+
   useEffect(() => {
     if (!showSizes) return;
     const handleClick = (e: MouseEvent) => {
