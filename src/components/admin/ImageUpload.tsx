@@ -7,6 +7,7 @@ type Props = {
   value: string;
   onChange: (url: string) => void;
   folder?: string;
+  multiple?: boolean;
 };
 
 const ImageUpload = ({ value, onChange, folder = 'products' }: Props) => {
