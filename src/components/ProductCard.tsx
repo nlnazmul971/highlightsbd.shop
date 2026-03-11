@@ -4,23 +4,18 @@ import { Link } from 'react-router-dom';
 import { Product, getProductImage } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useAllReviewStats, useProductImages } from '@/hooks/useSupabase';
+import { useAllReviewStats } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { data: reviewStats = {} } = useAllReviewStats();
-  const { data: productImages = [] } = useProductImages(product.id);
   const [showSizes, setShowSizes] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const discountPercent = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
-
-  // Get hover image (second image from product_images, fallback to main)
-  const hoverImage = productImages.length > 1 ? productImages[1].image_url : null;
 
   useEffect(() => {
     if (!showSizes) return;
@@ -56,29 +51,13 @@ const ProductCard = ({ product }: { product: Product }) => {
   return (
     <div className="group animate-fade-in">
       <Link to={`/product/${product.id}`}>
-        <div
-          className="relative overflow-hidden aspect-[3/4]"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
+        <div className="relative overflow-hidden aspect-[3/4]">
           {/* Main image */}
           <img
             src={getProductImage(product.image_url)}
             alt={product.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-              isHovered && hoverImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
-            }`}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          {/* Hover image */}
-          {hoverImage && (
-            <img
-              src={hoverImage}
-              alt={`${product.name} alternate`}
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
-                isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-              }`}
-            />
-          )}
 
           {/* Bottom white gradient shade */}
           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/50 via-background/20 to-transparent pointer-events-none" />
