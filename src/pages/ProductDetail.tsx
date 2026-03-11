@@ -64,7 +64,7 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
       {/* Main image */}
       <div
         ref={imgRef}
-        className="flex-1 aspect-[3/5] overflow-hidden bg-secondary cursor-crosshair relative"
+        className="flex-1 aspect-[3/4] overflow-hidden bg-secondary cursor-crosshair relative"
         onMouseEnter={() => setZoomed(true)}
         onMouseLeave={() => setZoomed(false)}
         onMouseMove={handleMouseMove}
