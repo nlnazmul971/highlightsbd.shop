@@ -15,7 +15,7 @@ const FloatingActions = () => {
   };
 
   return (
-    <div className="fixed right-6 bottom-6 z-40 hidden md:flex flex-col gap-3">
+    <div className="fixed right-4 bottom-4 md:right-6 md:bottom-6 z-40 flex flex-col gap-3">
       {messageLink && (
         <button
           onClick={handleMessage}
