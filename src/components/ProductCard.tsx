@@ -11,9 +11,7 @@ const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { data: reviewStats = {} } = useAllReviewStats();
-  const { data: productImages = [] } = useProductImages(product.id);
   const [showSizes, setShowSizes] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const discountPercent = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
