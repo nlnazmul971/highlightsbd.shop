@@ -94,7 +94,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           {/* Add to cart button */}
           {!showSizes && (
             <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-              <button onClick={handleOpenSizes} className="w-full py-2 sm:py-3 text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 sm:gap-2 bg-foreground/70 sm:bg-foreground text-background backdrop-blur-sm sm:backdrop-blur-none tracking-[0.15em] uppercase transition-colors hover:bg-foreground" style={{ fontFamily: 'var(--font-body)' }}>
+              <button onClick={handleOpenSizes} className="w-full py-2 sm:py-3 text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 sm:gap-2 bg-foreground/60 text-background backdrop-blur-sm tracking-[0.15em] uppercase transition-colors hover:bg-foreground/80" style={{ fontFamily: 'var(--font-body)' }}>
                 <ShoppingBag size={11} className="sm:w-[13px] sm:h-[13px]" />
                 Add to Cart
               </button>
