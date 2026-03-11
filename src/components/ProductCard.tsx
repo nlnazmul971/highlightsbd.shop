@@ -4,18 +4,22 @@ import { Link } from 'react-router-dom';
 import { Product, getProductImage } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useAllReviewStats } from '@/hooks/useSupabase';
+import { useAllReviewStats, useProductImages } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { data: reviewStats = {} } = useAllReviewStats();
+  const { data: productImages = [] } = useProductImages(product.id);
   const [showSizes, setShowSizes] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
   const discountPercent = product.original_price
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
+
+  const hoverImage = productImages.length > 1 ? productImages[1].image_url : null;
 
   useEffect(() => {
     if (!showSizes) return;
@@ -51,18 +55,33 @@ const ProductCard = ({ product }: { product: Product }) => {
   return (
     <div className="group animate-fade-in">
       <Link to={`/product/${product.id}`}>
-        <div className="relative overflow-hidden aspect-[3/4]">
+        <div
+          className="relative overflow-hidden aspect-[3/4]"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           {/* Main image */}
           <img
             src={getProductImage(product.image_url)}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+              isHovered && hoverImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
+            }`}
           />
+          {/* Hover image */}
+          {hoverImage && (
+            <img
+              src={hoverImage}
+              alt={`${product.name} alternate`}
+              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+                isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+              }`}
+            />
+          )}
 
-
-          {/* Discount badge - fully transparent */}
+          {/* Discount badge with subtle shadow */}
           {discountPercent && (
-            <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-foreground bg-transparent backdrop-blur-none">
+            <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-foreground bg-transparent drop-shadow-[0_1px_3px_rgba(0,0,0,0.15)]">
               -{discountPercent}%
             </span>
           )}
