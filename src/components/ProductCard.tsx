@@ -22,7 +22,7 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardPr
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
 
-  const hoverImage = productImages.length > 1 ? productImages[1].image_url : null;
+  const hoverImage = hoverImageUrl ?? null;
 
   useEffect(() => {
     if (!showSizes) return;
