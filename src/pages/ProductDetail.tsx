@@ -300,7 +300,7 @@ const ProductDetail = () => {
               href={`https://m.me/highlightbd`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm flex items-center justify-center gap-2 mt-2"
+              className="w-full py-2.5 sm:py-3.5 text-[11px] sm:text-sm flex items-center justify-center gap-2 mt-2 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors tracking-[0.15em] uppercase"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               Message Now
