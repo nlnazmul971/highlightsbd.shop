@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
@@ -5,7 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
-import { useProducts, useStoreSettings } from '@/hooks/useSupabase';
+import { useProducts, useStoreSettings, useAllReviewStats, useAllProductImages } from '@/hooks/useSupabase';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const Index = () => {
@@ -18,6 +19,8 @@ const Index = () => {
   );
   const { data: allProducts = [] } = useProducts();
   const { data: settings = {} } = useStoreSettings();
+  const { data: reviewStats = {} } = useAllReviewStats();
+  const { data: allProductImages = [] } = useAllProductImages();
   const { viewedIds } = useRecentlyViewed();
 
   const showProducts = activeCategory || searchQuery;
@@ -26,6 +29,22 @@ const Index = () => {
     .map(id => allProducts.find(p => p.id === id))
     .filter(Boolean)
     .slice(0, 6);
+
+  // Build hover image map: product_id -> second image url
+  const hoverImageMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    // Group by product_id, sorted by sort_order, pick second image
+    const grouped: Record<string, { sort_order: number; image_url: string }[]> = {};
+    for (const img of allProductImages) {
+      if (!grouped[img.product_id]) grouped[img.product_id] = [];
+      grouped[img.product_id].push(img);
+    }
+    for (const [pid, imgs] of Object.entries(grouped)) {
+      const sorted = imgs.sort((a, b) => a.sort_order - b.sort_order);
+      if (sorted.length > 0) map[pid] = sorted[0].image_url;
+    }
+    return map;
+  }, [allProductImages]);
 
   // Dynamic posters from settings
   const rawPosters = settings['homepage_posters'];
