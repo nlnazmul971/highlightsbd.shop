@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw, Send } from 'lucide-react';
+import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw, Send, ZoomIn, X } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
