@@ -24,6 +24,8 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const [mobileZoom, setMobileZoom] = useState(false);
+  const [mobileZoomPos, setMobileZoomPos] = useState({ x: 50, y: 50 });
   const imgRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
