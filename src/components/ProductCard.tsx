@@ -4,14 +4,17 @@ import { Link } from 'react-router-dom';
 import { Product, getProductImage } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useAllReviewStats, useProductImages } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
 
-const ProductCard = ({ product }: { product: Product }) => {
+interface ProductCardProps {
+  product: Product;
+  reviewStats?: Record<string, { avg: number; count: number }>;
+  hoverImageUrl?: string | null;
+}
+
+const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardProps) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
-  const { data: reviewStats = {} } = useAllReviewStats();
-  const { data: productImages = [] } = useProductImages(product.id);
   const [showSizes, setShowSizes] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -19,7 +22,7 @@ const ProductCard = ({ product }: { product: Product }) => {
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : null;
 
-  const hoverImage = productImages.length > 1 ? productImages[1].image_url : null;
+  const hoverImage = hoverImageUrl ?? null;
 
   useEffect(() => {
     if (!showSizes) return;

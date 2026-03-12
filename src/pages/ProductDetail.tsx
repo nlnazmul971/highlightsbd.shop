@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw, Send } from 'lucide-react';
+import { ArrowLeft, Heart, Minus, Plus, Star, Truck, Shield, RotateCcw, Send, ZoomIn, X } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -24,6 +24,8 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
   const [activeIndex, setActiveIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
+  const [mobileZoom, setMobileZoom] = useState(false);
+  const [mobileZoomPos, setMobileZoomPos] = useState({ x: 50, y: 50 });
   const imgRef = useRef<HTMLDivElement>(null);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -78,7 +80,42 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
           style={zoomed ? { transform: 'scale(2.5)', transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
           draggable={false}
         />
+        {/* Mobile zoom button */}
+        <button
+          onClick={() => setMobileZoom(true)}
+          className="sm:hidden absolute bottom-3 right-3 p-2.5 bg-foreground/60 backdrop-blur-sm text-background rounded-full shadow-lg active:scale-95 transition-transform"
+          aria-label="Zoom image"
+        >
+          <ZoomIn size={18} />
+        </button>
       </div>
+
+      {/* Mobile fullscreen zoom overlay */}
+      {mobileZoom && (
+        <div
+          className="fixed inset-0 z-[100] bg-background touch-pan-x touch-pan-y overflow-auto"
+          onTouchMove={(e) => {
+            const el = e.currentTarget;
+            const x = (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * 100;
+            const y = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
+            setMobileZoomPos({ x, y });
+          }}
+        >
+          <button
+            onClick={() => setMobileZoom(false)}
+            className="fixed top-4 right-4 z-[101] p-2.5 bg-foreground/70 backdrop-blur-sm text-background rounded-full shadow-lg"
+            aria-label="Close zoom"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={images[activeIndex]}
+            alt={name}
+            className="w-[250vw] h-auto max-w-none"
+            draggable={false}
+          />
+        </div>
+      )}
 
       {/* Mobile thumbnail strip */}
       <div className="flex sm:hidden items-center justify-start gap-1.5 overflow-x-auto py-2">

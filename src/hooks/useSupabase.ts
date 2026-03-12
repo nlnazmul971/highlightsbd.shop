@@ -48,6 +48,17 @@ export const useProductImages = (productId: string) => {
   });
 };
 
+export const useAllProductImages = () => {
+  return useQuery({
+    queryKey: ['all-product-images'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('product_images').select('*').order('sort_order', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+};
+
 export const useAddProductImage = () => {
   const qc = useQueryClient();
   return useMutation({
