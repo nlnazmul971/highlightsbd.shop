@@ -296,6 +296,15 @@ const ProductDetail = () => {
               </button>
             </div>
             <button onClick={handleBuyNow} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Buy Now</button>
+            <a
+              href={`https://m.me/highlightbd`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm flex items-center justify-center gap-2 mt-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              Message Now
+            </a>
 
             <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
               <div className="flex items-center gap-1.5 text-muted-foreground">
