@@ -90,20 +90,15 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
         </button>
       </div>
 
-      {/* Mobile fullscreen zoom overlay */}
+      {/* Mobile fullscreen zoom overlay - pinch to zoom */}
       {mobileZoom && (
         <div
-          className="fixed inset-0 z-[100] bg-background touch-pan-x touch-pan-y overflow-auto"
-          onTouchMove={(e) => {
-            const el = e.currentTarget;
-            const x = (el.scrollLeft / (el.scrollWidth - el.clientWidth)) * 100;
-            const y = (el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100;
-            setMobileZoomPos({ x, y });
-          }}
+          className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
+          style={{ touchAction: 'pinch-zoom' }}
         >
           <button
             onClick={() => setMobileZoom(false)}
-            className="fixed top-4 right-4 z-[101] p-2.5 bg-foreground/70 backdrop-blur-sm text-background rounded-full shadow-lg"
+            className="fixed top-4 right-4 z-[101] p-2.5 bg-white/20 backdrop-blur-sm text-white rounded-full shadow-lg"
             aria-label="Close zoom"
           >
             <X size={20} />
@@ -111,7 +106,7 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
           <img
             src={images[activeIndex]}
             alt={name}
-            className="w-[250vw] h-auto max-w-none"
+            className="w-full h-auto max-h-screen object-contain"
             draggable={false}
           />
         </div>
