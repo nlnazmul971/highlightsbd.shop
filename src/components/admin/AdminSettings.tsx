@@ -16,7 +16,7 @@ const AdminSettings = () => {
   const { data: paymentSettings = [], isLoading: paymentLoading } = useCheckoutPaymentSettings();
   const upsertPayment = useUpsertCheckoutPaymentSetting();
 
-  const [zoneEdits, setZoneEdits] = useState<Record<string, { fee: number; description: string; is_active: boolean }>>({});
+  const [zoneEdits, setZoneEdits] = useState<Record<string, { name: string; fee: number; description: string; is_active: boolean }>>({});
   const [paymentEdits, setPaymentEdits] = useState<Record<string, { number: string; instructions: string; is_active: boolean }>>({});
 
   const paymentByProvider = useMemo(() => {
@@ -30,7 +30,7 @@ const AdminSettings = () => {
     setZoneEdits(prev => {
       const next = { ...prev };
       for (const z of zones) {
-        if (!next[z.id]) next[z.id] = { fee: z.fee, description: z.description || '', is_active: z.is_active };
+        if (!next[z.id]) next[z.id] = { name: z.name, fee: z.fee, description: z.description || '', is_active: z.is_active };
       }
       return next;
     });
@@ -50,7 +50,7 @@ const AdminSettings = () => {
     const edit = zoneEdits[zoneId];
     if (!edit) return;
     try {
-      await updateZone.mutateAsync({ id: zoneId, fee: edit.fee, description: edit.description, is_active: edit.is_active });
+      await updateZone.mutateAsync({ id: zoneId, name: edit.name, fee: edit.fee, description: edit.description, is_active: edit.is_active });
       toast.success('Delivery charge updated');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update delivery charge');
@@ -84,13 +84,18 @@ const AdminSettings = () => {
         ) : (
           <div className="space-y-4">
             {zones.map(z => {
-              const edit = zoneEdits[z.id] || { fee: z.fee, description: z.description || '', is_active: z.is_active };
+              const edit = zoneEdits[z.id] || { name: z.name, fee: z.fee, description: z.description || '', is_active: z.is_active };
               return (
                 <div key={z.id} className="border border-border p-4 space-y-3 bg-muted/10">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{z.name}</p>
-                      <p className="text-xs text-muted-foreground">Zone name locked (safe) — fee/description edit করুন</p>
+                    <div className="flex-1">
+                      <label className="text-xs text-muted-foreground tracking-wider uppercase block mb-1">Zone Name</label>
+                      <input
+                        value={edit.name}
+                        onChange={e => setZoneEdits(prev => ({ ...prev, [z.id]: { ...edit, name: e.target.value } }))}
+                        className="luxury-input"
+                        placeholder="e.g. Inside Dhaka"
+                      />
                     </div>
                     <div className="flex items-center gap-3">
                       <label className="flex items-center gap-2 text-xs text-muted-foreground">
