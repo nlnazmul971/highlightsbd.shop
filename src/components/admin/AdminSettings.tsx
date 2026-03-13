@@ -16,7 +16,7 @@ const AdminSettings = () => {
   const { data: paymentSettings = [], isLoading: paymentLoading } = useCheckoutPaymentSettings();
   const upsertPayment = useUpsertCheckoutPaymentSetting();
 
-  const [zoneEdits, setZoneEdits] = useState<Record<string, { fee: number; description: string; is_active: boolean }>>({});
+  const [zoneEdits, setZoneEdits] = useState<Record<string, { name: string; fee: number; description: string; is_active: boolean }>>({});
   const [paymentEdits, setPaymentEdits] = useState<Record<string, { number: string; instructions: string; is_active: boolean }>>({});
 
   const paymentByProvider = useMemo(() => {
