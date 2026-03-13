@@ -50,7 +50,7 @@ const AdminSettings = () => {
     const edit = zoneEdits[zoneId];
     if (!edit) return;
     try {
-      await updateZone.mutateAsync({ id: zoneId, fee: edit.fee, description: edit.description, is_active: edit.is_active });
+      await updateZone.mutateAsync({ id: zoneId, name: edit.name, fee: edit.fee, description: edit.description, is_active: edit.is_active });
       toast.success('Delivery charge updated');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update delivery charge');
