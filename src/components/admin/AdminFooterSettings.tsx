@@ -13,6 +13,7 @@ const FOOTER_FIELDS = [
   { key: 'footer_messenger', label: 'Messenger Link', placeholder: 'https://m.me/yourpage' },
   { key: 'footer_whatsapp', label: 'WhatsApp Link', placeholder: 'https://wa.me/8801XXXXXXXXX' },
   { key: 'footer_copyright', label: 'Copyright Text', placeholder: '© 2026 HIGHLIGHTS. All rights reserved.' },
+  { key: 'product_message_link', label: 'Product Page "Message Now" Link', placeholder: 'https://m.me/yourpage' },
 ];
 
 const AdminFooterSettings = () => {
