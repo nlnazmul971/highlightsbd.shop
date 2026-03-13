@@ -299,7 +299,7 @@ const ProductDetail = () => {
             </div>
             <button onClick={handleBuyNow} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Buy Now</button>
             <a
-              href={`https://m.me/highlightbd`}
+              href={messageLink}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-2.5 sm:py-3.5 text-[11px] sm:text-sm flex items-center justify-center gap-2 mt-2 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors tracking-[0.15em] uppercase"
