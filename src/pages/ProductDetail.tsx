@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';
-import { useProduct, useProductReviews, useRelatedProducts, useProductImages } from '@/hooks/useSupabase';
+import { useProduct, useProductReviews, useRelatedProducts, useProductImages, useStoreSettings } from '@/hooks/useSupabase';
 import ProductCard from '@/components/ProductCard';
 import { getProductImage } from '@/data/products';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
@@ -138,6 +138,8 @@ const ProductDetail = () => {
   const { addItem, setShowPopup } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const { addView } = useRecentlyViewed();
+  const { data: storeSettings } = useStoreSettings();
+  const messageLink = storeSettings?.product_message_link || storeSettings?.footer_messenger || 'https://m.me/highlightbd';
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -297,7 +299,7 @@ const ProductDetail = () => {
             </div>
             <button onClick={handleBuyNow} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Buy Now</button>
             <a
-              href={`https://m.me/highlightbd`}
+              href={messageLink}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full py-2.5 sm:py-3.5 text-[11px] sm:text-sm flex items-center justify-center gap-2 mt-2 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors tracking-[0.15em] uppercase"
