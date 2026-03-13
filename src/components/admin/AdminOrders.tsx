@@ -137,7 +137,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
 
     const result = await callCourier('pathao', 'create_order', {
-      store_id: 1,
+      store_id: 373239,
       merchant_order_id: order.id.slice(0, 8),
       recipient_name: order.customer_name,
       recipient_phone: order.customer_phone,
