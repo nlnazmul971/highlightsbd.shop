@@ -30,7 +30,7 @@ const AdminSettings = () => {
     setZoneEdits(prev => {
       const next = { ...prev };
       for (const z of zones) {
-        if (!next[z.id]) next[z.id] = { fee: z.fee, description: z.description || '', is_active: z.is_active };
+        if (!next[z.id]) next[z.id] = { name: z.name, fee: z.fee, description: z.description || '', is_active: z.is_active };
       }
       return next;
     });
