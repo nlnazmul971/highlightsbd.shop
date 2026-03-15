@@ -65,21 +65,19 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardPr
           onMouseLeave={() => setIsHovered(false)}
         >
           {/* Main image */}
-          <img
+          <OptimizedImage
             src={getProductImage(product.image_url)}
             alt={product.name}
-            loading="lazy"
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+            className={`absolute inset-0 w-full h-full transition-all duration-700 ${
               isHovered && hoverImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
             }`}
           />
           {/* Hover image */}
           {hoverImage && (
-            <img
+            <OptimizedImage
               src={hoverImage}
               alt={`${product.name} alternate`}
-              loading="lazy"
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ${
+              className={`absolute inset-0 w-full h-full transition-all duration-700 ${
                 isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
               }`}
             />
