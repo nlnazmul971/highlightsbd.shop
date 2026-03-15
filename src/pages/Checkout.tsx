@@ -22,13 +22,13 @@ const FALLBACK_DELIVERY_OPTIONS: { id: DeliveryZone; label: string; subtitle: st
     id: 'Sub - Urban Dhaka',
     label: 'Sub - Urban Dhaka',
     subtitle: 'Ashulia, Dhamrai, Keranigonj, Dohar, Hemayetpur, Keraniganj Model, Nowabganj, Savar, South Keraniganj',
-    price: 120,
+    price: 90,
   },
   {
     id: 'Outside Dhaka',
     label: 'Outside Dhaka',
     subtitle: 'All districts outside Dhaka',
-    price: 150,
+    price: 110,
   },
 ];
 
