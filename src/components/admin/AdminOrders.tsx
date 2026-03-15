@@ -61,11 +61,16 @@ const AdminOrders = () => {
 <html><head><meta charset="utf-8"><title>Invoice #${order.id.slice(0, 8)}</title>
 <style>
   body { font-family: 'Segoe UI', sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 30px; color: #1a1a1a; }
-  h1 { font-size: 24px; font-weight: 300; letter-spacing: 3px; margin-bottom: 30px; text-transform: uppercase; }
-  .meta { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 13px; color: #666; }
+  .brand { text-align: center; font-size: 36px; font-weight: 700; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 8px; }
+  .brand-sub { text-align: center; font-size: 11px; color: #999; letter-spacing: 3px; margin-bottom: 30px; }
+  .divider { border: none; border-top: 1px solid #e0e0e0; margin: 20px 0; }
+  h2 { font-size: 18px; font-weight: 300; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13px; color: #666; }
   .section { margin-bottom: 20px; }
   .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-bottom: 8px; }
   .info p { margin: 3px 0; font-size: 13px; }
+  .courier-box { background: #f5f5f5; padding: 14px 18px; margin-bottom: 20px; }
+  .courier-box p { margin: 3px 0; font-size: 13px; }
   table { width: 100%; border-collapse: collapse; margin-top: 20px; }
   th { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; text-align: left; padding: 8px 0; border-bottom: 1px solid #eee; }
   td { padding: 10px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
@@ -76,14 +81,24 @@ const AdminOrders = () => {
   .note { margin-top: 20px; padding: 12px; background: #f9f9f9; font-size: 12px; color: #666; font-style: italic; }
   @media print { body { padding: 20px; } }
 </style></head><body>
-<h1>Invoice</h1>
+<div class="brand">HIGHLIGHTS</div>
+<div class="brand-sub">www.highlightsbd.shop</div>
+<hr class="divider" />
+<h2>Invoice</h2>
 <div class="meta"><span>Order #${order.id.slice(0, 8)}</span><span>${new Date(order.created_at).toLocaleDateString()}</span></div>
 <div class="section info">
   <div class="section-title">Customer</div>
   <p><strong>${order.customer_name}</strong></p>
   <p>${order.customer_phone}</p>
+  ${order.customer_email ? '<p>' + order.customer_email + '</p>' : ''}
   <p>${order.customer_address}, ${order.customer_city}</p>
 </div>
+${order.courier_provider || order.tracking_code ? `<div class="courier-box">
+  <div class="section-title">Courier Information</div>
+  ${order.courier_provider ? '<p><strong>Courier:</strong> ' + (order.courier_provider === 'steadfast' ? 'Steadfast Courier' : order.courier_provider === 'pathao' ? 'Pathao Courier' : order.courier_provider) + '</p>' : ''}
+  ${order.tracking_code ? '<p><strong>Tracking ID:</strong> ' + order.tracking_code + '</p>' : ''}
+  ${order.consignment_id && order.consignment_id !== order.tracking_code ? '<p><strong>Consignment ID:</strong> ' + order.consignment_id + '</p>' : ''}
+</div>` : ''}
 <div class="section info">
   <div class="section-title">Payment & Delivery</div>
   <p>Payment: ${order.payment_method}${order.payment_sender_number ? ' | Sender: ' + order.payment_sender_number : ''}${order.transaction_id ? ' | TxID: ' + order.transaction_id : ''}</p>
