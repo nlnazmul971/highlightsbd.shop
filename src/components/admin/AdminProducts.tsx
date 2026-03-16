@@ -24,7 +24,7 @@ const AdminProducts = () => {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." className="luxury-input pl-9" />
         </div>
-        <button onClick={() => { setShowAddForm(true); setEditingProduct({ id: '', name: '', price: 0, original_price: null, image_url: '', category: 'T-Shirt', description: '', sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Black', hex: '#1a1a1a' }], stock: 0, featured: false, brand: '', sku: '', created_at: '', updated_at: '' }); }} className="luxury-button-primary inline-flex items-center gap-2 text-[10px]">
+        <button onClick={() => { setShowAddForm(true); setEditingProduct({ id: '', name: '', price: 0, original_price: null, image_url: '', category: 'T-Shirt', description: '', sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Black', hex: '#1a1a1a' }], stock: 0, featured: false, brand: '', sku: '', size_chart: [], created_at: '', updated_at: '' }); }} className="luxury-button-primary inline-flex items-center gap-2 text-[10px]">
           <Plus size={14} /> Add Product
         </button>
       </div>
