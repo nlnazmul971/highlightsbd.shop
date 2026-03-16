@@ -786,7 +786,7 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                 <span>৳{selectedOrder.total.toLocaleString()}</span>
               </div>
               <button
-                onClick={() => downloadInvoice(selectedOrder)}
+                onClick={() => openInvoiceEditor(selectedOrder)}
                 className="mt-4 w-full luxury-button-outline text-[10px] py-2 inline-flex items-center justify-center gap-1.5"
               >
                 <Download size={12} />
