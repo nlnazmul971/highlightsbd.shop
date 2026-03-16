@@ -655,6 +655,9 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                     {!fraudData && !fraudLoading && <span className="text-[10px] text-muted-foreground ml-2">(click for fraud check)</span>}
                   </p>
                   <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.customer_phone}</p>
+                  {selectedOrder.customer_email && (
+                    <p><span className="text-muted-foreground">Email:</span> {selectedOrder.customer_email}</p>
+                  )}
                   <p><span className="text-muted-foreground">Address:</span> {selectedOrder.customer_address}</p>
                   <p><span className="text-muted-foreground">City:</span> {selectedOrder.customer_city}</p>
                   <p><span className="text-muted-foreground">Delivery:</span> {selectedOrder.delivery_method}</p>
