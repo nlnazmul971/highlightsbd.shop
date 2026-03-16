@@ -1,5 +1,5 @@
 import * as React from 'npm:react@18.3.1'
-import { renderAsync } from 'npm:@react-email/components@0.0.22'
+import { renderAsync } from 'npm:@react-email/components@0.0.31'
 import { OrderConfirmationEmail } from '../_shared/email-templates/order-confirmation.tsx'
 import { AdminOrderNotification } from '../_shared/email-templates/admin-order-notification.tsx'
 import { OrderStatusEmail } from '../_shared/email-templates/order-status-update.tsx'
