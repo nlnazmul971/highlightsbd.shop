@@ -235,6 +235,12 @@ const ProductForm = ({ product, isNew, onSave, onCancel, onDone }: { product: Pr
         <label className="text-xs text-muted-foreground tracking-wider uppercase">Description</label>
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="luxury-input min-h-[80px]" />
       </div>
+
+      {/* Size Chart Editor */}
+      <SizeChartEditor
+        value={(form as any).size_chart || []}
+        onChange={(chart) => setForm({ ...form, size_chart: chart } as any)}
+      />
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={form.featured} onChange={e => setForm({ ...form, featured: e.target.checked })} className="accent-primary" />
