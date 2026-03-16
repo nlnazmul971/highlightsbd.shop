@@ -861,6 +861,7 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
           </div>
         </div>
       )}
+    </div>
   );
 };
 
