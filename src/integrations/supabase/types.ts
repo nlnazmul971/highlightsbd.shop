@@ -254,6 +254,7 @@ export type Database = {
           name: string
           original_price: number | null
           price: number
+          size_chart: Json | null
           sizes: string[]
           sku: string
           stock: number
@@ -271,6 +272,7 @@ export type Database = {
           name: string
           original_price?: number | null
           price: number
+          size_chart?: Json | null
           sizes?: string[]
           sku?: string
           stock?: number
@@ -288,6 +290,7 @@ export type Database = {
           name?: string
           original_price?: number | null
           price?: number
+          size_chart?: Json | null
           sizes?: string[]
           sku?: string
           stock?: number

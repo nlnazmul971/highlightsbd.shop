@@ -323,6 +323,35 @@ const ProductDetail = () => {
               </div>
             </div>
 
+            {/* Size Chart */}
+            {product.size_chart && Array.isArray(product.size_chart) && (product.size_chart as any[]).length > 0 && (
+              <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-border">
+                <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-3 sm:mb-4">Size Chart</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs sm:text-sm border border-border">
+                    <thead>
+                      <tr className="bg-muted/30">
+                        {Object.keys((product.size_chart as any[])[0]).map(key => (
+                          <th key={key} className="px-3 py-2 text-left text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground border-b border-border font-medium">
+                            {key}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(product.size_chart as any[]).map((row: any, i: number) => (
+                        <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/10">
+                          {Object.values(row).map((val: any, j: number) => (
+                            <td key={j} className="px-3 py-2 text-foreground">{val}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
               <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
               

@@ -15,6 +15,7 @@ export type Product = {
   featured: boolean;
   brand: string;
   sku: string;
+  size_chart?: any[];
   created_at: string;
   updated_at: string;
 };
