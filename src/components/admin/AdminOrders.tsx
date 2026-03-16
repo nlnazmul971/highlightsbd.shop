@@ -367,8 +367,113 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     finally { setFraudLoading(false); }
   };
 
+  // Prepare invoice data for editing
+  const openInvoiceEditor = (order: any) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    setInvoiceData({
+      brandName: 'HIGHLIGHTS',
+      brandSub: 'www.highlightsbd.shop',
+      orderId: order.id.slice(0, 8),
+      date: new Date(order.created_at).toLocaleDateString(),
+      customerName: order.customer_name,
+      customerPhone: order.customer_phone,
+      customerEmail: order.customer_email || '',
+      customerAddress: `${order.customer_address}, ${order.customer_city}`,
+      courierProvider: order.courier_provider ? (order.courier_provider === 'steadfast' ? 'Steadfast Courier' : order.courier_provider === 'pathao' ? 'Pathao Courier' : order.courier_provider) : '',
+      trackingCode: order.tracking_code || '',
+      consignmentId: order.consignment_id || '',
+      paymentMethod: order.payment_method,
+      paymentSender: order.payment_sender_number || '',
+      transactionId: order.transaction_id || '',
+      deliveryMethod: order.delivery_method,
+      customerNote: order.customer_note || '',
+      items: items.map((i: any) => ({ name: i.name, size: i.size || '', quantity: i.quantity || 1, price: i.price || 0 })),
+      total: order.total,
+      extraLines: [] as string[],
+    });
+    setInvoiceEditing(true);
+  };
+
+  const printEditedInvoice = () => {
+    if (!invoiceData) return;
+    const d = invoiceData;
+    const invoiceHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoice #${d.orderId}</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 30px; color: #1a1a1a; }
+  .brand { text-align: center; font-size: 36px; font-weight: 700; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 8px; }
+  .brand-sub { text-align: center; font-size: 11px; color: #999; letter-spacing: 3px; margin-bottom: 30px; }
+  .divider { border: none; border-top: 1px solid #e0e0e0; margin: 20px 0; }
+  h2 { font-size: 18px; font-weight: 300; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13px; color: #666; }
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-bottom: 8px; }
+  .info p { margin: 3px 0; font-size: 13px; }
+  .courier-box { background: #f5f5f5; padding: 14px 18px; margin-bottom: 20px; }
+  .courier-box p { margin: 3px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; text-align: left; padding: 8px 0; border-bottom: 1px solid #eee; }
+  td { padding: 10px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+  td:last-child, th:last-child { text-align: right; }
+  .totals { margin-top: 20px; text-align: right; font-size: 13px; }
+  .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 4px 0; }
+  .totals .grand { font-size: 16px; font-weight: 600; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 8px; }
+  .note { margin-top: 20px; padding: 12px; background: #f9f9f9; font-size: 12px; color: #666; font-style: italic; }
+  .extra { margin-top: 15px; font-size: 12px; color: #555; }
+  @media print { body { padding: 20px; } }
+</style></head><body>
+<div class="brand">${d.brandName}</div>
+<div class="brand-sub">${d.brandSub}</div>
+<hr class="divider" />
+<h2>Invoice</h2>
+<div class="meta"><span>Order #${d.orderId}</span><span>${d.date}</span></div>
+<div class="section info">
+  <div class="section-title">Customer</div>
+  <p><strong>${d.customerName}</strong></p>
+  <p>${d.customerPhone}</p>
+  ${d.customerEmail ? '<p>' + d.customerEmail + '</p>' : ''}
+  <p>${d.customerAddress}</p>
+</div>
+${d.courierProvider || d.trackingCode ? `<div class="courier-box">
+  <div class="section-title">Courier Information</div>
+  ${d.courierProvider ? '<p><strong>Courier:</strong> ' + d.courierProvider + '</p>' : ''}
+  ${d.trackingCode ? '<p><strong>Tracking ID:</strong> ' + d.trackingCode + '</p>' : ''}
+  ${d.consignmentId && d.consignmentId !== d.trackingCode ? '<p><strong>Consignment ID:</strong> ' + d.consignmentId + '</p>' : ''}
+</div>` : ''}
+<div class="section info">
+  <div class="section-title">Payment & Delivery</div>
+  <p>Payment: ${d.paymentMethod}${d.paymentSender ? ' | Sender: ' + d.paymentSender : ''}${d.transactionId ? ' | TxID: ' + d.transactionId : ''}</p>
+  <p>Delivery: ${d.deliveryMethod}</p>
+</div>
+${d.customerNote ? '<div class="note">Note: ' + d.customerNote + '</div>' : ''}
+<table><thead><tr><th>Item</th><th>Size</th><th>Qty</th><th>Price</th></tr></thead><tbody>
+${d.items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.quantity}</td><td>৳${(i.price * i.quantity).toLocaleString()}</td></tr>`).join('')}
+</tbody></table>
+<div class="totals">
+  <div class="row grand"><span>Total</span><span>৳${d.total.toLocaleString()}</span></div>
+</div>
+${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="extra">' + l + '</div>').join('')}
+</body></html>`;
+    const blob = new Blob([invoiceHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) { w.onload = () => { w.print(); URL.revokeObjectURL(url); }; }
+    setInvoiceEditing(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Search bar */}
+      <div className="flex gap-3 flex-wrap items-center">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search by name, phone, email, order ID, tracking..."
+          className="luxury-input flex-1 min-w-[200px] text-sm"
+        />
+      </div>
+
       <div className="flex gap-2 flex-wrap">
         {['All', ...statusOptions].map(s => (
           <button key={s} onClick={() => setFilter(s)} className={`text-[10px] tracking-[0.15em] uppercase px-4 py-2 border transition-colors ${filter === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}>
