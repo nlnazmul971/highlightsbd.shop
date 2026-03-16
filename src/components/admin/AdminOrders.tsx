@@ -36,6 +36,7 @@ const AdminOrders = () => {
   const { data: orders = [] } = useOrders();
   const updateOrder = useUpdateOrder();
   const [filter, setFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -48,11 +49,25 @@ const AdminOrders = () => {
   const [syncingStatus, setSyncingStatus] = useState<string | null>(null);
   const [returnLoading, setReturnLoading] = useState<string | null>(null);
 
+  // Invoice editor state
+  const [invoiceEditing, setInvoiceEditing] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+
   // Courier selection modal state
   const [courierModal, setCourierModal] = useState<{ open: boolean; order: any | null }>({ open: false, order: null });
   const [selectedCourier, setSelectedCourier] = useState<string>('steadfast');
 
-  const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
+  const filteredByStatus = filter === 'All' ? orders : orders.filter(o => o.status === filter);
+  const filtered = searchQuery.trim()
+    ? filteredByStatus.filter(o => {
+        const q = searchQuery.toLowerCase();
+        return o.customer_name.toLowerCase().includes(q) ||
+          o.customer_phone.includes(q) ||
+          o.id.toLowerCase().includes(q) ||
+          (o.customer_email && o.customer_email.toLowerCase().includes(q)) ||
+          (o.tracking_code && o.tracking_code.toLowerCase().includes(q));
+      })
+    : filteredByStatus;
 
   const downloadInvoice = (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];

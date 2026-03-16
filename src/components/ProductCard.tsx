@@ -60,26 +60,28 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardPr
     <div className="group animate-fade-in">
       <Link to={`/product/${product.id}`}>
         <div
-          className="relative overflow-hidden aspect-[3/4]"
+          className="relative overflow-hidden aspect-[3/4] bg-muted"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {/* Main image */}
+          {/* Main image - always rendered */}
           <OptimizedImage
             src={getProductImage(product.image_url)}
             alt={product.name}
-            className={`absolute inset-0 w-full h-full transition-all duration-700 ${
+            className={`absolute inset-0 w-full h-full transition-all duration-500 ease-in-out ${
               isHovered && hoverImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
             }`}
+            loading="eager"
           />
-          {/* Hover image */}
+          {/* Hover image - preloaded, hidden until hover */}
           {hoverImage && (
             <OptimizedImage
               src={hoverImage}
               alt={`${product.name} alternate`}
-              className={`absolute inset-0 w-full h-full transition-all duration-700 ${
+              className={`absolute inset-0 w-full h-full transition-all duration-500 ease-in-out ${
                 isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
               }`}
+              loading="eager"
             />
           )}
 
