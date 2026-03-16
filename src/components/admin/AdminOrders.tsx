@@ -36,6 +36,7 @@ const AdminOrders = () => {
   const { data: orders = [] } = useOrders();
   const updateOrder = useUpdateOrder();
   const [filter, setFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [editing, setEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -48,11 +49,25 @@ const AdminOrders = () => {
   const [syncingStatus, setSyncingStatus] = useState<string | null>(null);
   const [returnLoading, setReturnLoading] = useState<string | null>(null);
 
+  // Invoice editor state
+  const [invoiceEditing, setInvoiceEditing] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
+
   // Courier selection modal state
   const [courierModal, setCourierModal] = useState<{ open: boolean; order: any | null }>({ open: false, order: null });
   const [selectedCourier, setSelectedCourier] = useState<string>('steadfast');
 
-  const filtered = filter === 'All' ? orders : orders.filter(o => o.status === filter);
+  const filteredByStatus = filter === 'All' ? orders : orders.filter(o => o.status === filter);
+  const filtered = searchQuery.trim()
+    ? filteredByStatus.filter(o => {
+        const q = searchQuery.toLowerCase();
+        return o.customer_name.toLowerCase().includes(q) ||
+          o.customer_phone.includes(q) ||
+          o.id.toLowerCase().includes(q) ||
+          (o.customer_email && o.customer_email.toLowerCase().includes(q)) ||
+          (o.tracking_code && o.tracking_code.toLowerCase().includes(q));
+      })
+    : filteredByStatus;
 
   const downloadInvoice = (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
@@ -352,8 +367,113 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     finally { setFraudLoading(false); }
   };
 
+  // Prepare invoice data for editing
+  const openInvoiceEditor = (order: any) => {
+    const items = Array.isArray(order.items) ? order.items : [];
+    setInvoiceData({
+      brandName: 'HIGHLIGHTS',
+      brandSub: 'www.highlightsbd.shop',
+      orderId: order.id.slice(0, 8),
+      date: new Date(order.created_at).toLocaleDateString(),
+      customerName: order.customer_name,
+      customerPhone: order.customer_phone,
+      customerEmail: order.customer_email || '',
+      customerAddress: `${order.customer_address}, ${order.customer_city}`,
+      courierProvider: order.courier_provider ? (order.courier_provider === 'steadfast' ? 'Steadfast Courier' : order.courier_provider === 'pathao' ? 'Pathao Courier' : order.courier_provider) : '',
+      trackingCode: order.tracking_code || '',
+      consignmentId: order.consignment_id || '',
+      paymentMethod: order.payment_method,
+      paymentSender: order.payment_sender_number || '',
+      transactionId: order.transaction_id || '',
+      deliveryMethod: order.delivery_method,
+      customerNote: order.customer_note || '',
+      items: items.map((i: any) => ({ name: i.name, size: i.size || '', quantity: i.quantity || 1, price: i.price || 0 })),
+      total: order.total,
+      extraLines: [] as string[],
+    });
+    setInvoiceEditing(true);
+  };
+
+  const printEditedInvoice = () => {
+    if (!invoiceData) return;
+    const d = invoiceData;
+    const invoiceHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoice #${d.orderId}</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; max-width: 700px; margin: 0 auto; padding: 40px 30px; color: #1a1a1a; }
+  .brand { text-align: center; font-size: 36px; font-weight: 700; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 8px; }
+  .brand-sub { text-align: center; font-size: 11px; color: #999; letter-spacing: 3px; margin-bottom: 30px; }
+  .divider { border: none; border-top: 1px solid #e0e0e0; margin: 20px 0; }
+  h2 { font-size: 18px; font-weight: 300; letter-spacing: 3px; margin-bottom: 20px; text-transform: uppercase; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 25px; font-size: 13px; color: #666; }
+  .section { margin-bottom: 20px; }
+  .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-bottom: 8px; }
+  .info p { margin: 3px 0; font-size: 13px; }
+  .courier-box { background: #f5f5f5; padding: 14px 18px; margin-bottom: 20px; }
+  .courier-box p { margin: 3px 0; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; text-align: left; padding: 8px 0; border-bottom: 1px solid #eee; }
+  td { padding: 10px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+  td:last-child, th:last-child { text-align: right; }
+  .totals { margin-top: 20px; text-align: right; font-size: 13px; }
+  .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 4px 0; }
+  .totals .grand { font-size: 16px; font-weight: 600; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 8px; }
+  .note { margin-top: 20px; padding: 12px; background: #f9f9f9; font-size: 12px; color: #666; font-style: italic; }
+  .extra { margin-top: 15px; font-size: 12px; color: #555; }
+  @media print { body { padding: 20px; } }
+</style></head><body>
+<div class="brand">${d.brandName}</div>
+<div class="brand-sub">${d.brandSub}</div>
+<hr class="divider" />
+<h2>Invoice</h2>
+<div class="meta"><span>Order #${d.orderId}</span><span>${d.date}</span></div>
+<div class="section info">
+  <div class="section-title">Customer</div>
+  <p><strong>${d.customerName}</strong></p>
+  <p>${d.customerPhone}</p>
+  ${d.customerEmail ? '<p>' + d.customerEmail + '</p>' : ''}
+  <p>${d.customerAddress}</p>
+</div>
+${d.courierProvider || d.trackingCode ? `<div class="courier-box">
+  <div class="section-title">Courier Information</div>
+  ${d.courierProvider ? '<p><strong>Courier:</strong> ' + d.courierProvider + '</p>' : ''}
+  ${d.trackingCode ? '<p><strong>Tracking ID:</strong> ' + d.trackingCode + '</p>' : ''}
+  ${d.consignmentId && d.consignmentId !== d.trackingCode ? '<p><strong>Consignment ID:</strong> ' + d.consignmentId + '</p>' : ''}
+</div>` : ''}
+<div class="section info">
+  <div class="section-title">Payment & Delivery</div>
+  <p>Payment: ${d.paymentMethod}${d.paymentSender ? ' | Sender: ' + d.paymentSender : ''}${d.transactionId ? ' | TxID: ' + d.transactionId : ''}</p>
+  <p>Delivery: ${d.deliveryMethod}</p>
+</div>
+${d.customerNote ? '<div class="note">Note: ' + d.customerNote + '</div>' : ''}
+<table><thead><tr><th>Item</th><th>Size</th><th>Qty</th><th>Price</th></tr></thead><tbody>
+${d.items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.quantity}</td><td>৳${(i.price * i.quantity).toLocaleString()}</td></tr>`).join('')}
+</tbody></table>
+<div class="totals">
+  <div class="row grand"><span>Total</span><span>৳${d.total.toLocaleString()}</span></div>
+</div>
+${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="extra">' + l + '</div>').join('')}
+</body></html>`;
+    const blob = new Blob([invoiceHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) { w.onload = () => { w.print(); URL.revokeObjectURL(url); }; }
+    setInvoiceEditing(false);
+  };
+
   return (
     <div className="space-y-6">
+      {/* Search bar */}
+      <div className="flex gap-3 flex-wrap items-center">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search by name, phone, email, order ID, tracking..."
+          className="luxury-input flex-1 min-w-[200px] text-sm"
+        />
+      </div>
+
       <div className="flex gap-2 flex-wrap">
         {['All', ...statusOptions].map(s => (
           <button key={s} onClick={() => setFilter(s)} className={`text-[10px] tracking-[0.15em] uppercase px-4 py-2 border transition-colors ${filter === s ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'}`}>
@@ -535,6 +655,9 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
                     {!fraudData && !fraudLoading && <span className="text-[10px] text-muted-foreground ml-2">(click for fraud check)</span>}
                   </p>
                   <p><span className="text-muted-foreground">Phone:</span> {selectedOrder.customer_phone}</p>
+                  {selectedOrder.customer_email && (
+                    <p><span className="text-muted-foreground">Email:</span> {selectedOrder.customer_email}</p>
+                  )}
                   <p><span className="text-muted-foreground">Address:</span> {selectedOrder.customer_address}</p>
                   <p><span className="text-muted-foreground">City:</span> {selectedOrder.customer_city}</p>
                   <p><span className="text-muted-foreground">Delivery:</span> {selectedOrder.delivery_method}</p>
@@ -663,13 +786,78 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
                 <span>৳{selectedOrder.total.toLocaleString()}</span>
               </div>
               <button
-                onClick={() => downloadInvoice(selectedOrder)}
+                onClick={() => openInvoiceEditor(selectedOrder)}
                 className="mt-4 w-full luxury-button-outline text-[10px] py-2 inline-flex items-center justify-center gap-1.5"
               >
                 <Download size={12} />
                 Download Invoice
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invoice Editor Modal */}
+      {invoiceEditing && invoiceData && (
+        <div className="fixed inset-0 bg-foreground/50 z-[60] flex items-center justify-center p-4" onClick={() => setInvoiceEditing(false)}>
+          <div className="bg-background border border-border max-w-2xl w-full max-h-[90vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Edit Invoice</h3>
+              <button onClick={() => setInvoiceEditing(false)} className="p-1.5 hover:bg-accent"><X size={16} /></button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <EditField label="Brand Name" value={invoiceData.brandName} onChange={v => setInvoiceData((p: any) => ({ ...p, brandName: v }))} />
+              <EditField label="Brand Subtitle" value={invoiceData.brandSub} onChange={v => setInvoiceData((p: any) => ({ ...p, brandSub: v }))} />
+              <EditField label="Customer Name" value={invoiceData.customerName} onChange={v => setInvoiceData((p: any) => ({ ...p, customerName: v }))} />
+              <EditField label="Phone" value={invoiceData.customerPhone} onChange={v => setInvoiceData((p: any) => ({ ...p, customerPhone: v }))} />
+              <EditField label="Email" value={invoiceData.customerEmail} onChange={v => setInvoiceData((p: any) => ({ ...p, customerEmail: v }))} />
+              <EditField label="Address" value={invoiceData.customerAddress} onChange={v => setInvoiceData((p: any) => ({ ...p, customerAddress: v }))} />
+              <EditField label="Courier Provider" value={invoiceData.courierProvider} onChange={v => setInvoiceData((p: any) => ({ ...p, courierProvider: v }))} />
+              <EditField label="Tracking Code" value={invoiceData.trackingCode} onChange={v => setInvoiceData((p: any) => ({ ...p, trackingCode: v }))} />
+              <EditField label="Consignment ID" value={invoiceData.consignmentId} onChange={v => setInvoiceData((p: any) => ({ ...p, consignmentId: v }))} />
+              <EditField label="Payment Method" value={invoiceData.paymentMethod} onChange={v => setInvoiceData((p: any) => ({ ...p, paymentMethod: v }))} />
+              <EditField label="Sender Number" value={invoiceData.paymentSender} onChange={v => setInvoiceData((p: any) => ({ ...p, paymentSender: v }))} />
+              <EditField label="Transaction ID" value={invoiceData.transactionId} onChange={v => setInvoiceData((p: any) => ({ ...p, transactionId: v }))} />
+              <EditField label="Delivery Method" value={invoiceData.deliveryMethod} onChange={v => setInvoiceData((p: any) => ({ ...p, deliveryMethod: v }))} />
+              <EditField label="Date" value={invoiceData.date} onChange={v => setInvoiceData((p: any) => ({ ...p, date: v }))} />
+            </div>
+
+            <EditField label="Customer Note" value={invoiceData.customerNote} onChange={v => setInvoiceData((p: any) => ({ ...p, customerNote: v }))} textarea />
+
+            {/* Editable Items */}
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground tracking-wider uppercase">Items</label>
+              {invoiceData.items.map((item: any, idx: number) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input value={item.name} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], name: e.target.value }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input flex-1 text-sm" placeholder="Name" />
+                  <input value={item.size} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], size: e.target.value }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input w-16 text-sm" placeholder="Size" />
+                  <input type="number" value={item.quantity} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], quantity: parseInt(e.target.value) || 1 }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input w-16 text-sm" placeholder="Qty" />
+                  <input type="number" value={item.price} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], price: parseInt(e.target.value) || 0 }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input w-20 text-sm" placeholder="Price" />
+                  <button onClick={() => { const items = invoiceData.items.filter((_: any, i: number) => i !== idx); setInvoiceData((p: any) => ({ ...p, items })); }} className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><X size={14} /></button>
+                </div>
+              ))}
+              <button onClick={() => setInvoiceData((p: any) => ({ ...p, items: [...p.items, { name: '', size: '', quantity: 1, price: 0 }] }))} className="text-xs text-primary hover:underline">+ Add Item</button>
+            </div>
+
+            <EditField label="Total (৳)" value={String(invoiceData.total)} onChange={v => setInvoiceData((p: any) => ({ ...p, total: parseInt(v) || 0 }))} />
+
+            {/* Extra Lines */}
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground tracking-wider uppercase">Extra Lines (custom text)</label>
+              {invoiceData.extraLines.map((line: string, idx: number) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input value={line} onChange={e => { const lines = [...invoiceData.extraLines]; lines[idx] = e.target.value; setInvoiceData((p: any) => ({ ...p, extraLines: lines })); }} className="luxury-input flex-1 text-sm" placeholder="Custom text..." />
+                  <button onClick={() => { const lines = invoiceData.extraLines.filter((_: string, i: number) => i !== idx); setInvoiceData((p: any) => ({ ...p, extraLines: lines })); }} className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><X size={14} /></button>
+                </div>
+              ))}
+              <button onClick={() => setInvoiceData((p: any) => ({ ...p, extraLines: [...p.extraLines, ''] }))} className="text-xs text-primary hover:underline">+ Add Line</button>
+            </div>
+
+            <button onClick={printEditedInvoice} className="w-full luxury-button-primary text-sm py-2.5 inline-flex items-center justify-center gap-2">
+              <Download size={14} />
+              Print Invoice
+            </button>
           </div>
         </div>
       )}
