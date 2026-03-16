@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Heart, Eye, ShoppingBag, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import OptimizedImage from '@/components/OptimizedImage';
 import { Product, getProductImage } from '@/data/products';
 import { useCart } from '@/contexts/CartContext';
 import { useWishlist } from '@/contexts/WishlistContext';

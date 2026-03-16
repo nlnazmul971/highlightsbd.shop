@@ -151,6 +151,121 @@ const MultiImageUpload = ({ productId }: { productId: string }) => {
   );
 };
 
+const SizeChartEditor = ({ value, onChange }: { value: any[]; onChange: (v: any[]) => void }) => {
+  const [columns, setColumns] = useState<string[]>(() => {
+    if (value.length > 0) return Object.keys(value[0]);
+    return ['Size', 'Chest (inch)', 'Length (inch)', 'Shoulder (inch)'];
+  });
+  const [rows, setRows] = useState<Record<string, string>[]>(() => {
+    if (value.length > 0) return value;
+    return [];
+  });
+  const [newCol, setNewCol] = useState('');
+
+  const addRow = () => {
+    const row: Record<string, string> = {};
+    columns.forEach(c => row[c] = '');
+    const updated = [...rows, row];
+    setRows(updated);
+    onChange(updated);
+  };
+
+  const removeRow = (i: number) => {
+    const updated = rows.filter((_, idx) => idx !== i);
+    setRows(updated);
+    onChange(updated);
+  };
+
+  const updateCell = (rowIdx: number, col: string, val: string) => {
+    const updated = rows.map((r, i) => i === rowIdx ? { ...r, [col]: val } : r);
+    setRows(updated);
+    onChange(updated);
+  };
+
+  const addColumn = () => {
+    if (!newCol.trim()) return;
+    const col = newCol.trim();
+    setColumns([...columns, col]);
+    const updated = rows.map(r => ({ ...r, [col]: '' }));
+    setRows(updated);
+    onChange(updated);
+    setNewCol('');
+  };
+
+  const removeColumn = (col: string) => {
+    const newCols = columns.filter(c => c !== col);
+    setColumns(newCols);
+    const updated = rows.map(r => {
+      const { [col]: _, ...rest } = r;
+      return rest;
+    });
+    setRows(updated);
+    onChange(updated);
+  };
+
+  return (
+    <div className="space-y-3">
+      <label className="text-xs text-muted-foreground tracking-wider uppercase">Size Chart</label>
+      
+      {columns.length > 0 && (
+        <div className="overflow-x-auto border border-border">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-muted/30">
+                {columns.map(col => (
+                  <th key={col} className="px-2 py-1.5 text-left text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <div className="flex items-center gap-1">
+                      {col}
+                      <button onClick={() => removeColumn(col)} className="text-destructive hover:text-destructive/80 ml-1"><X size={10} /></button>
+                    </div>
+                  </th>
+                ))}
+                <th className="px-2 py-1.5 border-b border-border w-8"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i} className="border-b border-border last:border-0">
+                  {columns.map(col => (
+                    <td key={col} className="px-1 py-1">
+                      <input
+                        value={row[col] || ''}
+                        onChange={e => updateCell(i, col, e.target.value)}
+                        className="w-full px-2 py-1 text-xs bg-transparent border border-transparent hover:border-border focus:border-foreground/30 outline-none"
+                      />
+                    </td>
+                  ))}
+                  <td className="px-1 py-1">
+                    <button onClick={() => removeRow(i)} className="p-1 text-destructive hover:text-destructive/80"><Trash2 size={12} /></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={addRow} className="luxury-button-outline text-[10px] py-1.5 px-3 inline-flex items-center gap-1">
+          <Plus size={12} /> Add Row
+        </button>
+        <div className="flex items-center gap-1">
+          <input
+            value={newCol}
+            onChange={e => setNewCol(e.target.value)}
+            placeholder="Column name"
+            className="luxury-input text-[10px] py-1.5 px-2 w-28"
+            onKeyDown={e => e.key === 'Enter' && addColumn()}
+          />
+          <button type="button" onClick={addColumn} className="luxury-button-outline text-[10px] py-1.5 px-2">
+            <Plus size={12} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const ProductForm = ({ product, isNew, onSave, onCancel, onDone }: { product: Product; isNew: boolean; onSave: (p: Product) => Promise<any>; onCancel: () => void; onDone: () => void }) => {
   const [form, setForm] = useState(product);
   const [savedProductId, setSavedProductId] = useState(isNew ? '' : product.id);
