@@ -796,7 +796,71 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
           </div>
         </div>
       )}
-    </div>
+
+      {/* Invoice Editor Modal */}
+      {invoiceEditing && invoiceData && (
+        <div className="fixed inset-0 bg-foreground/50 z-[60] flex items-center justify-center p-4" onClick={() => setInvoiceEditing(false)}>
+          <div className="bg-background border border-border max-w-2xl w-full max-h-[90vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Edit Invoice</h3>
+              <button onClick={() => setInvoiceEditing(false)} className="p-1.5 hover:bg-accent"><X size={16} /></button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <EditField label="Brand Name" value={invoiceData.brandName} onChange={v => setInvoiceData((p: any) => ({ ...p, brandName: v }))} />
+              <EditField label="Brand Subtitle" value={invoiceData.brandSub} onChange={v => setInvoiceData((p: any) => ({ ...p, brandSub: v }))} />
+              <EditField label="Customer Name" value={invoiceData.customerName} onChange={v => setInvoiceData((p: any) => ({ ...p, customerName: v }))} />
+              <EditField label="Phone" value={invoiceData.customerPhone} onChange={v => setInvoiceData((p: any) => ({ ...p, customerPhone: v }))} />
+              <EditField label="Email" value={invoiceData.customerEmail} onChange={v => setInvoiceData((p: any) => ({ ...p, customerEmail: v }))} />
+              <EditField label="Address" value={invoiceData.customerAddress} onChange={v => setInvoiceData((p: any) => ({ ...p, customerAddress: v }))} />
+              <EditField label="Courier Provider" value={invoiceData.courierProvider} onChange={v => setInvoiceData((p: any) => ({ ...p, courierProvider: v }))} />
+              <EditField label="Tracking Code" value={invoiceData.trackingCode} onChange={v => setInvoiceData((p: any) => ({ ...p, trackingCode: v }))} />
+              <EditField label="Consignment ID" value={invoiceData.consignmentId} onChange={v => setInvoiceData((p: any) => ({ ...p, consignmentId: v }))} />
+              <EditField label="Payment Method" value={invoiceData.paymentMethod} onChange={v => setInvoiceData((p: any) => ({ ...p, paymentMethod: v }))} />
+              <EditField label="Sender Number" value={invoiceData.paymentSender} onChange={v => setInvoiceData((p: any) => ({ ...p, paymentSender: v }))} />
+              <EditField label="Transaction ID" value={invoiceData.transactionId} onChange={v => setInvoiceData((p: any) => ({ ...p, transactionId: v }))} />
+              <EditField label="Delivery Method" value={invoiceData.deliveryMethod} onChange={v => setInvoiceData((p: any) => ({ ...p, deliveryMethod: v }))} />
+              <EditField label="Date" value={invoiceData.date} onChange={v => setInvoiceData((p: any) => ({ ...p, date: v }))} />
+            </div>
+
+            <EditField label="Customer Note" value={invoiceData.customerNote} onChange={v => setInvoiceData((p: any) => ({ ...p, customerNote: v }))} textarea />
+
+            {/* Editable Items */}
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground tracking-wider uppercase">Items</label>
+              {invoiceData.items.map((item: any, idx: number) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input value={item.name} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], name: e.target.value }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input flex-1 text-sm" placeholder="Name" />
+                  <input value={item.size} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], size: e.target.value }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input w-16 text-sm" placeholder="Size" />
+                  <input type="number" value={item.quantity} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], quantity: parseInt(e.target.value) || 1 }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input w-16 text-sm" placeholder="Qty" />
+                  <input type="number" value={item.price} onChange={e => { const items = [...invoiceData.items]; items[idx] = { ...items[idx], price: parseInt(e.target.value) || 0 }; setInvoiceData((p: any) => ({ ...p, items })); }} className="luxury-input w-20 text-sm" placeholder="Price" />
+                  <button onClick={() => { const items = invoiceData.items.filter((_: any, i: number) => i !== idx); setInvoiceData((p: any) => ({ ...p, items })); }} className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><X size={14} /></button>
+                </div>
+              ))}
+              <button onClick={() => setInvoiceData((p: any) => ({ ...p, items: [...p.items, { name: '', size: '', quantity: 1, price: 0 }] }))} className="text-xs text-primary hover:underline">+ Add Item</button>
+            </div>
+
+            <EditField label="Total (৳)" value={String(invoiceData.total)} onChange={v => setInvoiceData((p: any) => ({ ...p, total: parseInt(v) || 0 }))} />
+
+            {/* Extra Lines */}
+            <div className="space-y-2">
+              <label className="text-xs text-muted-foreground tracking-wider uppercase">Extra Lines (custom text)</label>
+              {invoiceData.extraLines.map((line: string, idx: number) => (
+                <div key={idx} className="flex gap-2 items-center">
+                  <input value={line} onChange={e => { const lines = [...invoiceData.extraLines]; lines[idx] = e.target.value; setInvoiceData((p: any) => ({ ...p, extraLines: lines })); }} className="luxury-input flex-1 text-sm" placeholder="Custom text..." />
+                  <button onClick={() => { const lines = invoiceData.extraLines.filter((_: string, i: number) => i !== idx); setInvoiceData((p: any) => ({ ...p, extraLines: lines })); }} className="p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><X size={14} /></button>
+                </div>
+              ))}
+              <button onClick={() => setInvoiceData((p: any) => ({ ...p, extraLines: [...p.extraLines, ''] }))} className="text-xs text-primary hover:underline">+ Add Line</button>
+            </div>
+
+            <button onClick={printEditedInvoice} className="w-full luxury-button-primary text-sm py-2.5 inline-flex items-center justify-center gap-2">
+              <Download size={14} />
+              Print Invoice
+            </button>
+          </div>
+        </div>
+      )}
   );
 };
 
