@@ -62,7 +62,7 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 </p>
               ))}
             </div>
-            {!isCancelled && (
+            {!isCancelled && !isReturned && (
               <div className="flex items-center justify-between gap-1 pt-2">
                 {statusSteps.map((step, i) => (
                   <div key={step} className="flex-1 flex flex-col items-center gap-1">
