@@ -31,7 +31,8 @@ const OrderTracker = ({ userId }: { userId: string }) => {
       <h2 className="luxury-heading text-lg tracking-[0.1em] text-center">My Orders</h2>
       {orders.map((order: any) => {
         const isCancelled = order.status === 'Cancelled';
-        const currentStep = isCancelled ? -1 : statusSteps.indexOf(order.status);
+        const isReturned = order.status === 'Returned';
+        const currentStep = (isCancelled || isReturned) ? -1 : statusSteps.indexOf(order.status);
         const items = (order.items as any[]) || [];
         return (
           <div key={order.id} className={`border border-border p-4 space-y-3 ${isCancelled ? 'opacity-60' : ''}`}>
