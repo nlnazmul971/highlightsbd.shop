@@ -35,7 +35,7 @@ const OrderTracker = ({ userId }: { userId: string }) => {
         const currentStep = (isCancelled || isReturned) ? -1 : statusSteps.indexOf(order.status);
         const items = (order.items as any[]) || [];
         return (
-          <div key={order.id} className={`border border-border p-4 space-y-3 ${isCancelled ? 'opacity-60' : ''}`}>
+          <div key={order.id} className={`border border-border p-4 space-y-3 ${(isCancelled || isReturned) ? 'opacity-60' : ''}`}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs text-muted-foreground">Order #{order.id.slice(0, 8)}</p>
@@ -46,6 +46,11 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 {isCancelled && (
                   <p className="text-xs text-destructive font-medium flex items-center gap-1 justify-end mt-0.5">
                     <XCircle size={12} /> Cancelled
+                  </p>
+                )}
+                {isReturned && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1 justify-end mt-0.5">
+                    <RotateCcw size={12} /> Returned
                   </p>
                 )}
               </div>
