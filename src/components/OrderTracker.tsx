@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react';
 
 const statusSteps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
 const statusIcons: Record<string, React.ReactNode> = {
