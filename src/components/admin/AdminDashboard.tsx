@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProducts, useOrders } from '@/hooks/useSupabase';
-import { Package, ShoppingBag, DollarSign, TrendingUp, XCircle, RotateCcw, CreditCard, Truck } from 'lucide-react';
+import { Package, ShoppingBag, DollarSign, TrendingUp, XCircle, RotateCcw, CreditCard, Truck, TrendingDown } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, subDays, isWithinInterval, startOfDay, endOfDay, parseISO } from 'date-fns';
 
@@ -24,6 +24,8 @@ const AdminDashboard = () => {
   }, [orders, dateRange]);
 
   const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.total, 0);
+  const totalCourierFee = filteredOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
+  const deliveryRevenue = totalRevenue - totalCourierFee;
   const pendingOrders = filteredOrders.filter(o => o.status === 'Pending').length;
   const cancelledOrders = filteredOrders.filter(o => o.status === 'Cancelled').length;
   const returnedOrders = filteredOrders.filter(o => o.status === 'Returned').length;
@@ -74,6 +76,7 @@ const AdminDashboard = () => {
   const stats = [
     { label: 'Total Orders', value: filteredOrders.length, icon: ShoppingBag, color: 'bg-accent text-accent-foreground' },
     { label: 'Revenue', value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-secondary text-secondary-foreground' },
+    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Courier Fee: ৳${totalCourierFee.toLocaleString()}` },
     { label: 'COD Orders', value: codOrders, icon: Truck, color: 'bg-primary/10 text-primary' },
     { label: 'Online Payment', value: onlineOrders, icon: CreditCard, color: 'bg-muted text-muted-foreground' },
     { label: 'Pending', value: pendingOrders, icon: TrendingUp, color: 'bg-primary/10 text-primary' },
@@ -87,26 +90,12 @@ const AdminDashboard = () => {
       {/* Date range picker */}
       <div className="flex flex-wrap items-center gap-3 border border-border p-4">
         <span className="text-xs text-muted-foreground tracking-wider uppercase">Date Range:</span>
-        <input
-          type="date"
-          value={dateRange.from}
-          onChange={e => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-          className="luxury-input w-auto text-sm"
-        />
+        <input type="date" value={dateRange.from} onChange={e => setDateRange(prev => ({ ...prev, from: e.target.value }))} className="luxury-input w-auto text-sm" />
         <span className="text-xs text-muted-foreground">to</span>
-        <input
-          type="date"
-          value={dateRange.to}
-          onChange={e => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-          className="luxury-input w-auto text-sm"
-        />
+        <input type="date" value={dateRange.to} onChange={e => setDateRange(prev => ({ ...prev, to: e.target.value }))} className="luxury-input w-auto text-sm" />
         <div className="flex gap-2 ml-auto">
           {[7, 30, 90].map(d => (
-            <button
-              key={d}
-              onClick={() => setDateRange({ from: format(subDays(new Date(), d), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') })}
-              className="luxury-button-outline text-[10px] px-3 py-1.5"
-            >
+            <button key={d} onClick={() => setDateRange({ from: format(subDays(new Date(), d), 'yyyy-MM-dd'), to: format(new Date(), 'yyyy-MM-dd') })} className="luxury-button-outline text-[10px] px-3 py-1.5">
               {d}D
             </button>
           ))}
@@ -114,7 +103,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Stats grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {stats.map(s => (
           <div key={s.label} className="border border-border p-4 space-y-2">
             <div className="flex items-center justify-between">
@@ -122,15 +111,14 @@ const AdminDashboard = () => {
               <div className={`p-1.5 rounded ${s.color}`}><s.icon size={14} /></div>
             </div>
             <p className="text-xl font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>{s.value}</p>
+            {(s as any).sub && <p className="text-[10px] text-muted-foreground">{(s as any).sub}</p>}
           </div>
         ))}
       </div>
 
       {/* Revenue Area Chart */}
       <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
-        <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-          Revenue Overview
-        </h3>
+        <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>Revenue Overview</h3>
         <p className="text-xs text-muted-foreground mb-4">Daily revenue for selected period</p>
         {dailyData.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">No revenue data for selected period</p>
@@ -146,16 +134,7 @@ const AdminDashboard = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(var(--background))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 8,
-                  fontSize: 12,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                }}
-                formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']}
-              />
+              <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']} />
               <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }} />
             </AreaChart>
           </ResponsiveContainer>
@@ -164,11 +143,8 @@ const AdminDashboard = () => {
 
       {/* Pie Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Payment Method Pie */}
         <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
-          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-            Payment Methods
-          </h3>
+          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>Payment Methods</h3>
           <p className="text-xs text-muted-foreground mb-4">Breakdown by payment type</p>
           {paymentData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No data</p>
@@ -195,11 +171,8 @@ const AdminDashboard = () => {
           )}
         </div>
 
-        {/* Order Status Pie */}
         <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
-          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-            Order Status
-          </h3>
+          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>Order Status</h3>
           <p className="text-xs text-muted-foreground mb-4">Distribution of order statuses</p>
           {statusData.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No data</p>

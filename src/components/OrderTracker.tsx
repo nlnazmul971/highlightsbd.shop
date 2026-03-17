@@ -9,6 +9,7 @@ const statusIcons: Record<string, React.ReactNode> = {
   Shipped: <Truck size={16} />,
   Delivered: <CheckCircle size={16} />,
   Cancelled: <XCircle size={16} />,
+  Returned: <RotateCcw size={16} />,
 };
 
 const OrderTracker = ({ userId }: { userId: string }) => {
