@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Package, Truck, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react';
 
 const statusSteps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
 const statusIcons: Record<string, React.ReactNode> = {
@@ -9,6 +9,7 @@ const statusIcons: Record<string, React.ReactNode> = {
   Shipped: <Truck size={16} />,
   Delivered: <CheckCircle size={16} />,
   Cancelled: <XCircle size={16} />,
+  Returned: <RotateCcw size={16} />,
 };
 
 const OrderTracker = ({ userId }: { userId: string }) => {
@@ -30,10 +31,11 @@ const OrderTracker = ({ userId }: { userId: string }) => {
       <h2 className="luxury-heading text-lg tracking-[0.1em] text-center">My Orders</h2>
       {orders.map((order: any) => {
         const isCancelled = order.status === 'Cancelled';
-        const currentStep = isCancelled ? -1 : statusSteps.indexOf(order.status);
+        const isReturned = order.status === 'Returned';
+        const currentStep = (isCancelled || isReturned) ? -1 : statusSteps.indexOf(order.status);
         const items = (order.items as any[]) || [];
         return (
-          <div key={order.id} className={`border border-border p-4 space-y-3 ${isCancelled ? 'opacity-60' : ''}`}>
+          <div key={order.id} className={`border border-border p-4 space-y-3 ${(isCancelled || isReturned) ? 'opacity-60' : ''}`}>
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-xs text-muted-foreground">Order #{order.id.slice(0, 8)}</p>
@@ -46,6 +48,11 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                     <XCircle size={12} /> Cancelled
                   </p>
                 )}
+                {isReturned && (
+                  <p className="text-xs text-destructive font-medium flex items-center gap-1 justify-end mt-0.5">
+                    <RotateCcw size={12} /> Returned
+                  </p>
+                )}
               </div>
             </div>
             <div className="space-y-1">
@@ -55,7 +62,7 @@ const OrderTracker = ({ userId }: { userId: string }) => {
                 </p>
               ))}
             </div>
-            {!isCancelled && (
+            {!isCancelled && !isReturned && (
               <div className="flex items-center justify-between gap-1 pt-2">
                 {statusSteps.map((step, i) => (
                   <div key={step} className="flex-1 flex flex-col items-center gap-1">
