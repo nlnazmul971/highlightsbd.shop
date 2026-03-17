@@ -137,6 +137,7 @@ export type Database = {
       orders: {
         Row: {
           consignment_id: string | null
+          courier_fee: number
           courier_provider: string | null
           created_at: string
           customer_address: string
@@ -146,7 +147,9 @@ export type Database = {
           customer_note: string | null
           customer_phone: string
           deleted_at: string | null
+          delivery_charge: number
           delivery_method: string
+          discount: number
           id: string
           items: Json
           order_token: string | null
@@ -161,6 +164,7 @@ export type Database = {
         }
         Insert: {
           consignment_id?: string | null
+          courier_fee?: number
           courier_provider?: string | null
           created_at?: string
           customer_address: string
@@ -170,7 +174,9 @@ export type Database = {
           customer_note?: string | null
           customer_phone: string
           deleted_at?: string | null
+          delivery_charge?: number
           delivery_method?: string
+          discount?: number
           id?: string
           items: Json
           order_token?: string | null
@@ -185,6 +191,7 @@ export type Database = {
         }
         Update: {
           consignment_id?: string | null
+          courier_fee?: number
           courier_provider?: string | null
           created_at?: string
           customer_address?: string
@@ -194,7 +201,9 @@ export type Database = {
           customer_note?: string | null
           customer_phone?: string
           deleted_at?: string | null
+          delivery_charge?: number
           delivery_method?: string
+          discount?: number
           id?: string
           items?: Json
           order_token?: string | null
