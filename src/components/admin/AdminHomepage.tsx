@@ -149,12 +149,20 @@ const PosterManager = ({ posters, onSave }: {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (posters.length > 0) setItems(posters);
+    setItems(posters);
   }, [JSON.stringify(posters)]);
 
   const handleSave = async () => {
     setSaving(true);
     try { await onSave(items); } finally { setSaving(false); }
+  };
+
+  const addPoster = () => {
+    setItems([...items, { image: '', link: '', subtitle: '', title: '' }]);
+  };
+
+  const removePoster = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
   };
 
   const updatePoster = (index: number, field: string, value: string) => {
@@ -166,18 +174,30 @@ const PosterManager = ({ posters, onSave }: {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium tracking-wider uppercase">Homepage Posters</h3>
-          <p className="text-[10px] text-muted-foreground mt-1">পুরানো ছবি মুছে নতুন upload করুন</p>
+          <p className="text-[10px] text-muted-foreground mt-1">{items.length} poster configured • পুরানো ছবি মুছে নতুন upload করুন</p>
         </div>
-        <button onClick={handleSave} disabled={saving} className="luxury-button-primary text-[10px] py-2 px-3 inline-flex items-center gap-1.5">
-          {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
-          Save
-        </button>
+        <div className="flex gap-2">
+          <button onClick={addPoster} className="luxury-button-outline text-[10px] py-2 px-3">+ Add Poster</button>
+          <button onClick={handleSave} disabled={saving} className="luxury-button-primary text-[10px] py-2 px-3 inline-flex items-center gap-1.5">
+            {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+            Save
+          </button>
+        </div>
       </div>
+
+      {items.length === 0 && (
+        <p className="text-xs text-muted-foreground py-4 text-center">No posters configured.</p>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {items.map((poster, i) => (
-          <div key={i} className="border border-border p-4 space-y-3">
-            <p className="text-xs text-muted-foreground font-medium">Poster {i + 1}</p>
+          <div key={i} className="border border-border p-4 space-y-3 relative">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground font-medium">Poster {i + 1}</p>
+              <button onClick={() => removePoster(i)} className="inline-flex items-center gap-1 text-[10px] text-destructive hover:bg-destructive/10 px-2 py-1 transition-colors">
+                <Trash2 size={12} /> Delete
+              </button>
+            </div>
             <div className="space-y-1">
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Image (800×1000, max 10MB)</label>
               <HomepageImageUpload value={poster.image} onChange={(url) => updatePoster(i, 'image', url)} folder="poster" />
