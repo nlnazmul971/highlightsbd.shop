@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrders, useProducts, useDeliveryZones, useCoupons } from '@/hooks/useSupabase';
 import { Facebook, Plus, Trash2, Loader2, Search, Tag, MapPin } from 'lucide-react';
@@ -21,10 +21,19 @@ const AdminFacebookOrders = () => {
   const { data: products = [] } = useProducts();
   const { data: deliveryZones = [] } = useDeliveryZones(false);
   const { data: coupons = [] } = useCoupons();
+  
   const fbOrders = orders.filter((o: any) => o.source === 'facebook');
-
   const activeCoupons = useMemo(() => (coupons as any[]).filter((c: any) => c.is_active), [coupons]);
-  const activeZones = useMemo(() => (deliveryZones as any[]).filter((z: any) => z.is_active), [deliveryZones]);
+  
+  // আপনার ছবি অনুযায়ী ৩টি ডিফল্ট জোন (যদি ডাটাবেসে না থাকে তবে এগুলো কাজ করবে)
+  const defaultZones = [
+    { id: 'inside-dhaka', name: 'Inside Dhaka', fee: 70, description: 'Dhaka city area' },
+    { id: 'sub-urban-dhaka', name: 'Sub - Urban Dhaka', fee: 90, description: 'Ashulia, Keraniganj, Savar, etc.' },
+    { id: 'outside-dhaka', name: 'Outside Dhaka', fee: 110, description: 'All districts outside Dhaka' }
+  ];
+
+  // ডাটাবেস থেকে জোন থাকলে সেগুলো নেবে, না থাকলে ডিফল্টগুলো
+  const activeZones = deliveryZones.length > 0 ? (deliveryZones as any[]).filter((z: any) => z.is_active) : defaultZones;
 
   const [form, setForm] = useState({
     customer_name: '',
@@ -38,6 +47,7 @@ const AdminFacebookOrders = () => {
     delivery_charge: 0,
     discount: 0,
   });
+
   const [items, setItems] = useState<OrderItem[]>([{ ...emptyItem }]);
   const [submitting, setSubmitting] = useState(false);
   const [searchQueries, setSearchQueries] = useState<Record<number, string>>({});
@@ -45,12 +55,50 @@ const AdminFacebookOrders = () => {
   const [selectedCoupon, setSelectedCoupon] = useState('');
   const [selectedZone, setSelectedZone] = useState('');
 
-  // Product search filtering
+  // সাব-টোটাল ক্যালকুলেশন
+  const subtotal = useMemo(() => items.reduce((sum, i) => sum + (i.price * i.quantity), 0), [items]);
+
+  // কুপন অ্যাপ্লাই লজিক (অটোমেটিক)
+  useEffect(() => {
+    if (selectedCoupon) {
+      const coupon = activeCoupons.find((c: any) => c.id === selectedCoupon || c.code === selectedCoupon);
+      if (coupon) {
+        let disc = 0;
+        if (subtotal >= coupon.min_order_amount) {
+          disc = coupon.discount_type === 'percentage' 
+            ? Math.round(subtotal * coupon.discount_value / 100) 
+            : coupon.discount_value;
+          setForm(prev => ({ ...prev, discount: disc }));
+        } else {
+          setForm(prev => ({ ...prev, discount: 0 }));
+        }
+      }
+    }
+  }, [subtotal, selectedCoupon, activeCoupons]);
+
+  // জোন অ্যাপ্লাই লজিক (অটোমেটিক)
+  const applyZone = (zoneId: string) => {
+    setSelectedZone(zoneId);
+    const zone = activeZones.find((z: any) => z.id === zoneId);
+    if (zone) {
+      setForm(prev => ({ 
+        ...prev, 
+        delivery_charge: zone.fee, 
+        customer_city: zone.name 
+      }));
+    } else {
+      setForm(prev => ({ ...prev, delivery_charge: 0 }));
+    }
+  };
+
+  const total = Math.max(0, subtotal - form.discount + form.delivery_charge);
+
+  // প্রোডাক্ট সার্চিং
   const getFilteredProducts = (query: string) => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
     return (products as any[]).filter((p: any) =>
-      p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)
+      p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
     ).slice(0, 8);
   };
 
@@ -73,61 +121,16 @@ const AdminFacebookOrders = () => {
   };
 
   const addItem = () => setItems(prev => [...prev, { ...emptyItem }]);
-  const removeItem = (idx: number) => {
-    setItems(prev => prev.filter((_, i) => i !== idx));
-    setSearchQueries(prev => { const n = { ...prev }; delete n[idx]; return n; });
-  };
-
-  // Apply coupon
-  const applyCoupon = (couponId: string) => {
-    setSelectedCoupon(couponId);
-    if (!couponId) {
-      setForm(prev => ({ ...prev, discount: 0 }));
-      return;
-    }
-    const coupon = activeCoupons.find((c: any) => c.id === couponId);
-    if (!coupon) return;
-
-    const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    if (subtotal < (coupon as any).min_order_amount) {
-      toast.error(`Minimum order ৳${(coupon as any).min_order_amount} required for this coupon`);
-      setSelectedCoupon('');
-      return;
-    }
-
-    let discount = 0;
-    if ((coupon as any).discount_type === 'percentage') {
-      discount = Math.round(subtotal * (coupon as any).discount_value / 100);
-    } else {
-      discount = (coupon as any).discount_value;
-    }
-    setForm(prev => ({ ...prev, discount }));
-  };
-
-  // Apply delivery zone
-  const applyZone = (zoneId: string) => {
-    setSelectedZone(zoneId);
-    if (!zoneId) {
-      setForm(prev => ({ ...prev, delivery_charge: 0 }));
-      return;
-    }
-    const zone = activeZones.find((z: any) => z.id === zoneId);
-    if (zone) {
-      setForm(prev => ({ ...prev, delivery_charge: (zone as any).fee, customer_city: (zone as any).name }));
-    }
-  };
-
-  const subtotal = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-  const total = Math.max(0, subtotal - form.discount + form.delivery_charge);
+  const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.customer_name.trim() || !form.customer_phone.trim() || !form.customer_address.trim() || !form.customer_city.trim()) {
-      toast.error('Please fill in all required customer fields');
+      toast.error('Please fill in Name, Phone, Address and Select a Delivery Zone (City)');
       return;
     }
-    if (items.length === 0 || items.some(i => !i.name.trim() || i.price <= 0)) {
-      toast.error('Please add at least one item with name and price');
+    if (items.some(i => !i.name.trim() || i.price <= 0)) {
+      toast.error('Please select products and set valid prices');
       return;
     }
 
@@ -153,6 +156,7 @@ const AdminFacebookOrders = () => {
       if (error) throw error;
 
       toast.success('Facebook order created successfully!');
+      // Reset form
       setForm({
         customer_name: '', customer_phone: '', customer_email: '',
         customer_address: '', customer_city: '', customer_note: '',
@@ -164,7 +168,7 @@ const AdminFacebookOrders = () => {
       setSelectedZone('');
       refetch();
     } catch (err: any) {
-      toast.error('Failed to create order: ' + err.message);
+      toast.error('Error: ' + err.message);
     } finally {
       setSubmitting(false);
     }
@@ -172,229 +176,113 @@ const AdminFacebookOrders = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded bg-primary/10">
-          <Facebook className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-lg font-light tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>Facebook Orders</h2>
-          <p className="text-xs text-muted-foreground">Manually enter orders from Facebook — select products from your store</p>
-        </div>
+        <Facebook className="h-6 w-6 text-primary" />
+        <h2 className="text-xl font-light">Facebook Order System</h2>
       </div>
 
-      {/* Entry Form */}
-      <form onSubmit={handleSubmit} className="border border-border p-5 space-y-5">
-        <h3 className="text-sm font-medium tracking-wider uppercase text-muted-foreground">New Facebook Order</h3>
-
-        {/* Customer Info */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} placeholder="Customer Name *" className="luxury-input text-sm" required />
-          <input value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })} placeholder="Phone *" className="luxury-input text-sm" required />
-          <input value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })} placeholder="Email (optional)" className="luxury-input text-sm" type="email" />
-          <input value={form.customer_address} onChange={e => setForm({ ...form, customer_address: e.target.value })} placeholder="Full Address *" className="luxury-input text-sm" required />
-          <textarea value={form.customer_note} onChange={e => setForm({ ...form, customer_note: e.target.value })} placeholder="Customer Note (optional)" className="luxury-input text-sm sm:col-span-2" rows={2} />
+      <form onSubmit={handleSubmit} className="border border-border p-6 space-y-6 bg-card">
+        {/* Customer Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input value={form.customer_name} onChange={e => setForm({ ...form, customer_name: e.target.value })} placeholder="Customer Name *" className="luxury-input" required />
+          <input value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })} placeholder="Phone Number *" className="luxury-input" required />
+          <input value={form.customer_address} onChange={e => setForm({ ...form, customer_address: e.target.value })} placeholder="Full Address *" className="luxury-input md:col-span-2" required />
+          
+          {/* City Field - জোন থেকে অটো আসবে বা নিজে লিখবে */}
+          <input value={form.customer_city} onChange={e => setForm({ ...form, customer_city: e.target.value })} placeholder="City / District *" className="luxury-input" required />
+          
+          <textarea value={form.customer_note} onChange={e => setForm({ ...form, customer_note: e.target.value })} placeholder="Special Instructions (Optional)" className="luxury-input md:col-span-2" rows={2} />
         </div>
 
-        {/* Items with Product Search */}
+        {/* Product Selection - Simplified Search */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium tracking-wider uppercase text-muted-foreground flex items-center gap-1">
-              <Search size={12} /> Items — Search & Select Products
-            </span>
-            <button type="button" onClick={addItem} className="luxury-button-outline text-[10px] px-3 py-1.5 flex items-center gap-1">
-              <Plus size={12} /> Add Item
-            </button>
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-bold uppercase text-muted-foreground">Order Items</span>
+            <button type="button" onClick={addItem} className="text-xs bg-primary/10 px-3 py-1 rounded">+ Add More</button>
           </div>
-
           {items.map((item, idx) => (
-            <div key={idx} className="border border-border/50 p-3 space-y-2 relative">
-              {/* Product Search */}
+            <div key={idx} className="p-3 border border-dashed rounded relative space-y-3">
               <div className="relative">
-                <div className="flex items-center gap-2">
-                  {item.image_url && (
-                    <img src={item.image_url} alt="" className="w-10 h-10 object-cover rounded border border-border" />
-                  )}
-                  <div className="flex-1 relative">
-                    <input
-                      value={searchQueries[idx] ?? ''}
-                      onChange={e => {
-                        setSearchQueries(prev => ({ ...prev, [idx]: e.target.value }));
-                        setActiveSearchIdx(idx);
-                      }}
-                      onFocus={() => setActiveSearchIdx(idx)}
-                      placeholder={item.name ? `✓ ${item.name}` : 'Search product by name, SKU...'}
-                      className="luxury-input text-sm w-full pl-8"
-                    />
-                    <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  </div>
-                  {items.length > 1 && (
-                    <button type="button" onClick={() => removeItem(idx)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded">
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </div>
-
-                {/* Search Dropdown */}
-                {activeSearchIdx === idx && (searchQueries[idx] ?? '').length > 0 && (
-                  <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-background border border-border rounded shadow-lg max-h-48 overflow-y-auto">
-                    {getFilteredProducts(searchQueries[idx] ?? '').length === 0 ? (
-                      <p className="p-3 text-xs text-muted-foreground">No products found</p>
-                    ) : (
-                      getFilteredProducts(searchQueries[idx] ?? '').map((p: any) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => selectProduct(idx, p)}
-                          className="w-full flex items-center gap-3 p-2 hover:bg-accent/50 transition text-left"
-                        >
-                          <img src={p.image_url} alt="" className="w-8 h-8 object-cover rounded border border-border" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">{p.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{p.sku} • {p.category} • Stock: {p.stock}</p>
-                          </div>
-                          <span className="text-xs font-medium text-primary">৳{p.price}</span>
-                        </button>
-                      ))
-                    )}
+                <input
+                  value={searchQueries[idx] ?? ''}
+                  onChange={e => {
+                    setSearchQueries(prev => ({ ...prev, [idx]: e.target.value }));
+                    setActiveSearchIdx(idx);
+                  }}
+                  onFocus={() => setActiveSearchIdx(idx)}
+                  placeholder={item.name ? `Selected: ${item.name}` : "Type product name to search..."}
+                  className="luxury-input w-full"
+                />
+                {activeSearchIdx === idx && searchQueries[idx] && (
+                  <div className="absolute z-10 w-full bg-white border shadow-xl max-h-40 overflow-auto mt-1">
+                    {getFilteredProducts(searchQueries[idx] || '').map((p: any) => (
+                      <div key={p.id} onClick={() => selectProduct(idx, p)} className="p-2 hover:bg-gray-100 cursor-pointer flex justify-between">
+                        <span className="text-sm">{p.name}</span>
+                        <span className="text-sm font-bold">৳{p.price}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
-
-              {/* Size, Color, Qty, Price row */}
-              <div className="grid grid-cols-4 gap-2">
-                {item.product_id && (products as any[]).find((p: any) => p.id === item.product_id)?.sizes?.length > 0 ? (
-                  <select value={item.size} onChange={e => updateItem(idx, 'size', e.target.value)} className="luxury-input text-xs">
-                    <option value="">Size</option>
-                    {(products as any[]).find((p: any) => p.id === item.product_id)?.sizes?.map((s: string) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input value={item.size} onChange={e => updateItem(idx, 'size', e.target.value)} placeholder="Size" className="luxury-input text-xs" />
-                )}
-
-                {item.product_id && (products as any[]).find((p: any) => p.id === item.product_id)?.colors?.length > 0 ? (
-                  <select value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} className="luxury-input text-xs">
-                    <option value="">Color</option>
-                    {(products as any[]).find((p: any) => p.id === item.product_id)?.colors?.map((c: any) => (
-                      <option key={c.name} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input value={item.color} onChange={e => updateItem(idx, 'color', e.target.value)} placeholder="Color" className="luxury-input text-xs" />
-                )}
-
-                <input type="number" value={item.quantity} onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 1)} min={1} className="luxury-input text-xs" placeholder="Qty" />
-                <input type="number" value={item.price} onChange={e => updateItem(idx, 'price', parseInt(e.target.value) || 0)} min={0} placeholder="Price ৳" className="luxury-input text-xs" />
+              <div className="grid grid-cols-3 gap-2">
+                <input value={item.size} onChange={e => updateItem(idx, 'size', e.target.value)} placeholder="Size" className="luxury-input text-xs" />
+                <input type="number" value={item.quantity} onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 1)} className="luxury-input text-xs" />
+                <input type="number" value={item.price} onChange={e => updateItem(idx, 'price', parseInt(e.target.value) || 0)} className="luxury-input text-xs" />
               </div>
-
-              {item.name && (
-                <p className="text-[10px] text-muted-foreground">
-                  {item.name} — ৳{item.price} × {item.quantity} = ৳{(item.price * item.quantity).toLocaleString()}
-                </p>
-              )}
+              {items.length > 1 && <button onClick={() => removeItem(idx)} className="absolute top-1 right-1 text-red-500"><Trash2 size={14}/></button>}
             </div>
           ))}
         </div>
 
-        {/* Delivery Zone & Coupon */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Delivery Zone */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground flex items-center gap-1">
-              <MapPin size={10} /> Delivery Zone
-            </label>
-            <select
-              value={selectedZone}
-              onChange={e => applyZone(e.target.value)}
-              className="luxury-input text-sm w-full"
-            >
-              <option value="">Select Delivery Zone</option>
+        {/* Delivery & Coupon Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+          {/* Delivery Zone Selection */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase flex items-center gap-2"><MapPin size={14}/> Select Delivery Zone</label>
+            <div className="space-y-2">
               {activeZones.map((zone: any) => (
-                <option key={zone.id} value={zone.id}>
-                  {zone.name} — ৳{zone.fee}
-                </option>
+                <div 
+                  key={zone.id} 
+                  onClick={() => applyZone(zone.id)}
+                  className={`p-3 border cursor-pointer flex justify-between items-center transition-all ${selectedZone === zone.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:border-gray-400'}`}
+                >
+                  <div>
+                    <p className="text-sm font-medium">{zone.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{zone.description}</p>
+                  </div>
+                  <span className="font-bold">৳{zone.fee}</span>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
 
-          {/* Coupon */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-medium tracking-wider uppercase text-muted-foreground flex items-center gap-1">
-              <Tag size={10} /> Coupon / Discount
-            </label>
-            <select
-              value={selectedCoupon}
-              onChange={e => applyCoupon(e.target.value)}
-              className="luxury-input text-sm w-full"
-            >
-              <option value="">No Coupon</option>
-              {activeCoupons.map((coupon: any) => (
-                <option key={coupon.id} value={coupon.id}>
-                  {coupon.code} — {coupon.discount_type === 'percentage' ? `${coupon.discount_value}%` : `৳${coupon.discount_value}`} off
-                  {coupon.min_order_amount > 0 ? ` (min ৳${coupon.min_order_amount})` : ''}
-                </option>
-              ))}
-            </select>
+          {/* Coupon / Discount Input */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase flex items-center gap-2"><Tag size={14}/> Coupon Code / Discount</label>
+            <div className="flex gap-2">
+              <input 
+                placeholder="Enter coupon code..." 
+                className="luxury-input flex-1"
+                value={selectedCoupon}
+                onChange={(e) => setSelectedCoupon(e.target.value.toUpperCase())}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground italic">If you type a valid coupon code, the discount will apply automatically.</p>
+            
+            {/* Summary Box */}
+            <div className="mt-6 p-4 bg-gray-50 rounded space-y-2">
+              <div className="flex justify-between text-sm"><span>Subtotal:</span><span>৳{subtotal.toLocaleString()}</span></div>
+              <div className="flex justify-between text-sm text-green-600"><span>Discount:</span><span>-৳{form.discount.toLocaleString()}</span></div>
+              <div className="flex justify-between text-sm"><span>Delivery:</span><span>৳{form.delivery_charge.toLocaleString()}</span></div>
+              <div className="flex justify-between font-bold border-t pt-2 text-lg"><span>Total:</span><span>৳{total.toLocaleString()}</span></div>
+            </div>
+            
+            <button type="submit" disabled={submitting} className="w-full luxury-button-primary h-12 mt-4">
+              {submitting ? <Loader2 className="animate-spin mx-auto" /> : 'CONFIRM FACEBOOK ORDER'}
+            </button>
           </div>
-        </div>
-
-        {/* Payment & Delivery Method */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value })} className="luxury-input text-sm">
-            <option value="cod">Cash on Delivery</option>
-            <option value="bkash">bKash</option>
-            <option value="nagad">Nagad</option>
-            <option value="rocket">Rocket</option>
-          </select>
-          <select value={form.delivery_method} onChange={e => setForm({ ...form, delivery_method: e.target.value })} className="luxury-input text-sm">
-            <option value="standard">Standard</option>
-            <option value="express">Express</option>
-          </select>
-          <input type="number" value={form.delivery_charge} onChange={e => setForm({ ...form, delivery_charge: parseInt(e.target.value) || 0 })} min={0} placeholder="Delivery ৳" className="luxury-input text-sm" />
-          <input type="number" value={form.discount} onChange={e => setForm({ ...form, discount: parseInt(e.target.value) || 0 })} min={0} placeholder="Discount ৳" className="luxury-input text-sm" />
-        </div>
-
-        {/* Total & Submit */}
-        <div className="flex items-center justify-between border-t border-border pt-4">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">Subtotal: ৳{subtotal.toLocaleString()}</p>
-            {form.discount > 0 && <p className="text-xs text-green-600">Discount: -৳{form.discount.toLocaleString()}</p>}
-            {form.delivery_charge > 0 && <p className="text-xs text-muted-foreground">Delivery: ৳{form.delivery_charge.toLocaleString()}</p>}
-            <p className="text-sm font-medium">Total: ৳{total.toLocaleString()}</p>
-          </div>
-          <button type="submit" disabled={submitting} className="luxury-button-primary flex items-center gap-2">
-            {submitting ? <Loader2 size={14} className="animate-spin" /> : <Facebook size={14} />}
-            {submitting ? 'Creating...' : 'Create FB Order'}
-          </button>
         </div>
       </form>
-
-      {/* Recent FB Orders */}
-      <div>
-        <h3 className="text-sm font-medium tracking-wider uppercase text-muted-foreground mb-3">Recent Facebook Orders ({fbOrders.length})</h3>
-        {fbOrders.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No Facebook orders yet</p>
-        ) : (
-          <div className="space-y-2">
-            {fbOrders.slice(0, 20).map((order: any) => (
-              <div key={order.id} className="flex items-center justify-between border border-border p-3">
-                <div>
-                  <p className="text-sm font-medium">#{order.id.slice(0, 8)}</p>
-                  <p className="text-xs text-muted-foreground">{order.customer_name} • {order.customer_phone}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm">৳{order.total.toLocaleString()}</p>
-                  <span className={`luxury-badge text-[8px] ${order.status === 'Cancelled' || order.status === 'Returned' ? 'bg-destructive/10 text-destructive' : ''}`}>
-                    {order.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
