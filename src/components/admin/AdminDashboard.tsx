@@ -33,6 +33,11 @@ const AdminDashboard = () => {
   const onlineOrders = filteredOrders.filter(o => o.payment_method !== 'cod').length;
   const lowStock = products.filter(p => p.stock < 5).length;
 
+  // Facebook order stats
+  const fbOrders = filteredOrders.filter((o: any) => o.source === 'facebook');
+  const fbOrderCount = fbOrders.length;
+  const fbRevenue = fbOrders.reduce((sum, o) => sum + o.total, 0);
+
   // Daily revenue chart data
   const dailyData = useMemo(() => {
     const map: Record<string, number> = {};
