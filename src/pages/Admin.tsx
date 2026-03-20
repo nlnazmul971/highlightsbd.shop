@@ -18,6 +18,7 @@ import AdminHomepage from '@/components/admin/AdminHomepage';
 import AdminWishlist from '@/components/admin/AdminWishlist';
 import AdminNewsletter from '@/components/admin/AdminNewsletter';
 import AdminCoupons from '@/components/admin/AdminCoupons';
+import AdminFacebookOrders from '@/components/admin/AdminFacebookOrders';
 import AdminTrash from '@/components/admin/AdminTrash';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import OrderTracker from '@/components/OrderTracker';
@@ -118,6 +119,7 @@ const Admin = () => {
             {activeTab === 'homepage' && <AdminHomepage />}
             {activeTab === 'products' && <AdminProducts />}
             {activeTab === 'orders' && <AdminOrders />}
+            {activeTab === 'facebook-orders' && <AdminFacebookOrders />}
             {activeTab === 'reviews' && <AdminReviews />}
             {activeTab === 'wishlist' && <AdminWishlist />}
             {activeTab === 'newsletter' && <AdminNewsletter />}
