@@ -76,7 +76,7 @@ const AdminDashboard = () => {
   const stats = [
     { label: 'Total Orders', value: filteredOrders.length, icon: ShoppingBag, color: 'bg-accent text-accent-foreground' },
     { label: 'Revenue', value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-secondary text-secondary-foreground' },
-    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Courier Fee: ৳${totalCourierFee.toLocaleString()}` },
+    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: totalCourierFee > 0 ? `Courier Fee: ৳${totalCourierFee.toLocaleString()}` : undefined },
     { label: 'COD Orders', value: codOrders, icon: Truck, color: 'bg-primary/10 text-primary' },
     { label: 'Online Payment', value: onlineOrders, icon: CreditCard, color: 'bg-muted text-muted-foreground' },
     { label: 'Pending', value: pendingOrders, icon: TrendingUp, color: 'bg-primary/10 text-primary' },
