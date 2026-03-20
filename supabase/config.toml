@@ -1,15 +1,1 @@
-project_id = "ruxzgxkqmlblqsmctfnh"
-
-[functions]
-  [functions.auth-email-hook]
-    verify_jwt = false
-  [functions.meta-capi]
-    verify_jwt = false
-  [functions.pathao-courier]
-    verify_jwt = false
-  [functions.steadfast-courier]
-    verify_jwt = false
-  [functions.verify-recaptcha]
-    verify_jwt = false
-  [functions.send-order-email]
-    verify_jwt = false
+project_id = "wfrwhidbugrnzggbeywy"
