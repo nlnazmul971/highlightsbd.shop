@@ -17,6 +17,7 @@ const menuItems = [
   { title: 'Homepage', key: 'homepage', icon: Home },
   { title: 'Products', key: 'products', icon: Package },
   { title: 'Orders', key: 'orders', icon: ShoppingBag },
+  { title: 'FB Orders', key: 'facebook-orders', icon: Facebook },
   { title: 'Reviews', key: 'reviews', icon: MessageSquare },
   { title: 'Wishlist', key: 'wishlist', icon: Heart },
   { title: 'Newsletter', key: 'newsletter', icon: Mail },
