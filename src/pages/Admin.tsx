@@ -119,6 +119,7 @@ const Admin = () => {
             {activeTab === 'homepage' && <AdminHomepage />}
             {activeTab === 'products' && <AdminProducts />}
             {activeTab === 'orders' && <AdminOrders />}
+            {activeTab === 'facebook-orders' && <AdminFacebookOrders />}
             {activeTab === 'reviews' && <AdminReviews />}
             {activeTab === 'wishlist' && <AdminWishlist />}
             {activeTab === 'newsletter' && <AdminNewsletter />}
