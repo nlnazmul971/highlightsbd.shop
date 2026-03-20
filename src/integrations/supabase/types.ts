@@ -155,6 +155,7 @@ export type Database = {
           order_token: string | null
           payment_method: string
           payment_sender_number: string | null
+          source: string
           status: string
           total: number
           tracking_code: string | null
@@ -182,6 +183,7 @@ export type Database = {
           order_token?: string | null
           payment_method?: string
           payment_sender_number?: string | null
+          source?: string
           status?: string
           total: number
           tracking_code?: string | null
@@ -209,6 +211,7 @@ export type Database = {
           order_token?: string | null
           payment_method?: string
           payment_sender_number?: string | null
+          source?: string
           status?: string
           total?: number
           tracking_code?: string | null
