@@ -305,6 +305,8 @@ const Checkout = () => {
           color: i.color,
         })) as any,
         total: grandTotal,
+        discount: couponDiscount,
+        delivery_charge: deliveryFee,
         customer_name: sanitizeInput(form.name, 100),
         customer_phone: form.phone.replace(/[^\d+\-\s]/g, '').slice(0, 20),
         customer_address: sanitizeInput(form.address, 500),
