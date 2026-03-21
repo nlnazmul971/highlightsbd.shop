@@ -534,7 +534,14 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
               <tbody>
                 {filtered.map(order => (
                   <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                    <td className="p-3 font-mono text-xs">#{order.id.slice(0, 8)}</td>
+                    <td className="p-3 font-mono text-xs flex items-center gap-1.5">
+                      #{order.id.slice(0, 8)}
+                      {(order as any).source === 'facebook' && (
+                        <span className="inline-flex items-center gap-0.5 bg-blue-500/10 text-blue-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                          <Facebook size={10} /> FB
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3 hidden sm:table-cell">
                       <button onClick={() => { openOrder(order); runFraudCheck(order.customer_phone, order.customer_name); }} className="text-left hover:underline underline-offset-2 decoration-primary/50">
                         <p className="font-medium">{order.customer_name}</p>
