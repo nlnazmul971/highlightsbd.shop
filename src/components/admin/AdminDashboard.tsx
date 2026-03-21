@@ -50,7 +50,37 @@ const AdminDashboard = () => {
   const dailyData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredOrders.forEach(o => {
-      if (o.status === 'Cancelled') return;
+      if (o.status === 'Cancelled' || o.status === 'Returned') return;
+      const day = format(parseISO(o.created_at), 'MMM dd');
+      map[day] = (map[day] || 0) + o.total;
+    });
+    return Object.entries(map).map(([date, revenue]) => ({ date, revenue }));
+  }, [filteredOrders]);
+
+  // Daily cancelled orders
+  const dailyCancelled = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredOrders.filter(o => o.status === 'Cancelled').forEach(o => {
+      const day = format(parseISO(o.created_at), 'MMM dd');
+      map[day] = (map[day] || 0) + 1;
+    });
+    return Object.entries(map).map(([date, count]) => ({ date, count }));
+  }, [filteredOrders]);
+
+  // Daily returned orders
+  const dailyReturned = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredOrders.filter(o => o.status === 'Returned').forEach(o => {
+      const day = format(parseISO(o.created_at), 'MMM dd');
+      map[day] = (map[day] || 0) + 1;
+    });
+    return Object.entries(map).map(([date, count]) => ({ date, count }));
+  }, [filteredOrders]);
+
+  // Daily FB orders
+  const dailyFb = useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredOrders.filter((o: any) => o.source === 'facebook').forEach(o => {
       const day = format(parseISO(o.created_at), 'MMM dd');
       map[day] = (map[day] || 0) + o.total;
     });
