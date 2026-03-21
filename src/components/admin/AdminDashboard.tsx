@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useProducts, useOrders } from '@/hooks/useSupabase';
 import { Package, ShoppingBag, DollarSign, TrendingUp, XCircle, RotateCcw, CreditCard, Truck, TrendingDown, Facebook } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, subDays, isWithinInterval, startOfDay, endOfDay, parseISO } from 'date-fns';
 
 const AdminDashboard = () => {
