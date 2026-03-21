@@ -23,9 +23,17 @@ const AdminDashboard = () => {
     });
   }, [orders, dateRange]);
 
-  const totalRevenue = filteredOrders.reduce((sum, o) => sum + o.total, 0);
-  const totalCourierFee = filteredOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
-  const deliveryRevenue = totalRevenue - totalCourierFee;
+  // Revenue excludes Cancelled & Returned orders
+  const activeOrders = filteredOrders.filter(o => o.status !== 'Cancelled' && o.status !== 'Returned');
+  const totalRevenue = activeOrders.reduce((sum, o) => sum + o.total, 0);
+  const totalCourierFee = activeOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
+  
+  // Delivery Revenue = only Delivered orders, minus courier fees
+  const deliveredOrders = filteredOrders.filter(o => o.status === 'Delivered');
+  const deliveredTotal = deliveredOrders.reduce((sum, o) => sum + o.total, 0);
+  const deliveredCourierFee = deliveredOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
+  const deliveryRevenue = deliveredTotal - deliveredCourierFee;
+
   const pendingOrders = filteredOrders.filter(o => o.status === 'Pending').length;
   const cancelledOrders = filteredOrders.filter(o => o.status === 'Cancelled').length;
   const returnedOrders = filteredOrders.filter(o => o.status === 'Returned').length;
@@ -81,7 +89,7 @@ const AdminDashboard = () => {
   const stats = [
     { label: 'Total Orders', value: filteredOrders.length, icon: ShoppingBag, color: 'bg-accent text-accent-foreground' },
     { label: 'Revenue', value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-secondary text-secondary-foreground' },
-    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: totalCourierFee > 0 ? `Courier Fee: ৳${totalCourierFee.toLocaleString()}` : undefined },
+    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Delivered: ${deliveredOrders.length} | Courier: ৳${deliveredCourierFee.toLocaleString()}` },
     { label: 'FB Orders', value: fbOrderCount, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
     { label: 'FB Revenue', value: `৳${fbRevenue.toLocaleString()}`, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
     { label: 'COD Orders', value: codOrders, icon: Truck, color: 'bg-primary/10 text-primary' },
