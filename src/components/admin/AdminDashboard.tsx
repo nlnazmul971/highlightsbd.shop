@@ -161,40 +161,125 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* Revenue Area Chart */}
-      <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
-        <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>Revenue Overview</h3>
-        <p className="text-xs text-muted-foreground mb-4">Daily revenue for selected period</p>
-        {dailyData.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">No revenue data for selected period</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={320}>
-            <AreaChart data={dailyData}>
-              <defs>
-                <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']} />
-              <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} fill="url(#revenueGradient)" dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, fill: '#6366f1', stroke: '#fff', strokeWidth: 2 }} />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
+      {/* Charts Grid - Revenue + Mini Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Revenue Overview - Compact */}
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-indigo-500/5 to-purple-500/5">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-2 h-2 rounded-full bg-indigo-500" />
+            <h3 className="text-xs font-semibold tracking-wider uppercase text-indigo-600">Revenue Overview</h3>
+          </div>
+          {dailyData.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">No data</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={dailyData}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={40} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }} formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']} />
+                <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fill="url(#revenueGradient)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* FB Orders Revenue - Compact */}
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-blue-500/5 to-cyan-500/5">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <h3 className="text-xs font-semibold tracking-wider uppercase text-blue-600">FB Orders Revenue</h3>
+          </div>
+          <p className="text-lg font-bold text-blue-600 mb-2">৳{fbRevenue.toLocaleString()} <span className="text-[10px] font-normal text-muted-foreground">({fbOrderCount} orders)</span></p>
+          {dailyFb.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">No FB orders</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={dailyFb}>
+                <defs>
+                  <linearGradient id="fbGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#06b6d4" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={35} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }} formatter={(value: number) => [`৳${value.toLocaleString()}`, 'FB Revenue']} />
+                <Bar dataKey="revenue" fill="url(#fbGrad)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Cancelled Orders - Compact */}
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-red-500/5 to-orange-500/5">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
+            <h3 className="text-xs font-semibold tracking-wider uppercase text-red-500">Cancelled Orders</h3>
+          </div>
+          <p className="text-lg font-bold text-red-500 mb-2">{cancelledOrders} <span className="text-[10px] font-normal text-muted-foreground">cancelled</span></p>
+          {dailyCancelled.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">No cancellations 🎉</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={140}>
+              <BarChart data={dailyCancelled}>
+                <defs>
+                  <linearGradient id="cancelGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#f97316" stopOpacity={0.5} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={25} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }} />
+                <Bar dataKey="count" fill="url(#cancelGrad)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Returned Orders - Compact */}
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-pink-500/5 to-rose-500/5">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-2 h-2 rounded-full bg-pink-500" />
+            <h3 className="text-xs font-semibold tracking-wider uppercase text-pink-500">Returned Orders</h3>
+          </div>
+          <p className="text-lg font-bold text-pink-500 mb-2">{returnedOrders} <span className="text-[10px] font-normal text-muted-foreground">returned</span></p>
+          {dailyReturned.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">No returns 🎉</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={dailyReturned}>
+                <defs>
+                  <linearGradient id="returnGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ec4899" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="#ec4899" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={25} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }} />
+                <Area type="monotone" dataKey="count" stroke="#ec4899" strokeWidth={2} fill="url(#returnGrad)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       {/* Pie Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
-          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>Payment Methods</h3>
-          <p className="text-xs text-muted-foreground mb-4">Breakdown by payment type</p>
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-background to-secondary/20">
+          <h3 className="text-xs font-semibold tracking-wider uppercase mb-3">Payment Methods</h3>
           {paymentData.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+            <p className="text-xs text-muted-foreground text-center py-6">No data</p>
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <defs>
                   {PIE_COLORS.map((color, i) => (
@@ -204,25 +289,23 @@ const AdminDashboard = () => {
                     </linearGradient>
                   ))}
                 </defs>
-                <Pie data={paymentData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={4} dataKey="value" cornerRadius={6} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}>
+                <Pie data={paymentData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={4} dataKey="value" cornerRadius={6} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}>
                   {paymentData.map((_, i) => (
                     <Cell key={i} fill={`url(#payGrad${i % PIE_COLORS.length})`} stroke="none" />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }} />
               </PieChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        <div className="border border-border p-5 rounded-lg bg-gradient-to-br from-background to-secondary/20">
-          <h3 className="text-sm font-medium tracking-wide mb-1" style={{ fontFamily: 'var(--font-display)' }}>Order Status</h3>
-          <p className="text-xs text-muted-foreground mb-4">Distribution of order statuses</p>
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-background to-secondary/20">
+          <h3 className="text-xs font-semibold tracking-wider uppercase mb-3">Order Status</h3>
           {statusData.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No data</p>
+            <p className="text-xs text-muted-foreground text-center py-6">No data</p>
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <defs>
                   {statusData.map((entry, i) => (
@@ -232,13 +315,13 @@ const AdminDashboard = () => {
                     </linearGradient>
                   ))}
                 </defs>
-                <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={4} dataKey="value" cornerRadius={6} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}>
+                <Pie data={statusData} cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={4} dataKey="value" cornerRadius={6} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1 }}>
                   {statusData.map((_, i) => (
                     <Cell key={i} fill={`url(#statusGrad${i})`} stroke="none" />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} iconType="circle" />
+                <Tooltip contentStyle={{ background: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 11 }} />
+                <Legend wrapperStyle={{ fontSize: 10, paddingTop: 4 }} iconType="circle" />
               </PieChart>
             </ResponsiveContainer>
           )}
@@ -247,7 +330,7 @@ const AdminDashboard = () => {
 
       {/* Low stock warning */}
       {lowStock > 0 && (
-        <div className="border border-destructive/30 bg-destructive/5 p-4">
+        <div className="border border-destructive/30 bg-destructive/5 p-4 rounded-lg">
           <p className="text-sm text-destructive font-medium">⚠️ {lowStock} product(s) with low stock (less than 5)</p>
           <div className="mt-3 space-y-1">
             {products.filter(p => p.stock < 5).map(p => (
@@ -259,20 +342,21 @@ const AdminDashboard = () => {
 
       {/* Recent orders */}
       <div>
-        <h2 className="text-lg font-light tracking-wide mb-4" style={{ fontFamily: 'var(--font-display)' }}>Recent Orders</h2>
+        <h2 className="text-sm font-semibold tracking-wider uppercase mb-3">Recent Orders</h2>
         {orders.length === 0 ? (
           <p className="text-sm text-muted-foreground">No orders yet</p>
         ) : (
           <div className="space-y-2">
             {orders.slice(0, 5).map(order => (
-              <div key={order.id} className="flex items-center justify-between border border-border p-3">
-                <div>
+              <div key={order.id} className="flex items-center justify-between border border-border p-3 rounded-lg">
+                <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">#{order.id.slice(0, 8)}</p>
+                  {(order as any).source === 'facebook' && <span className="bg-blue-500/10 text-blue-600 text-[8px] font-bold px-1.5 py-0.5 rounded">FB</span>}
                   <p className="text-xs text-muted-foreground">{order.customer_name}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm">৳{order.total.toLocaleString()}</p>
-                  <span className={`luxury-badge text-[8px] ${order.status === 'Cancelled' ? 'bg-destructive/10 text-destructive' : order.status === 'Returned' ? 'bg-destructive/10 text-destructive' : ''}`}>{order.status}</span>
+                  <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${order.status === 'Cancelled' ? 'bg-red-500/10 text-red-500' : order.status === 'Returned' ? 'bg-pink-500/10 text-pink-500' : order.status === 'Delivered' ? 'bg-green-500/10 text-green-600' : 'bg-amber-500/10 text-amber-600'}`}>{order.status}</span>
                 </div>
               </div>
             ))}
