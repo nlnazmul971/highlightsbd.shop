@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
  * Compress an image file before upload using canvas.
  * Resizes to maxWidth and compresses to target quality.
  */
-const compressImage = (file: File, maxWidth = 1200, quality = 0.82): Promise<Blob> => {
+const compressImage = (file: File, maxWidth = 1920, quality = 0.95): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     // If not an image type we can compress, return as-is
     if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') {
