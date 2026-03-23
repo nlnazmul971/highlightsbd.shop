@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct, useProductImages, useAddProductImage, useDeleteProductImage } from '@/hooks/useSupabase';
 import { Product, getProductImage } from '@/data/products';
 import { Edit, Trash2, Plus, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
@@ -152,15 +152,23 @@ const MultiImageUpload = ({ productId }: { productId: string }) => {
 };
 
 const SizeChartEditor = ({ value, onChange }: { value: any[]; onChange: (v: any[]) => void }) => {
+  const safeValue = Array.isArray(value) ? value : [];
+  
   const [columns, setColumns] = useState<string[]>(() => {
-    if (value.length > 0) return Object.keys(value[0]);
+    if (safeValue.length > 0) return Object.keys(safeValue[0]);
     return ['Size', 'Chest (inch)', 'Length (inch)', 'Shoulder (inch)'];
   });
-  const [rows, setRows] = useState<Record<string, string>[]>(() => {
-    if (value.length > 0) return value;
-    return [];
-  });
+  const [rows, setRows] = useState<Record<string, string>[]>(safeValue);
   const [newCol, setNewCol] = useState('');
+
+  useEffect(() => {
+    if (Array.isArray(value)) {
+      setRows(value);
+      if (value.length > 0) {
+        setColumns(Object.keys(value[0]));
+      }
+    }
+  }, [value]);
 
   const addRow = () => {
     const row: Record<string, string> = {};
@@ -267,7 +275,10 @@ const SizeChartEditor = ({ value, onChange }: { value: any[]; onChange: (v: any[
 };
 
 const ProductForm = ({ product, isNew, onSave, onCancel, onDone }: { product: Product; isNew: boolean; onSave: (p: Product) => Promise<any>; onCancel: () => void; onDone: () => void }) => {
-  const [form, setForm] = useState(product);
+  const [form, setForm] = useState({
+    ...product,
+    size_chart: Array.isArray(product.size_chart) ? product.size_chart : []
+  });
   const [savedProductId, setSavedProductId] = useState(isNew ? '' : product.id);
 
   const handleSave = async () => {
@@ -341,7 +352,6 @@ const ProductForm = ({ product, isNew, onSave, onCancel, onDone }: { product: Pr
         <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="Or paste image URL" className="luxury-input text-xs" />
       </div>
 
-      {/* Multiple images - only show after product is saved */}
       {savedProductId && (
         <MultiImageUpload productId={savedProductId} />
       )}
@@ -351,10 +361,9 @@ const ProductForm = ({ product, isNew, onSave, onCancel, onDone }: { product: Pr
         <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Description" className="luxury-input min-h-[80px]" />
       </div>
 
-      {/* Size Chart Editor */}
       <SizeChartEditor
-        value={(form as any).size_chart || []}
-        onChange={(chart) => setForm({ ...form, size_chart: chart } as any)}
+        value={form.size_chart}
+        onChange={(chart) => setForm({ ...form, size_chart: chart })}
       />
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm">
