@@ -616,6 +616,11 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
+                  <th className="p-3 w-8">
+                    <button onClick={toggleSelectAll} className="text-muted-foreground hover:text-foreground">
+                      {selectedIds.size === filtered.length && filtered.length > 0 ? <CheckSquare size={15} /> : <Square size={15} />}
+                    </button>
+                  </th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Order ID</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden sm:table-cell">Customer</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">City</th>
@@ -627,14 +632,21 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
               </thead>
               <tbody>
                 {filtered.map(order => (
-                  <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                    <td className="p-3 font-mono text-xs flex items-center gap-1.5">
-                      #{order.id.slice(0, 8)}
-                      {(order as any).source === 'facebook' && (
-                        <span className="inline-flex items-center gap-0.5 bg-blue-500/10 text-blue-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-                          <Facebook size={10} /> FB
-                        </span>
-                      )}
+                  <tr key={order.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${selectedIds.has(order.id) ? 'bg-primary/5' : ''}`}>
+                    <td className="p-3">
+                      <button onClick={() => toggleSelect(order.id)} className="text-muted-foreground hover:text-foreground">
+                        {selectedIds.has(order.id) ? <CheckSquare size={15} className="text-primary" /> : <Square size={15} />}
+                      </button>
+                    </td>
+                    <td className="p-3 font-mono text-xs">
+                      <span className="flex items-center gap-1.5">
+                        #{order.id.slice(0, 8)}
+                        {(order as any).source === 'facebook' && (
+                          <span className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                            <Facebook size={10} /> FB
+                          </span>
+                        )}
+                      </span>
                     </td>
                     <td className="p-3 hidden sm:table-cell">
                       <button onClick={() => { openOrder(order); runFraudCheck(order.customer_phone, order.customer_name); }} className="text-left hover:underline underline-offset-2 decoration-primary/50">
