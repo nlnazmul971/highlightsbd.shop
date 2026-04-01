@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { callCourier, sendOrderEmail } from '@/lib/api';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Trash2, Facebook } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -49,6 +49,8 @@ const AdminOrders = () => {
   const [courierSending, setCourierSending] = useState<string | null>(null);
   const [syncingStatus, setSyncingStatus] = useState<string | null>(null);
   const [returnLoading, setReturnLoading] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const importRef = useRef<HTMLInputElement>(null);
 
   // Item editing state
   const [editingItems, setEditingItems] = useState(false);
@@ -490,9 +492,94 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
     setInvoiceEditing(false);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(o => o.id)));
+    }
+  };
+
+  const exportOrders = () => {
+    const toExport = filtered.filter(o => selectedIds.has(o.id));
+    if (toExport.length === 0) { toast.error('কোনো অর্ডার সিলেক্ট করুন'); return; }
+    const exportData = toExport.map(o => ({
+      customer_name: o.customer_name,
+      customer_phone: o.customer_phone,
+      customer_email: (o as any).customer_email || '',
+      customer_address: o.customer_address,
+      customer_city: o.customer_city,
+      items: o.items,
+      total: o.total,
+      discount: (o as any).discount || 0,
+      delivery_charge: (o as any).delivery_charge || 0,
+      delivery_method: o.delivery_method,
+      payment_method: o.payment_method,
+      payment_sender_number: (o as any).payment_sender_number || '',
+      transaction_id: (o as any).transaction_id || '',
+      customer_note: (o as any).customer_note || '',
+      status: o.status,
+      source: (o as any).source || 'website',
+      created_at: o.created_at,
+    }));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${toExport.length}টি অর্ডার এক্সপোর্ট হয়েছে`);
+  };
+
+  const importOrders = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const importData = JSON.parse(text);
+      if (!Array.isArray(importData)) { toast.error('Invalid file format'); return; }
+      let count = 0;
+      for (const order of importData) {
+        const { error } = await supabase.from('orders').insert({
+          customer_name: order.customer_name,
+          customer_phone: order.customer_phone,
+          customer_email: order.customer_email || null,
+          customer_address: order.customer_address,
+          customer_city: order.customer_city,
+          items: order.items,
+          total: order.total,
+          discount: order.discount || 0,
+          delivery_charge: order.delivery_charge || 0,
+          delivery_method: order.delivery_method,
+          payment_method: order.payment_method,
+          payment_sender_number: order.payment_sender_number || null,
+          transaction_id: order.transaction_id || null,
+          customer_note: order.customer_note || null,
+          status: order.status || 'Pending',
+          source: order.source || 'website',
+        });
+        if (!error) count++;
+      }
+      toast.success(`${count}/${importData.length}টি অর্ডার ইম্পোর্ট হয়েছে`);
+      window.location.reload();
+    } catch (err: any) {
+      toast.error('ইম্পোর্ট ব্যর্থ: ' + err.message);
+    }
+    if (importRef.current) importRef.current.value = '';
+  };
+
   return (
     <div className="space-y-6">
-      {/* Search bar */}
+      {/* Search bar + Export/Import */}
       <div className="flex gap-3 flex-wrap items-center">
         <input
           type="text"
@@ -501,6 +588,13 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
           placeholder="Search by name, phone, email, order ID, tracking..."
           className="luxury-input flex-1 min-w-[200px] text-sm"
         />
+        <input type="file" accept=".json" ref={importRef} onChange={importOrders} className="hidden" />
+        <button onClick={() => importRef.current?.click()} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-border hover:bg-accent transition-colors tracking-wider uppercase">
+          <Upload size={13} /> Import
+        </button>
+        <button onClick={exportOrders} disabled={selectedIds.size === 0} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors tracking-wider uppercase disabled:opacity-40">
+          <Download size={13} /> Export ({selectedIds.size})
+        </button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
@@ -522,6 +616,11 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
+                  <th className="p-3 w-8">
+                    <button onClick={toggleSelectAll} className="text-muted-foreground hover:text-foreground">
+                      {selectedIds.size === filtered.length && filtered.length > 0 ? <CheckSquare size={15} /> : <Square size={15} />}
+                    </button>
+                  </th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Order ID</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden sm:table-cell">Customer</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">City</th>
@@ -533,14 +632,21 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
               </thead>
               <tbody>
                 {filtered.map(order => (
-                  <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                    <td className="p-3 font-mono text-xs flex items-center gap-1.5">
-                      #{order.id.slice(0, 8)}
-                      {(order as any).source === 'facebook' && (
-                        <span className="inline-flex items-center gap-0.5 bg-blue-500/10 text-blue-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-                          <Facebook size={10} /> FB
-                        </span>
-                      )}
+                  <tr key={order.id} className={`border-b border-border last:border-0 hover:bg-muted/20 transition-colors ${selectedIds.has(order.id) ? 'bg-primary/5' : ''}`}>
+                    <td className="p-3">
+                      <button onClick={() => toggleSelect(order.id)} className="text-muted-foreground hover:text-foreground">
+                        {selectedIds.has(order.id) ? <CheckSquare size={15} className="text-primary" /> : <Square size={15} />}
+                      </button>
+                    </td>
+                    <td className="p-3 font-mono text-xs">
+                      <span className="flex items-center gap-1.5">
+                        #{order.id.slice(0, 8)}
+                        {(order as any).source === 'facebook' && (
+                          <span className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                            <Facebook size={10} /> FB
+                          </span>
+                        )}
+                      </span>
                     </td>
                     <td className="p-3 hidden sm:table-cell">
                       <button onClick={() => { openOrder(order); runFraudCheck(order.customer_phone, order.customer_name); }} className="text-left hover:underline underline-offset-2 decoration-primary/50">
