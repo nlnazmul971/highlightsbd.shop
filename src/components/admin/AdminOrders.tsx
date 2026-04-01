@@ -49,6 +49,8 @@ const AdminOrders = () => {
   const [courierSending, setCourierSending] = useState<string | null>(null);
   const [syncingStatus, setSyncingStatus] = useState<string | null>(null);
   const [returnLoading, setReturnLoading] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const importRef = useRef<HTMLInputElement>(null);
 
   // Item editing state
   const [editingItems, setEditingItems] = useState(false);
