@@ -492,9 +492,94 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
     setInvoiceEditing(false);
   };
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(o => o.id)));
+    }
+  };
+
+  const exportOrders = () => {
+    const toExport = filtered.filter(o => selectedIds.has(o.id));
+    if (toExport.length === 0) { toast.error('কোনো অর্ডার সিলেক্ট করুন'); return; }
+    const exportData = toExport.map(o => ({
+      customer_name: o.customer_name,
+      customer_phone: o.customer_phone,
+      customer_email: (o as any).customer_email || '',
+      customer_address: o.customer_address,
+      customer_city: o.customer_city,
+      items: o.items,
+      total: o.total,
+      discount: (o as any).discount || 0,
+      delivery_charge: (o as any).delivery_charge || 0,
+      delivery_method: o.delivery_method,
+      payment_method: o.payment_method,
+      payment_sender_number: (o as any).payment_sender_number || '',
+      transaction_id: (o as any).transaction_id || '',
+      customer_note: (o as any).customer_note || '',
+      status: o.status,
+      source: (o as any).source || 'website',
+      created_at: o.created_at,
+    }));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${toExport.length}টি অর্ডার এক্সপোর্ট হয়েছে`);
+  };
+
+  const importOrders = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const importData = JSON.parse(text);
+      if (!Array.isArray(importData)) { toast.error('Invalid file format'); return; }
+      let count = 0;
+      for (const order of importData) {
+        const { error } = await supabase.from('orders').insert({
+          customer_name: order.customer_name,
+          customer_phone: order.customer_phone,
+          customer_email: order.customer_email || null,
+          customer_address: order.customer_address,
+          customer_city: order.customer_city,
+          items: order.items,
+          total: order.total,
+          discount: order.discount || 0,
+          delivery_charge: order.delivery_charge || 0,
+          delivery_method: order.delivery_method,
+          payment_method: order.payment_method,
+          payment_sender_number: order.payment_sender_number || null,
+          transaction_id: order.transaction_id || null,
+          customer_note: order.customer_note || null,
+          status: order.status || 'Pending',
+          source: order.source || 'website',
+        });
+        if (!error) count++;
+      }
+      toast.success(`${count}/${importData.length}টি অর্ডার ইম্পোর্ট হয়েছে`);
+      window.location.reload();
+    } catch (err: any) {
+      toast.error('ইম্পোর্ট ব্যর্থ: ' + err.message);
+    }
+    if (importRef.current) importRef.current.value = '';
+  };
+
   return (
     <div className="space-y-6">
-      {/* Search bar */}
+      {/* Search bar + Export/Import */}
       <div className="flex gap-3 flex-wrap items-center">
         <input
           type="text"
@@ -503,6 +588,13 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
           placeholder="Search by name, phone, email, order ID, tracking..."
           className="luxury-input flex-1 min-w-[200px] text-sm"
         />
+        <input type="file" accept=".json" ref={importRef} onChange={importOrders} className="hidden" />
+        <button onClick={() => importRef.current?.click()} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-border hover:bg-accent transition-colors tracking-wider uppercase">
+          <Upload size={13} /> Import
+        </button>
+        <button onClick={exportOrders} disabled={selectedIds.size === 0} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors tracking-wider uppercase disabled:opacity-40">
+          <Download size={13} /> Export ({selectedIds.size})
+        </button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
