@@ -315,6 +315,28 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
         await updateOrder.mutateAsync({ id, status: newStatus });
         toast.success(`Order status updated to ${newStatus}`);
         sendStatusEmail(order, newStatus);
+
+        // Stock management: update cancelled/returned counts
+        if (newStatus === 'Cancelled' || newStatus === 'Returned') {
+          const items = Array.isArray(order.items) ? order.items : [];
+          for (const item of items) {
+            if (item.product_id && item.size) {
+              const { data: existing } = await supabase.from('product_size_stock')
+                .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
+              if (existing) {
+                const field = newStatus === 'Cancelled' ? 'cancelled_count' : 'returned_count';
+                await supabase.from('product_size_stock').update({
+                  [field]: (existing as any)[field] + (item.quantity || 1)
+                } as any).eq('id', existing.id);
+              }
+              await supabase.from('stock_logs').insert({
+                product_id: item.product_id, size: item.size,
+                change_type: newStatus.toLowerCase(), quantity: item.quantity || 1,
+                order_id: id, notes: `Order ${newStatus.toLowerCase()}`,
+              });
+            }
+          }
+        }
       }
     } catch (err: any) { toast.error(err.message); }
   };
