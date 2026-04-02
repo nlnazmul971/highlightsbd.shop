@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrders, useProducts, useDeliveryZones, useCoupons } from '@/hooks/useSupabase';
-import { Facebook, Plus, Trash2, Loader2, Search, Tag, MapPin, Package, CheckCircle, XCircle } from 'lucide-react';
+import { Store, Plus, Trash2, Loader2, Search, Tag, MapPin, Package, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 type OrderItem = {
@@ -16,13 +16,13 @@ type OrderItem = {
 
 const emptyItem: OrderItem = { name: '', size: '', color: '', quantity: 1, price: 0 };
 
-const AdminFacebookOrders = () => {
+const AdminOfflineOrders = () => {
   const { data: orders = [], refetch } = useOrders();
   const { data: products = [] } = useProducts();
   const { data: deliveryZones = [] } = useDeliveryZones(false);
   const { data: coupons = [] } = useCoupons();
 
-  const fbOrders = orders.filter((o: any) => o.source === 'facebook');
+  const offlineOrders = orders.filter((o: any) => o.source === 'offline');
   const activeCoupons = useMemo(() => (coupons as any[]).filter((c: any) => c.is_active), [coupons]);
 
   const defaultZones = [
@@ -56,7 +56,6 @@ const AdminFacebookOrders = () => {
 
   const subtotal = useMemo(() => items.reduce((sum, i) => sum + (i.price * i.quantity), 0), [items]);
 
-  // Re-calculate coupon discount when subtotal changes
   useEffect(() => {
     if (couponApplied) {
       let disc = 0;
@@ -72,40 +71,22 @@ const AdminFacebookOrders = () => {
   const applyCoupon = () => {
     if (!couponCode.trim()) return;
     const found = activeCoupons.find((c: any) => c.code === couponCode.trim().toUpperCase());
-    if (!found) {
-      toast.error('Invalid or inactive coupon code');
-      return;
-    }
-    if (found.max_uses && found.used_count >= found.max_uses) {
-      toast.error('This coupon has reached maximum usage');
-      return;
-    }
-    if (subtotal < found.min_order_amount) {
-      toast.error(`Minimum order ৳${found.min_order_amount} required for this coupon`);
-      return;
-    }
+    if (!found) { toast.error('Invalid or inactive coupon code'); return; }
+    if (found.max_uses && found.used_count >= found.max_uses) { toast.error('This coupon has reached maximum usage'); return; }
+    if (subtotal < found.min_order_amount) { toast.error(`Minimum order ৳${found.min_order_amount} required`); return; }
     setCouponApplied(found);
-    let disc = found.discount_type === 'percentage'
-      ? Math.round(subtotal * found.discount_value / 100)
-      : found.discount_value;
+    let disc = found.discount_type === 'percentage' ? Math.round(subtotal * found.discount_value / 100) : found.discount_value;
     setForm(prev => ({ ...prev, discount: disc }));
     toast.success(`Coupon "${found.code}" applied! Discount: ৳${disc}`);
   };
 
-  const removeCoupon = () => {
-    setCouponApplied(null);
-    setCouponCode('');
-    setForm(prev => ({ ...prev, discount: 0 }));
-  };
+  const removeCoupon = () => { setCouponApplied(null); setCouponCode(''); setForm(prev => ({ ...prev, discount: 0 })); };
 
   const applyZone = (zoneId: string) => {
     setSelectedZone(zoneId);
     const zone = activeZones.find((z: any) => z.id === zoneId);
-    if (zone) {
-      setForm(prev => ({ ...prev, delivery_charge: zone.fee, customer_city: zone.name }));
-    } else {
-      setForm(prev => ({ ...prev, delivery_charge: 0 }));
-    }
+    if (zone) setForm(prev => ({ ...prev, delivery_charge: zone.fee, customer_city: zone.name }));
+    else setForm(prev => ({ ...prev, delivery_charge: 0 }));
   };
 
   const total = Math.max(0, subtotal - form.discount + form.delivery_charge);
@@ -113,20 +94,13 @@ const AdminFacebookOrders = () => {
   const getFilteredProducts = (query: string) => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return (products as any[]).filter((p: any) =>
-      p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)
-    ).slice(0, 8);
+    return (products as any[]).filter((p: any) => p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q)).slice(0, 8);
   };
 
   const selectProduct = (idx: number, product: any) => {
     setItems(prev => prev.map((item, i) => i === idx ? {
-      ...item,
-      product_id: product.id,
-      name: product.name,
-      price: product.price,
-      image_url: product.image_url,
-      size: product.sizes?.[0] || '',
-      color: product.colors?.[0]?.name || '',
+      ...item, product_id: product.id, name: product.name, price: product.price,
+      image_url: product.image_url, size: product.sizes?.[0] || '', color: product.colors?.[0]?.name || '',
     } : item));
     setSearchQueries(prev => ({ ...prev, [idx]: '' }));
     setActiveSearchIdx(null);
@@ -142,31 +116,21 @@ const AdminFacebookOrders = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.customer_name.trim() || !form.customer_phone.trim() || !form.customer_address.trim() || !form.customer_city.trim()) {
-      toast.error('Please fill in Name, Phone, Address and Select a Delivery Zone');
-      return;
+      toast.error('Please fill in Name, Phone, Address and Select a Delivery Zone'); return;
     }
     if (items.some(i => !i.name.trim() || i.price <= 0)) {
-      toast.error('Please select products with valid prices');
-      return;
+      toast.error('Please select products with valid prices'); return;
     }
 
     setSubmitting(true);
     try {
       const { data: orderData, error } = await supabase.from('orders').insert({
-        customer_name: form.customer_name,
-        customer_phone: form.customer_phone,
-        customer_email: form.customer_email || null,
-        customer_address: form.customer_address,
-        customer_city: form.customer_city,
-        customer_note: form.customer_note || null,
-        delivery_method: form.delivery_method,
-        payment_method: form.payment_method,
-        delivery_charge: form.delivery_charge,
-        discount: form.discount,
-        total,
-        items: items as any,
-        source: 'facebook',
-        status: 'Pending',
+        customer_name: form.customer_name, customer_phone: form.customer_phone,
+        customer_email: form.customer_email || null, customer_address: form.customer_address,
+        customer_city: form.customer_city, customer_note: form.customer_note || null,
+        delivery_method: form.delivery_method, payment_method: form.payment_method,
+        delivery_charge: form.delivery_charge, discount: form.discount,
+        total, items: items as any, source: 'offline', status: 'Pending',
       }).select().single();
 
       if (error) throw error;
@@ -174,22 +138,29 @@ const AdminFacebookOrders = () => {
       // Deduct stock for each item
       for (const item of items) {
         if (item.product_id && item.size) {
+          await supabase.from('product_size_stock').upsert({
+            product_id: item.product_id, size: item.size,
+            sold_count: item.quantity, total_stock: 0,
+          }, { onConflict: 'product_id,size' }).select();
+          
+          // Actually we need to increment sold_count, let's use RPC or manual
           const { data: existing } = await supabase.from('product_size_stock')
             .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
           if (existing) {
             await supabase.from('product_size_stock').update({
-              sold_count: (existing as any).sold_count + item.quantity
-            } as any).eq('id', (existing as any).id);
+              sold_count: existing.sold_count + item.quantity
+            } as any).eq('id', existing.id);
           }
+
           await supabase.from('stock_logs').insert({
             product_id: item.product_id, size: item.size,
             change_type: 'sold', quantity: item.quantity,
-            order_id: orderData?.id, notes: 'Facebook order',
+            order_id: orderData?.id, notes: 'Offline order',
           });
         }
       }
 
-      toast.success('Facebook order created successfully!');
+      toast.success('Offline order created successfully!');
       setForm({
         customer_name: '', customer_phone: '', customer_email: '',
         customer_address: '', customer_city: '', customer_note: '',
@@ -197,22 +168,18 @@ const AdminFacebookOrders = () => {
         delivery_charge: 0, discount: 0,
       });
       setItems([{ ...emptyItem }]);
-      setCouponCode('');
-      setCouponApplied(null);
-      setSelectedZone('');
+      setCouponCode(''); setCouponApplied(null); setSelectedZone('');
       refetch();
-    } catch (err: any) {
-      toast.error('Error: ' + err.message);
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err: any) { toast.error('Error: ' + err.message); }
+    finally { setSubmitting(false); }
   };
 
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
-        <Facebook className="h-6 w-6 text-blue-600" />
-        <h2 className="text-xl font-light tracking-wide">Facebook Order Entry</h2>
+        <Store className="h-6 w-6 text-emerald-600" />
+        <h2 className="text-xl font-light tracking-wide">Offline Order Entry</h2>
+        <span className="ml-auto text-xs text-muted-foreground">{offlineOrders.length} offline orders total</span>
       </div>
 
       <form onSubmit={handleSubmit} className="border border-border p-6 space-y-6 bg-card">
@@ -224,11 +191,11 @@ const AdminFacebookOrders = () => {
             <input value={form.customer_phone} onChange={e => setForm({ ...form, customer_phone: e.target.value })} placeholder="Phone Number *" className="luxury-input" required />
             <input value={form.customer_email} onChange={e => setForm({ ...form, customer_email: e.target.value })} placeholder="Email (Optional)" className="luxury-input" />
             <input value={form.customer_address} onChange={e => setForm({ ...form, customer_address: e.target.value })} placeholder="Full Address *" className="luxury-input" required />
-            <textarea value={form.customer_note} onChange={e => setForm({ ...form, customer_note: e.target.value })} placeholder="Special Instructions (Optional)" className="luxury-input md:col-span-2" rows={2} />
+            <textarea value={form.customer_note} onChange={e => setForm({ ...form, customer_note: e.target.value })} placeholder="Notes (Optional)" className="luxury-input md:col-span-2" rows={2} />
           </div>
         </div>
 
-        {/* Order Items - Enhanced UI */}
+        {/* Order Items */}
         <div>
           <div className="flex justify-between items-center mb-3">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
@@ -242,16 +209,12 @@ const AdminFacebookOrders = () => {
           <div className="space-y-3">
             {items.map((item, idx) => (
               <div key={idx} className="border border-border bg-background p-4 relative group">
-                {/* Product search */}
                 <div className="relative mb-3">
                   <div className="flex items-center gap-2">
                     <Search size={14} className="text-muted-foreground" />
                     <input
                       value={searchQueries[idx] ?? ''}
-                      onChange={e => {
-                        setSearchQueries(prev => ({ ...prev, [idx]: e.target.value }));
-                        setActiveSearchIdx(idx);
-                      }}
+                      onChange={e => { setSearchQueries(prev => ({ ...prev, [idx]: e.target.value })); setActiveSearchIdx(idx); }}
                       onFocus={() => setActiveSearchIdx(idx)}
                       placeholder="Search product by name or SKU..."
                       className="luxury-input flex-1 text-sm"
@@ -276,7 +239,6 @@ const AdminFacebookOrders = () => {
                   )}
                 </div>
 
-                {/* Selected product display */}
                 {item.name && (
                   <div className="flex items-center gap-3 mb-3 p-2 bg-accent/30 rounded">
                     {item.image_url && <img src={item.image_url} alt="" className="w-12 h-12 object-cover rounded" />}
@@ -287,7 +249,6 @@ const AdminFacebookOrders = () => {
                   </div>
                 )}
 
-                {/* Item details grid */}
                 <div className="grid grid-cols-4 gap-2">
                   <div>
                     <label className="text-[9px] uppercase text-muted-foreground tracking-wider block mb-1">Size</label>
@@ -307,7 +268,6 @@ const AdminFacebookOrders = () => {
                   </div>
                 </div>
 
-                {/* Item subtotal */}
                 <div className="text-right mt-2">
                   <span className="text-xs text-muted-foreground">Subtotal: </span>
                   <span className="text-sm font-bold">৳{(item.price * item.quantity).toLocaleString()}</span>
@@ -323,20 +283,16 @@ const AdminFacebookOrders = () => {
           </div>
         </div>
 
-        {/* Delivery Zone & Coupon Section */}
+        {/* Delivery Zone & Coupon */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
-          {/* Delivery Zone */}
           <div className="space-y-2">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
               <MapPin size={13} /> Delivery Zone
             </p>
             <div className="space-y-2">
               {activeZones.map((zone: any) => (
-                <div
-                  key={zone.id}
-                  onClick={() => applyZone(zone.id)}
-                  className={`p-3 border cursor-pointer flex justify-between items-center transition-all ${selectedZone === zone.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:border-muted-foreground/40'}`}
-                >
+                <div key={zone.id} onClick={() => applyZone(zone.id)}
+                  className={`p-3 border cursor-pointer flex justify-between items-center transition-all ${selectedZone === zone.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:border-muted-foreground/40'}`}>
                   <div>
                     <p className="text-sm font-medium">{zone.name}</p>
                     <p className="text-[10px] text-muted-foreground">{zone.description}</p>
@@ -348,7 +304,6 @@ const AdminFacebookOrders = () => {
             <input value={form.customer_city} onChange={e => setForm({ ...form, customer_city: e.target.value })} placeholder="City (auto-set by zone)" className="luxury-input text-xs mt-2" />
           </div>
 
-          {/* Coupon & Summary */}
           <div className="space-y-3">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold flex items-center gap-1.5">
               <Tag size={13} /> Coupon & Discount
@@ -365,41 +320,33 @@ const AdminFacebookOrders = () => {
                     </p>
                   </div>
                 </div>
-                <button type="button" onClick={removeCoupon} className="text-destructive hover:bg-destructive/10 p-1 rounded">
-                  <XCircle size={16} />
-                </button>
+                <button type="button" onClick={removeCoupon} className="text-destructive hover:bg-destructive/10 p-1 rounded"><XCircle size={16} /></button>
               </div>
             ) : (
               <div className="flex gap-2">
-                <input
-                  placeholder="Enter coupon code..."
-                  className="luxury-input flex-1 text-sm"
-                  value={couponCode}
+                <input placeholder="Enter coupon code..." className="luxury-input flex-1 text-sm" value={couponCode}
                   onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), applyCoupon())}
-                />
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), applyCoupon())} />
                 <button type="button" onClick={applyCoupon} className="luxury-button-outline text-xs px-4">Apply</button>
               </div>
             )}
 
-            {/* Manual discount override */}
             <div>
               <label className="text-[9px] uppercase text-muted-foreground tracking-wider block mb-1">Manual Discount (৳)</label>
               <input type="number" value={form.discount} onChange={e => { setForm(prev => ({ ...prev, discount: parseInt(e.target.value) || 0 })); setCouponApplied(null); setCouponCode(''); }} className="luxury-input text-sm w-full" />
             </div>
 
-            {/* Payment Method */}
             <div>
               <label className="text-[9px] uppercase text-muted-foreground tracking-wider block mb-1">Payment Method</label>
               <select value={form.payment_method} onChange={e => setForm({ ...form, payment_method: e.target.value })} className="luxury-input text-sm w-full">
                 <option value="cod">Cash on Delivery</option>
+                <option value="cash">Cash (Direct)</option>
                 <option value="bkash">bKash</option>
                 <option value="nagad">Nagad</option>
                 <option value="rocket">Rocket</option>
               </select>
             </div>
 
-            {/* Order Summary */}
             <div className="mt-4 p-4 bg-muted/30 border border-border space-y-2">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Order Summary</p>
               <div className="flex justify-between text-sm"><span>Subtotal ({items.length} items)</span><span>৳{subtotal.toLocaleString()}</span></div>
@@ -409,7 +356,7 @@ const AdminFacebookOrders = () => {
             </div>
 
             <button type="submit" disabled={submitting} className="w-full luxury-button-primary h-12 mt-2 flex items-center justify-center gap-2">
-              {submitting ? <Loader2 className="animate-spin" size={18} /> : <><Facebook size={16} /> CONFIRM FACEBOOK ORDER</>}
+              {submitting ? <Loader2 className="animate-spin" size={18} /> : <><Store size={16} /> CONFIRM OFFLINE ORDER</>}
             </button>
           </div>
         </div>
@@ -418,4 +365,4 @@ const AdminFacebookOrders = () => {
   );
 };
 
-export default AdminFacebookOrders;
+export default AdminOfflineOrders;

@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, ShoppingBag, MessageSquare, Users, Settings, LogOut, Store, Plug, Home, Heart, Mail, Trash2, Tag, Facebook } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingBag, MessageSquare, Users, Settings, LogOut, Store, Plug, Home, Heart, Mail, Trash2, Tag, Facebook, BarChart3 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,8 @@ const menuItems = [
   { title: 'Products', key: 'products', icon: Package },
   { title: 'Orders', key: 'orders', icon: ShoppingBag },
   { title: 'FB Orders', key: 'facebook-orders', icon: Facebook },
+  { title: 'Offline Orders', key: 'offline-orders', icon: Store },
+  { title: 'Stock', key: 'stock', icon: BarChart3 },
   { title: 'Reviews', key: 'reviews', icon: MessageSquare },
   { title: 'Wishlist', key: 'wishlist', icon: Heart },
   { title: 'Newsletter', key: 'newsletter', icon: Mail },

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useProducts, useOrders } from '@/hooks/useSupabase';
-import { Package, ShoppingBag, DollarSign, TrendingUp, XCircle, RotateCcw, CreditCard, Truck, TrendingDown, Facebook } from 'lucide-react';
+import { Package, ShoppingBag, DollarSign, TrendingUp, XCircle, RotateCcw, CreditCard, Truck, TrendingDown, Facebook, Store } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { format, subDays, isWithinInterval, startOfDay, endOfDay, parseISO } from 'date-fns';
 
@@ -45,6 +45,11 @@ const AdminDashboard = () => {
   const fbOrders = filteredOrders.filter((o: any) => o.source === 'facebook');
   const fbOrderCount = fbOrders.length;
   const fbRevenue = fbOrders.reduce((sum, o) => sum + o.total, 0);
+
+  // Offline order stats
+  const offlineOrders = filteredOrders.filter((o: any) => o.source === 'offline');
+  const offlineOrderCount = offlineOrders.length;
+  const offlineRevenue = offlineOrders.reduce((sum, o) => sum + o.total, 0);
 
   // Daily revenue chart data
   const dailyData = useMemo(() => {
@@ -122,6 +127,8 @@ const AdminDashboard = () => {
     { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Delivered: ${deliveredOrders.length} | Courier: ৳${deliveredCourierFee.toLocaleString()}` },
     { label: 'FB Orders', value: fbOrderCount, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
     { label: 'FB Revenue', value: `৳${fbRevenue.toLocaleString()}`, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
+    { label: 'Offline Orders', value: offlineOrderCount, icon: Store, color: 'bg-emerald-500/10 text-emerald-600' },
+    { label: 'Offline Revenue', value: `৳${offlineRevenue.toLocaleString()}`, icon: Store, color: 'bg-emerald-500/10 text-emerald-600' },
     { label: 'COD Orders', value: codOrders, icon: Truck, color: 'bg-primary/10 text-primary' },
     { label: 'Online Payment', value: onlineOrders, icon: CreditCard, color: 'bg-muted text-muted-foreground' },
     { label: 'Pending', value: pendingOrders, icon: TrendingUp, color: 'bg-primary/10 text-primary' },

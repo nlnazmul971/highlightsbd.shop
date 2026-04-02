@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { callCourier, sendOrderEmail } from '@/lib/api';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -315,6 +315,28 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
         await updateOrder.mutateAsync({ id, status: newStatus });
         toast.success(`Order status updated to ${newStatus}`);
         sendStatusEmail(order, newStatus);
+
+        // Stock management: update cancelled/returned counts
+        if (newStatus === 'Cancelled' || newStatus === 'Returned') {
+          const items = Array.isArray(order.items) ? order.items : [];
+          for (const item of items) {
+            if (item.product_id && item.size) {
+              const { data: existing } = await supabase.from('product_size_stock')
+                .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
+              if (existing) {
+                const field = newStatus === 'Cancelled' ? 'cancelled_count' : 'returned_count';
+                await supabase.from('product_size_stock').update({
+                  [field]: (existing as any)[field] + (item.quantity || 1)
+                } as any).eq('id', existing.id);
+              }
+              await supabase.from('stock_logs').insert({
+                product_id: item.product_id, size: item.size,
+                change_type: newStatus.toLowerCase(), quantity: item.quantity || 1,
+                order_id: id, notes: `Order ${newStatus.toLowerCase()}`,
+              });
+            }
+          }
+        }
       }
     } catch (err: any) { toast.error(err.message); }
   };
@@ -644,6 +666,11 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                         {(order as any).source === 'facebook' && (
                           <span className="inline-flex items-center gap-0.5 bg-primary/10 text-primary text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
                             <Facebook size={10} /> FB
+                          </span>
+                        )}
+                        {(order as any).source === 'offline' && (
+                          <span className="inline-flex items-center gap-0.5 bg-emerald-500/10 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                            <Store size={10} /> Offline
                           </span>
                         )}
                       </span>
