@@ -152,7 +152,7 @@ const AdminFacebookOrders = () => {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('orders').insert({
+      const { data: orderData, error } = await supabase.from('orders').insert({
         customer_name: form.customer_name,
         customer_phone: form.customer_phone,
         customer_email: form.customer_email || null,
@@ -167,9 +167,27 @@ const AdminFacebookOrders = () => {
         items: items as any,
         source: 'facebook',
         status: 'Pending',
-      });
+      }).select().single();
 
       if (error) throw error;
+
+      // Deduct stock for each item
+      for (const item of items) {
+        if (item.product_id && item.size) {
+          const { data: existing } = await supabase.from('product_size_stock')
+            .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
+          if (existing) {
+            await supabase.from('product_size_stock').update({
+              sold_count: (existing as any).sold_count + item.quantity
+            } as any).eq('id', (existing as any).id);
+          }
+          await supabase.from('stock_logs').insert({
+            product_id: item.product_id, size: item.size,
+            change_type: 'sold', quantity: item.quantity,
+            order_id: orderData?.id, notes: 'Facebook order',
+          });
+        }
+      }
 
       toast.success('Facebook order created successfully!');
       setForm({
