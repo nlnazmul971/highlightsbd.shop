@@ -127,6 +127,8 @@ const AdminDashboard = () => {
     { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Delivered: ${deliveredOrders.length} | Courier: ৳${deliveredCourierFee.toLocaleString()}` },
     { label: 'FB Orders', value: fbOrderCount, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
     { label: 'FB Revenue', value: `৳${fbRevenue.toLocaleString()}`, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
+    { label: 'Offline Orders', value: offlineOrderCount, icon: Store, color: 'bg-emerald-500/10 text-emerald-600' },
+    { label: 'Offline Revenue', value: `৳${offlineRevenue.toLocaleString()}`, icon: Store, color: 'bg-emerald-500/10 text-emerald-600' },
     { label: 'COD Orders', value: codOrders, icon: Truck, color: 'bg-primary/10 text-primary' },
     { label: 'Online Payment', value: onlineOrders, icon: CreditCard, color: 'bg-muted text-muted-foreground' },
     { label: 'Pending', value: pendingOrders, icon: TrendingUp, color: 'bg-primary/10 text-primary' },
