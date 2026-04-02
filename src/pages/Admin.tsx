@@ -19,6 +19,8 @@ import AdminWishlist from '@/components/admin/AdminWishlist';
 import AdminNewsletter from '@/components/admin/AdminNewsletter';
 import AdminCoupons from '@/components/admin/AdminCoupons';
 import AdminFacebookOrders from '@/components/admin/AdminFacebookOrders';
+import AdminOfflineOrders from '@/components/admin/AdminOfflineOrders';
+import AdminStockManagement from '@/components/admin/AdminStockManagement';
 import AdminTrash from '@/components/admin/AdminTrash';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import OrderTracker from '@/components/OrderTracker';
