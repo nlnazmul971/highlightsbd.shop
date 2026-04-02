@@ -46,6 +46,11 @@ const AdminDashboard = () => {
   const fbOrderCount = fbOrders.length;
   const fbRevenue = fbOrders.reduce((sum, o) => sum + o.total, 0);
 
+  // Offline order stats
+  const offlineOrders = filteredOrders.filter((o: any) => o.source === 'offline');
+  const offlineOrderCount = offlineOrders.length;
+  const offlineRevenue = offlineOrders.reduce((sum, o) => sum + o.total, 0);
+
   // Daily revenue chart data
   const dailyData = useMemo(() => {
     const map: Record<string, number> = {};
