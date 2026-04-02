@@ -253,6 +253,50 @@ export type Database = {
           },
         ]
       }
+      product_size_stock: {
+        Row: {
+          cancelled_count: number
+          created_at: string
+          id: string
+          product_id: string
+          returned_count: number
+          size: string
+          sold_count: number
+          total_stock: number
+          updated_at: string
+        }
+        Insert: {
+          cancelled_count?: number
+          created_at?: string
+          id?: string
+          product_id: string
+          returned_count?: number
+          size: string
+          sold_count?: number
+          total_stock?: number
+          updated_at?: string
+        }
+        Update: {
+          cancelled_count?: number
+          created_at?: string
+          id?: string
+          product_id?: string
+          returned_count?: number
+          size?: string
+          sold_count?: number
+          total_stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_size_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           brand: string
@@ -374,6 +418,54 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_logs: {
+        Row: {
+          change_type: string
+          created_at: string
+          id: string
+          notes: string | null
+          order_id: string | null
+          product_id: string
+          quantity: number
+          size: string
+        }
+        Insert: {
+          change_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id: string
+          quantity?: number
+          size: string
+        }
+        Update: {
+          change_type?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          product_id?: string
+          quantity?: number
+          size?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_logs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_logs_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
