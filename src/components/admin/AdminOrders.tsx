@@ -646,6 +646,11 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                             <Facebook size={10} /> FB
                           </span>
                         )}
+                        {(order as any).source === 'offline' && (
+                          <span className="inline-flex items-center gap-0.5 bg-emerald-500/10 text-emerald-600 text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                            <Store size={10} /> Offline
+                          </span>
+                        )}
                       </span>
                     </td>
                     <td className="p-3 hidden sm:table-cell">
