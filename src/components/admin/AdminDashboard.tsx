@@ -27,11 +27,13 @@ const AdminDashboard = () => {
   const activeOrders = filteredOrders.filter(o => o.status !== 'Cancelled' && o.status !== 'Returned');
   const totalRevenue = activeOrders.reduce((sum, o) => sum + o.total, 0);
   const totalCourierFee = activeOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
+  const totalAdvance = activeOrders.reduce((sum, o) => sum + ((o as any).advance_payment || 0), 0);
   
   // Delivery Revenue = only Delivered orders, minus courier fees
   const deliveredOrders = filteredOrders.filter(o => o.status === 'Delivered');
   const deliveredTotal = deliveredOrders.reduce((sum, o) => sum + o.total, 0);
   const deliveredCourierFee = deliveredOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
+  const deliveredAdvance = deliveredOrders.reduce((sum, o) => sum + ((o as any).advance_payment || 0), 0);
   const deliveryRevenue = deliveredTotal - deliveredCourierFee;
 
   const pendingOrders = filteredOrders.filter(o => o.status === 'Pending').length;
