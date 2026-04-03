@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
-import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
+import { useState, useRef, useMemo } from 'react';
+import { useOrders, useUpdateOrder, useProducts } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { callCourier, sendOrderEmail } from '@/lib/api';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store, Package, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -35,6 +35,7 @@ const FRAUD_COLORS: Record<string, string> = {
 
 const AdminOrders = () => {
   const { data: orders = [] } = useOrders();
+  const { data: products = [] } = useProducts();
   const updateOrder = useUpdateOrder();
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,6 +65,13 @@ const AdminOrders = () => {
   const [courierModal, setCourierModal] = useState<{ open: boolean; order: any | null }>({ open: false, order: null });
   const [selectedCourier, setSelectedCourier] = useState<string>('steadfast');
 
+  // Amount editing state
+  const [editingAmount, setEditingAmount] = useState(false);
+  const [amountData, setAmountData] = useState({ total: 0, discount: 0, delivery_charge: 0, advance_payment: 0 });
+
+  // Pending summary toggle
+  const [showPendingSummary, setShowPendingSummary] = useState(false);
+
   const filteredByStatus = filter === 'All' ? orders : orders.filter(o => o.status === filter);
   const filtered = searchQuery.trim()
     ? filteredByStatus.filter(o => {
@@ -76,8 +84,28 @@ const AdminOrders = () => {
       })
     : filteredByStatus;
 
+  // Pending orders size summary
+  const pendingSummary = useMemo(() => {
+    const pendingOrders = orders.filter(o => o.status === 'Pending');
+    const summary: Record<string, Record<string, number>> = {};
+    pendingOrders.forEach(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      items.forEach((item: any) => {
+        const name = item.name || 'Unknown';
+        const size = item.size || 'N/A';
+        const qty = item.quantity || 1;
+        if (!summary[name]) summary[name] = {};
+        summary[name][size] = (summary[name][size] || 0) + qty;
+      });
+    });
+    return summary;
+  }, [orders]);
+
+  const pendingOrderCount = orders.filter(o => o.status === 'Pending').length;
+
   const downloadInvoice = (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
+    const advancePayment = (order as any).advance_payment || 0;
     const invoiceHtml = `
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Invoice #${order.id.slice(0, 8)}</title>
@@ -100,6 +128,8 @@ const AdminOrders = () => {
   .totals { margin-top: 20px; text-align: right; font-size: 13px; }
   .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 4px 0; }
   .totals .grand { font-size: 16px; font-weight: 600; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 8px; }
+  .totals .advance { color: #16a34a; }
+  .totals .due { font-size: 16px; font-weight: 700; color: #dc2626; border-top: 2px solid #dc2626; padding-top: 8px; margin-top: 4px; }
   .note { margin-top: 20px; padding: 12px; background: #f9f9f9; font-size: 12px; color: #666; font-style: italic; }
   @media print { body { padding: 20px; } }
 </style></head><body>
@@ -135,6 +165,8 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
   ${(order.discount || 0) > 0 ? `<div class="row"><span>Discount</span><span>-৳${order.discount.toLocaleString()}</span></div>` : ''}
   ${(order.delivery_charge || 0) > 0 ? `<div class="row"><span>Delivery Charge</span><span>৳${order.delivery_charge.toLocaleString()}</span></div>` : ''}
   <div class="row grand"><span>Total</span><span>৳${order.total.toLocaleString()}</span></div>
+  ${advancePayment > 0 ? `<div class="row advance"><span>Advance Paid</span><span>-৳${advancePayment.toLocaleString()}</span></div>` : ''}
+  ${advancePayment > 0 ? `<div class="row due"><span>Amount Due</span><span>৳${(order.total - advancePayment).toLocaleString()}</span></div>` : ''}
 </div>
 </body></html>`;
     const blob = new Blob([invoiceHtml], { type: 'text/html' });
@@ -143,17 +175,82 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     if (w) { w.onload = () => { w.print(); URL.revokeObjectURL(url); }; }
   };
 
+  // Bulk invoice download
+  const downloadBulkInvoice = () => {
+    const toExport = filtered.filter(o => selectedIds.has(o.id));
+    if (toExport.length === 0) { toast.error('কোনো অর্ডার সিলেক্ট করুন'); return; }
+    
+    const allInvoicesHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Invoices (${toExport.length})</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; color: #1a1a1a; }
+  .invoice-page { max-width: 700px; margin: 0 auto; padding: 40px 30px; page-break-after: always; }
+  .invoice-page:last-child { page-break-after: auto; }
+  .brand { text-align: center; font-size: 30px; font-weight: 700; letter-spacing: 8px; text-transform: uppercase; margin-bottom: 6px; }
+  .brand-sub { text-align: center; font-size: 10px; color: #999; letter-spacing: 3px; margin-bottom: 20px; }
+  .divider { border: none; border-top: 1px solid #e0e0e0; margin: 15px 0; }
+  h2 { font-size: 16px; font-weight: 300; letter-spacing: 3px; margin-bottom: 15px; text-transform: uppercase; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 12px; color: #666; }
+  .section-title { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #999; margin-bottom: 6px; }
+  .info p { margin: 2px 0; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; text-align: left; padding: 6px 0; border-bottom: 1px solid #eee; }
+  td { padding: 8px 0; font-size: 12px; border-bottom: 1px solid #f5f5f5; }
+  td:last-child, th:last-child { text-align: right; }
+  .totals { margin-top: 15px; text-align: right; font-size: 12px; }
+  .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 3px 0; }
+  .totals .grand { font-size: 14px; font-weight: 600; border-top: 1px solid #1a1a1a; padding-top: 6px; margin-top: 6px; }
+  .totals .advance { color: #16a34a; }
+  .totals .due { font-size: 14px; font-weight: 700; color: #dc2626; }
+  @media print { .invoice-page { padding: 20px; } }
+</style></head><body>
+${toExport.map(order => {
+  const items = Array.isArray(order.items) ? order.items : [];
+  const adv = (order as any).advance_payment || 0;
+  return `<div class="invoice-page">
+<div class="brand">HIGHLIGHTS</div>
+<div class="brand-sub">www.highlightsbd.shop</div>
+<hr class="divider" />
+<h2>Invoice</h2>
+<div class="meta"><span>Order #${order.id.slice(0, 8)}</span><span>${new Date(order.created_at).toLocaleDateString()}</span></div>
+<div class="info">
+  <div class="section-title">Customer</div>
+  <p><strong>${order.customer_name}</strong></p>
+  <p>${order.customer_phone}</p>
+  <p>${order.customer_address}, ${order.customer_city}</p>
+</div>
+<table><thead><tr><th>Item</th><th>Size</th><th>Qty</th><th>Price</th></tr></thead><tbody>
+${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.quantity}</td><td>৳${((i.price || 0) * (i.quantity || 1)).toLocaleString()}</td></tr>`).join('')}
+</tbody></table>
+<div class="totals">
+  ${(order.discount || 0) > 0 ? `<div class="row"><span>Discount</span><span>-৳${order.discount.toLocaleString()}</span></div>` : ''}
+  ${(order.delivery_charge || 0) > 0 ? `<div class="row"><span>Delivery</span><span>৳${order.delivery_charge.toLocaleString()}</span></div>` : ''}
+  <div class="row grand"><span>Total</span><span>৳${order.total.toLocaleString()}</span></div>
+  ${adv > 0 ? `<div class="row advance"><span>Advance</span><span>-৳${adv.toLocaleString()}</span></div><div class="row due"><span>Due</span><span>৳${(order.total - adv).toLocaleString()}</span></div>` : ''}
+</div>
+</div>`;
+}).join('')}
+</body></html>`;
+    const blob = new Blob([allInvoicesHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if (w) { w.onload = () => { w.print(); URL.revokeObjectURL(url); }; }
+    toast.success(`${toExport.length}টি ইনভয়েস প্রিন্ট হচ্ছে`);
+  };
+
   // Send order to Steadfast courier
   const sendToSteadfast = async (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
+    const advancePayment = (order as any).advance_payment || 0;
+    const codAmount = order.payment_method === 'cod' ? (order.total - advancePayment) : 0;
 
     const result = await callCourier('steadfast', 'create_order', {
       invoice: order.id.slice(0, 8),
       recipient_name: order.customer_name,
       recipient_phone: order.customer_phone,
       recipient_address: `${order.customer_address}, ${order.customer_city}`,
-      cod_amount: order.payment_method === 'cod' ? order.total : 0,
+      cod_amount: codAmount > 0 ? codAmount : 0,
       note: `Order #${order.id.slice(0, 8)}`,
       item_description: itemDesc,
       delivery_type: 0,
@@ -175,6 +272,8 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
   const sendToPathao = async (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
     const itemDesc = items.map((i: any) => `${i.name}${i.size ? ` (${i.size})` : ''} x${i.quantity}`).join(', ');
+    const advancePayment = (order as any).advance_payment || 0;
+    const codAmount = order.payment_method === 'cod' ? (order.total - advancePayment) : 0;
 
     const result = await callCourier('pathao', 'create_order', {
       store_id: 373239,
@@ -189,7 +288,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       special_instruction: itemDesc,
       item_quantity: items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0),
       item_weight: 0.5,
-      amount_to_collect: order.payment_method === 'cod' ? order.total : 0,
+      amount_to_collect: codAmount > 0 ? codAmount : 0,
       item_description: itemDesc,
     });
 
@@ -205,7 +304,6 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     }
   };
 
-  // Main send to courier function
   const sendToCourier = async (order: any, courierProvider: string) => {
     setCourierSending(order.id);
     try {
@@ -232,7 +330,6 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     }
   };
 
-  // Sync courier status
   const syncCourierStatus = async (order: any) => {
     if (!order.consignment_id) { toast.error('No consignment ID'); return; }
     setSyncingStatus(order.id);
@@ -267,7 +364,6 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     }
   };
 
-  // Create return request
   const createReturn = async (order: any) => {
     if (!order.consignment_id) { toast.error('No consignment ID for return'); return; }
     if (order.courier_provider === 'pathao') { toast.error('Pathao direct return API not available'); return; }
@@ -316,7 +412,6 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
         toast.success(`Order status updated to ${newStatus}`);
         sendStatusEmail(order, newStatus);
 
-        // Stock management: update cancelled/returned counts
         if (newStatus === 'Cancelled' || newStatus === 'Returned') {
           const items = Array.isArray(order.items) ? order.items : [];
           for (const item of items) {
@@ -351,6 +446,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     setSelectedOrder(order);
     setEditing(false);
     setEditingItems(false);
+    setEditingAmount(false);
     setFraudData(null);
     setEditData({
       customer_name: order.customer_name, customer_phone: order.customer_phone,
@@ -385,6 +481,33 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     } catch (err: any) { toast.error(err.message); }
   };
 
+  // Amount editing
+  const startEditAmount = () => {
+    setAmountData({
+      total: selectedOrder.total,
+      discount: (selectedOrder as any).discount || 0,
+      delivery_charge: (selectedOrder as any).delivery_charge || 0,
+      advance_payment: (selectedOrder as any).advance_payment || 0,
+    });
+    setEditingAmount(true);
+  };
+
+  const saveAmountEdit = async () => {
+    if (!selectedOrder) return;
+    try {
+      await updateOrder.mutateAsync({
+        id: selectedOrder.id,
+        total: amountData.total,
+        discount: amountData.discount,
+        delivery_charge: amountData.delivery_charge,
+        advance_payment: amountData.advance_payment,
+      });
+      setSelectedOrder({ ...selectedOrder, ...amountData });
+      setEditingAmount(false);
+      toast.success('Amount updated! Dashboard will reflect changes.');
+    } catch (err: any) { toast.error(err.message); }
+  };
+
   const runFraudCheck = async (phone: string, name: string) => {
     setFraudLoading(true);
     setFraudData(null);
@@ -414,7 +537,6 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     finally { setFraudLoading(false); }
   };
 
-  // Prepare invoice data for editing
   const openInvoiceEditor = (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
     setInvoiceData({
@@ -437,6 +559,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       items: items.map((i: any) => ({ name: i.name, size: i.size || '', quantity: i.quantity || 1, price: i.price || 0 })),
       discount: (order as any).discount || 0,
       deliveryCharge: (order as any).delivery_charge || 0,
+      advancePayment: (order as any).advance_payment || 0,
       total: order.total,
       extraLines: [] as string[],
     });
@@ -447,6 +570,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     if (!invoiceData) return;
     const d = invoiceData;
     const subtotal = d.items.reduce((s: number, i: any) => s + i.price * i.quantity, 0);
+    const adv = d.advancePayment || 0;
     const invoiceHtml = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Invoice #${d.orderId}</title>
 <style>
@@ -468,6 +592,8 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
   .totals { margin-top: 20px; text-align: right; font-size: 13px; }
   .totals .row { display: flex; justify-content: flex-end; gap: 40px; padding: 4px 0; }
   .totals .grand { font-size: 16px; font-weight: 600; border-top: 1px solid #1a1a1a; padding-top: 8px; margin-top: 8px; }
+  .totals .advance { color: #16a34a; }
+  .totals .due { font-size: 16px; font-weight: 700; color: #dc2626; border-top: 2px solid #dc2626; padding-top: 8px; margin-top: 4px; }
   .note { margin-top: 20px; padding: 12px; background: #f9f9f9; font-size: 12px; color: #666; font-style: italic; }
   .extra { margin-top: 15px; font-size: 12px; color: #555; }
   @media print { body { padding: 20px; } }
@@ -504,6 +630,8 @@ ${d.items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${
   ${d.discount > 0 ? `<div class="row"><span>Discount</span><span>-৳${d.discount.toLocaleString()}</span></div>` : ''}
   ${d.deliveryCharge > 0 ? `<div class="row"><span>Delivery Charge</span><span>৳${d.deliveryCharge.toLocaleString()}</span></div>` : ''}
   <div class="row grand"><span>Total</span><span>৳${d.total.toLocaleString()}</span></div>
+  ${adv > 0 ? `<div class="row advance"><span>Advance Paid</span><span>-৳${adv.toLocaleString()}</span></div>` : ''}
+  ${adv > 0 ? `<div class="row due"><span>Amount Due</span><span>৳${(d.total - adv).toLocaleString()}</span></div>` : ''}
 </div>
 ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="extra">' + l + '</div>').join('')}
 </body></html>`;
@@ -543,6 +671,7 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
       total: o.total,
       discount: (o as any).discount || 0,
       delivery_charge: (o as any).delivery_charge || 0,
+      advance_payment: (o as any).advance_payment || 0,
       delivery_method: o.delivery_method,
       payment_method: o.payment_method,
       payment_sender_number: (o as any).payment_sender_number || '',
@@ -581,6 +710,7 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
           total: order.total,
           discount: order.discount || 0,
           delivery_charge: order.delivery_charge || 0,
+          advance_payment: order.advance_payment || 0,
           delivery_method: order.delivery_method,
           payment_method: order.payment_method,
           payment_sender_number: order.payment_sender_number || null,
@@ -601,7 +731,51 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
 
   return (
     <div className="space-y-6">
-      {/* Search bar + Export/Import */}
+      {/* Pending Orders Packaging Summary */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          onClick={() => setShowPendingSummary(!showPendingSummary)}
+          className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Package size={16} className="text-primary" />
+            <span className="text-sm font-medium">📦 Pending Orders - Packaging Summary</span>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{pendingOrderCount} orders</span>
+          </div>
+          <span className="text-xs text-muted-foreground">{showPendingSummary ? '▲ Hide' : '▼ Show'}</span>
+        </button>
+        {showPendingSummary && (
+          <div className="border-t border-border p-4">
+            {Object.keys(pendingSummary).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">কোনো pending order নেই 🎉</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {Object.entries(pendingSummary).map(([productName, sizes]) => {
+                  const totalQty = Object.values(sizes).reduce((s, q) => s + q, 0);
+                  return (
+                    <div key={productName} className="border border-border rounded-lg p-3 bg-gradient-to-br from-primary/5 to-transparent">
+                      <h4 className="text-sm font-semibold truncate mb-2" title={productName}>{productName}</h4>
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {Object.entries(sizes).sort(([a], [b]) => {
+                          const sizeOrder = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL'];
+                          return sizeOrder.indexOf(a) - sizeOrder.indexOf(b);
+                        }).map(([size, qty]) => (
+                          <span key={size} className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded">
+                            {size}: <span className="text-foreground">{qty}</span>
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Total: {totalQty} pcs</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Search bar + Export/Import/Invoice */}
       <div className="flex gap-3 flex-wrap items-center">
         <input
           type="text"
@@ -616,6 +790,9 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
         </button>
         <button onClick={exportOrders} disabled={selectedIds.size === 0} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors tracking-wider uppercase disabled:opacity-40">
           <Download size={13} /> Export ({selectedIds.size})
+        </button>
+        <button onClick={downloadBulkInvoice} disabled={selectedIds.size === 0} className="inline-flex items-center gap-1.5 px-3 py-2 text-xs border border-accent-foreground/30 bg-accent hover:bg-accent/80 transition-colors tracking-wider uppercase disabled:opacity-40">
+          <FileText size={13} /> Invoice ({selectedIds.size})
         </button>
       </div>
 
@@ -682,7 +859,12 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                       </button>
                     </td>
                     <td className="p-3 text-muted-foreground hidden md:table-cell">{order.customer_city}</td>
-                    <td className="p-3 font-medium">৳{order.total.toLocaleString()}</td>
+                    <td className="p-3 font-medium">
+                      ৳{order.total.toLocaleString()}
+                      {(order as any).advance_payment > 0 && (
+                        <span className="block text-[10px] text-emerald-600">Adv: ৳{(order as any).advance_payment}</span>
+                      )}
+                    </td>
                     <td className="p-3">
                       <select value={order.status} onChange={e => handleStatusChange(order.id, e.target.value, order)} className="text-xs border border-border bg-background px-2 py-1 focus:outline-none">
                         {statusOptions.map(s => <option key={s}>{s}</option>)}
@@ -988,21 +1170,74 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                   ))}
                 </div>
               )}
+
+              {/* Amount Section */}
               <div className="mt-3 pt-3 border-t border-border space-y-1 text-sm">
-                {((selectedOrder as any).discount || 0) > 0 && (
-                  <div className="flex justify-between text-muted-foreground"><span>Discount</span><span>-৳{(selectedOrder as any).discount.toLocaleString()}</span></div>
-                )}
-                {((selectedOrder as any).delivery_charge || 0) > 0 && (
-                  <div className="flex justify-between text-muted-foreground"><span>Delivery Charge</span><span>৳{(selectedOrder as any).delivery_charge.toLocaleString()}</span></div>
-                )}
-                {((selectedOrder as any).courier_fee || 0) > 0 && (
-                  <div className="flex justify-between text-muted-foreground"><span>Courier Fee</span><span>৳{(selectedOrder as any).courier_fee.toLocaleString()}</span></div>
-                )}
-                <div className="flex justify-between font-medium">
-                  <span>Total</span>
-                  <span>৳{selectedOrder.total.toLocaleString()}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs tracking-wider uppercase text-muted-foreground">Amount</span>
+                  {!editingAmount ? (
+                    <button onClick={startEditAmount} className="text-[10px] text-primary hover:underline flex items-center gap-1">
+                      <Pencil size={10} /> Edit Amount
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button onClick={() => setEditingAmount(false)} className="text-[10px] text-muted-foreground hover:underline">Cancel</button>
+                      <button onClick={saveAmountEdit} disabled={updateOrder.isPending} className="text-[10px] text-primary hover:underline flex items-center gap-1">
+                        {updateOrder.isPending ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />} Save
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                {editingAmount ? (
+                  <div className="space-y-2 bg-muted/30 p-3 rounded-lg">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Discount (৳)</label>
+                        <input type="number" value={amountData.discount} onChange={e => setAmountData(p => ({ ...p, discount: parseInt(e.target.value) || 0 }))} className="luxury-input w-full text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Delivery Charge (৳)</label>
+                        <input type="number" value={amountData.delivery_charge} onChange={e => setAmountData(p => ({ ...p, delivery_charge: parseInt(e.target.value) || 0 }))} className="luxury-input w-full text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Advance Payment (৳)</label>
+                        <input type="number" value={amountData.advance_payment} onChange={e => setAmountData(p => ({ ...p, advance_payment: parseInt(e.target.value) || 0 }))} className="luxury-input w-full text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Total (৳)</label>
+                        <input type="number" value={amountData.total} onChange={e => setAmountData(p => ({ ...p, total: parseInt(e.target.value) || 0 }))} className="luxury-input w-full text-sm" />
+                      </div>
+                    </div>
+                    {amountData.advance_payment > 0 && (
+                      <p className="text-xs text-emerald-600 font-medium">Due Amount: ৳{(amountData.total - amountData.advance_payment).toLocaleString()}</p>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    {((selectedOrder as any).discount || 0) > 0 && (
+                      <div className="flex justify-between text-muted-foreground"><span>Discount</span><span>-৳{(selectedOrder as any).discount.toLocaleString()}</span></div>
+                    )}
+                    {((selectedOrder as any).delivery_charge || 0) > 0 && (
+                      <div className="flex justify-between text-muted-foreground"><span>Delivery Charge</span><span>৳{(selectedOrder as any).delivery_charge.toLocaleString()}</span></div>
+                    )}
+                    {((selectedOrder as any).courier_fee || 0) > 0 && (
+                      <div className="flex justify-between text-muted-foreground"><span>Courier Fee</span><span>৳{(selectedOrder as any).courier_fee.toLocaleString()}</span></div>
+                    )}
+                    <div className="flex justify-between font-medium">
+                      <span>Total</span>
+                      <span>৳{selectedOrder.total.toLocaleString()}</span>
+                    </div>
+                    {((selectedOrder as any).advance_payment || 0) > 0 && (
+                      <>
+                        <div className="flex justify-between text-emerald-600"><span>Advance Paid</span><span>-৳{(selectedOrder as any).advance_payment.toLocaleString()}</span></div>
+                        <div className="flex justify-between font-bold text-destructive"><span>Amount Due</span><span>৳{(selectedOrder.total - (selectedOrder as any).advance_payment).toLocaleString()}</span></div>
+                      </>
+                    )}
+                  </>
+                )}
               </div>
+
               <button
                 onClick={() => openInvoiceEditor(selectedOrder)}
                 className="mt-4 w-full luxury-button-outline text-[10px] py-2 inline-flex items-center justify-center gap-1.5"
@@ -1058,9 +1293,10 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
               <button onClick={() => setInvoiceData((p: any) => ({ ...p, items: [...p.items, { name: '', size: '', quantity: 1, price: 0 }] }))} className="text-xs text-primary hover:underline">+ Add Item</button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <EditField label="Discount (৳)" value={String(invoiceData.discount)} onChange={v => setInvoiceData((p: any) => ({ ...p, discount: parseInt(v) || 0 }))} />
-              <EditField label="Delivery Charge (৳)" value={String(invoiceData.deliveryCharge)} onChange={v => setInvoiceData((p: any) => ({ ...p, deliveryCharge: parseInt(v) || 0 }))} />
+              <EditField label="Delivery (৳)" value={String(invoiceData.deliveryCharge)} onChange={v => setInvoiceData((p: any) => ({ ...p, deliveryCharge: parseInt(v) || 0 }))} />
+              <EditField label="Advance (৳)" value={String(invoiceData.advancePayment || 0)} onChange={v => setInvoiceData((p: any) => ({ ...p, advancePayment: parseInt(v) || 0 }))} />
               <EditField label="Total (৳)" value={String(invoiceData.total)} onChange={v => setInvoiceData((p: any) => ({ ...p, total: parseInt(v) || 0 }))} />
             </div>
 
