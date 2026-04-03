@@ -125,8 +125,8 @@ const AdminDashboard = () => {
 
   const stats = [
     { label: 'Total Orders', value: filteredOrders.length, icon: ShoppingBag, color: 'bg-accent text-accent-foreground' },
-    { label: 'Revenue', value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-secondary text-secondary-foreground' },
-    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Delivered: ${deliveredOrders.length} | Courier: ৳${deliveredCourierFee.toLocaleString()}` },
+    { label: 'Revenue', value: `৳${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'bg-secondary text-secondary-foreground', sub: totalAdvance > 0 ? `Advance: ৳${totalAdvance.toLocaleString()}` : undefined },
+    { label: 'Delivery Revenue', value: `৳${deliveryRevenue.toLocaleString()}`, icon: TrendingDown, color: 'bg-primary/10 text-primary', sub: `Delivered: ${deliveredOrders.length} | Courier: ৳${deliveredCourierFee.toLocaleString()}${deliveredAdvance > 0 ? ` | Adv: ৳${deliveredAdvance.toLocaleString()}` : ''}` },
     { label: 'FB Orders', value: fbOrderCount, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
     { label: 'FB Revenue', value: `৳${fbRevenue.toLocaleString()}`, icon: Facebook, color: 'bg-blue-500/10 text-blue-600' },
     { label: 'Offline Orders', value: offlineOrderCount, icon: Store, color: 'bg-emerald-500/10 text-emerald-600' },
