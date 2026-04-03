@@ -136,6 +136,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          advance_payment: number
           consignment_id: string | null
           courier_fee: number
           courier_provider: string | null
@@ -164,6 +165,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          advance_payment?: number
           consignment_id?: string | null
           courier_fee?: number
           courier_provider?: string | null
@@ -192,6 +194,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          advance_payment?: number
           consignment_id?: string | null
           courier_fee?: number
           courier_provider?: string | null
