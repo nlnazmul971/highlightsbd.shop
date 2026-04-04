@@ -1024,74 +1024,70 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                   )}
                 </>
               )}
-                  <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
-                  <p><span className="text-muted-foreground">Date:</span> {new Date(selectedOrder.created_at).toLocaleString()}</p>
-
-                  {/* Call Tracking */}
-                  <div className="border border-border rounded-lg p-3 mt-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={12} /> Call Attempts</span>
-                      <div className="flex items-center gap-2">
-                        {[1,2,3,4,5].map(n => (
-                          <button key={n} onClick={async () => {
-                            await updateOrder.mutateAsync({ id: selectedOrder.id, call_attempts: n });
-                            setSelectedOrder((p: any) => ({ ...p, call_attempts: n }));
-                            toast.success(`Call attempts: ${n}`);
-                          }} className={`w-7 h-7 rounded-full text-xs font-bold border transition-all ${
-                            n <= ((selectedOrder as any).call_attempts || 0)
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'border-border text-muted-foreground hover:border-primary'
-                          }`}>{n}</button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Admin Notes */}
-                  <div className="border border-border rounded-lg p-3 mt-2 space-y-2">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1"><StickyNote size={12} /> Admin Notes</span>
-                    <textarea
-                      value={(selectedOrder as any).admin_notes || ''}
-                      onChange={e => setSelectedOrder((p: any) => ({ ...p, admin_notes: e.target.value }))}
-                      onBlur={async (e) => {
-                        await updateOrder.mutateAsync({ id: selectedOrder.id, admin_notes: e.target.value || null });
-                        toast.success('Note saved');
-                      }}
-                      rows={2}
-                      placeholder="অর্ডার সম্পর্কে নোট লিখুন..."
-                      className="luxury-input w-full text-xs"
-                    />
-                  </div>
-
-                  {/* WhatsApp Order Link */}
-                  <div className="mt-2">
-                    <button
-                      onClick={() => {
-                        const items = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
-                        const itemText = items.map((i: any) => `${i.name} (${i.size || '-'}) x${i.quantity}`).join(', ');
-                        const msg = encodeURIComponent(
-                          `আসসালামু আলাইকুম, ${selectedOrder.customer_name}!\n\n` +
-                          `আপনার অর্ডার #${selectedOrder.id.slice(0, 8)} কনফার্ম হয়েছে ✅\n\n` +
-                          `📦 Items: ${itemText}\n` +
-                          `💰 Total: ৳${selectedOrder.total.toLocaleString()}\n` +
-                          `${(selectedOrder as any).advance_payment > 0 ? `✅ Advance: ৳${(selectedOrder as any).advance_payment}\n💵 Due: ৳${(selectedOrder.total - (selectedOrder as any).advance_payment).toLocaleString()}\n` : ''}` +
-                          `${selectedOrder.tracking_code ? `🚚 Tracking: ${selectedOrder.tracking_code}\n` : ''}` +
-                          `\nOrder Track: ${window.location.origin}/track/${selectedOrder.order_token || selectedOrder.id}\n\n` +
-                          `ধন্যবাদ! - HIGHLIGHTS`
-                        );
-                        const phone = selectedOrder.customer_phone.replace(/^0/, '88');
-                        window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
-                      }}
-                      className="w-full py-2 text-[10px] flex items-center justify-center gap-1.5 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors tracking-wider uppercase rounded"
-                    >
-                      <MessageSquare size={12} />
-                      WhatsApp এ অর্ডার পাঠান
-                    </button>
-                  </div>
-                </>
-              )}
               <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
               <p><span className="text-muted-foreground">Date:</span> {new Date(selectedOrder.created_at).toLocaleString()}</p>
+
+              {/* Call Tracking */}
+              <div className="border border-border rounded-lg p-3 mt-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={12} /> Call Attempts</span>
+                  <div className="flex items-center gap-2">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} onClick={async () => {
+                        await updateOrder.mutateAsync({ id: selectedOrder.id, call_attempts: n });
+                        setSelectedOrder((p: any) => ({ ...p, call_attempts: n }));
+                        toast.success(`Call attempts: ${n}`);
+                      }} className={`w-7 h-7 rounded-full text-xs font-bold border transition-all ${
+                        n <= ((selectedOrder as any).call_attempts || 0)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border text-muted-foreground hover:border-primary'
+                      }`}>{n}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Notes */}
+              <div className="border border-border rounded-lg p-3 mt-2 space-y-2">
+                <span className="text-xs text-muted-foreground flex items-center gap-1"><StickyNote size={12} /> Admin Notes</span>
+                <textarea
+                  value={(selectedOrder as any).admin_notes || ''}
+                  onChange={e => setSelectedOrder((p: any) => ({ ...p, admin_notes: e.target.value }))}
+                  onBlur={async (e) => {
+                    await updateOrder.mutateAsync({ id: selectedOrder.id, admin_notes: e.target.value || null });
+                    toast.success('Note saved');
+                  }}
+                  rows={2}
+                  placeholder="অর্ডার সম্পর্কে নোট লিখুন..."
+                  className="luxury-input w-full text-xs"
+                />
+              </div>
+
+              {/* WhatsApp Order Link */}
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    const items = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
+                    const itemText = items.map((i: any) => `${i.name} (${i.size || '-'}) x${i.quantity}`).join(', ');
+                    const msg = encodeURIComponent(
+                      `আসসালামু আলাইকুম, ${selectedOrder.customer_name}!\n\n` +
+                      `আপনার অর্ডার #${selectedOrder.id.slice(0, 8)} কনফার্ম হয়েছে ✅\n\n` +
+                      `📦 Items: ${itemText}\n` +
+                      `💰 Total: ৳${selectedOrder.total.toLocaleString()}\n` +
+                      `${(selectedOrder as any).advance_payment > 0 ? `✅ Advance: ৳${(selectedOrder as any).advance_payment}\n💵 Due: ৳${(selectedOrder.total - (selectedOrder as any).advance_payment).toLocaleString()}\n` : ''}` +
+                      `${selectedOrder.tracking_code ? `🚚 Tracking: ${selectedOrder.tracking_code}\n` : ''}` +
+                      `\nOrder Track: ${window.location.origin}/track/${selectedOrder.order_token || selectedOrder.id}\n\n` +
+                      `ধন্যবাদ! - HIGHLIGHTS`
+                    );
+                    const phone = selectedOrder.customer_phone.replace(/^0/, '88');
+                    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+                  }}
+                  className="w-full py-2 text-[10px] flex items-center justify-center gap-1.5 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors tracking-wider uppercase rounded"
+                >
+                  <MessageSquare size={12} />
+                  WhatsApp এ অর্ডার পাঠান
+                </button>
+              </div>
             </div>
 
             {/* Courier Info & Actions */}
