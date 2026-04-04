@@ -139,6 +139,7 @@ const ProductDetail = () => {
   const { isInWishlist, toggleItem } = useWishlist();
   const { addView } = useRecentlyViewed();
   const { data: storeSettings } = useStoreSettings();
+  const { data: allSizeStock = [] } = useAllSizeStock();
   const messageLink = storeSettings?.product_message_link || storeSettings?.footer_messenger || 'https://m.me/highlightbd';
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
