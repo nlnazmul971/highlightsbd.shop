@@ -6,7 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
-import { useProducts, useStoreSettings, useAllReviewStats, useAllProductImages } from '@/hooks/useSupabase';
+import { useProducts, useStoreSettings, useAllReviewStats, useAllProductImages, useAllSizeStock } from '@/hooks/useSupabase';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const Index = () => {
