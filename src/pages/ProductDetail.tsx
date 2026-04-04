@@ -284,12 +284,16 @@ const ProductDetail = () => {
             <div className="mb-3 sm:mb-6">
               <p className="luxury-body text-[10px] mb-1.5 sm:mb-2 tracking-[0.1em]">Size — <span className="text-muted-foreground">{size}</span></p>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {product.sizes.map(s => (
-                  <button key={s} onClick={() => setSelectedSize(s)}
-                    className={`min-w-[36px] h-9 sm:min-w-[40px] sm:h-11 px-2.5 sm:px-3 text-[11px] sm:text-xs tracking-wider border transition-all ${
-                      size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
-                    }`}>{s}</button>
-                ))}
+                {product.sizes.map(s => {
+                  const avail = getSizeAvailable(s);
+                  return (
+                    <button key={s} onClick={() => setSelectedSize(s)}
+                      className={`min-w-[36px] h-9 sm:min-w-[40px] sm:h-11 px-2.5 sm:px-3 text-[11px] sm:text-xs tracking-wider border transition-all relative ${
+                        avail <= 0 ? 'opacity-40 line-through' :
+                        size === s ? 'bg-foreground text-background border-foreground' : 'border-border hover:border-foreground'
+                      }`}>{s}</button>
+                  );
+                })}
               </div>
             </div>
 
@@ -298,19 +302,34 @@ const ProductDetail = () => {
               <div className="inline-flex items-center border border-border">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Minus size={13} /></button>
                 <span className="w-9 sm:w-12 text-center text-xs sm:text-sm">{quantity}</span>
-                <button onClick={() => setQuantity(Math.min(product.stock, quantity + 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Plus size={13} /></button>
+                <button onClick={() => setQuantity(Math.min(currentSizeAvailable || product.stock, quantity + 1))} className="p-2 sm:p-3 hover:bg-accent transition-colors"><Plus size={13} /></button>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">{product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</p>
+              <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-1">
+                {currentSizeAvailable > 0 ? `${currentSizeAvailable} in stock` : allSoldOut ? 'Sold Out' : 'This size is out of stock'}
+              </p>
             </div>
 
-            <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
-              <button onClick={handleAddToCart} className="flex-1 luxury-button-primary py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Add to Cart</button>
-              <button onClick={() => toggleItem(product)}
-                className={`p-2.5 sm:p-3.5 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
-                <Heart size={16} className="sm:w-[18px] sm:h-[18px]" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
-              </button>
-            </div>
-            <button onClick={handleBuyNow} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm">Buy Now</button>
+            {allSoldOut ? (
+              <div className="space-y-2">
+                <div className="w-full py-3.5 text-center bg-destructive/10 text-destructive text-sm font-medium tracking-wider uppercase">SOLD OUT</div>
+                <button onClick={() => toggleItem(product)}
+                  className={`w-full py-2.5 sm:py-3.5 text-[11px] sm:text-sm flex items-center justify-center gap-2 border transition-colors ${isInWishlist(product.id) ? 'border-destructive text-destructive' : 'border-border hover:bg-accent'}`}>
+                  <Heart size={16} fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                  {isInWishlist(product.id) ? 'In Wishlist' : 'Add to Wishlist'}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-3">
+                  <button onClick={handleAddToCart} disabled={currentSizeAvailable <= 0} className="flex-1 luxury-button-primary py-2.5 sm:py-3.5 text-[11px] sm:text-sm disabled:opacity-40">Add to Cart</button>
+                  <button onClick={() => toggleItem(product)}
+                    className={`p-2.5 sm:p-3.5 border border-border hover:bg-accent transition-colors ${isInWishlist(product.id) ? 'text-destructive' : ''}`}>
+                    <Heart size={16} className="sm:w-[18px] sm:h-[18px]" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                  </button>
+                </div>
+                <button onClick={handleBuyNow} disabled={currentSizeAvailable <= 0} className="w-full luxury-button-outline py-2.5 sm:py-3.5 text-[11px] sm:text-sm disabled:opacity-40">Buy Now</button>
+              </>
+            )}
             <a
               href={messageLink}
               target="_blank"
