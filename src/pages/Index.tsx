@@ -6,7 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
 import { categories } from '@/data/products';
-import { useProducts, useStoreSettings, useAllReviewStats, useAllProductImages } from '@/hooks/useSupabase';
+import { useProducts, useStoreSettings, useAllReviewStats, useAllProductImages, useAllSizeStock } from '@/hooks/useSupabase';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 
 const Index = () => {
@@ -21,7 +21,23 @@ const Index = () => {
   const { data: settings = {} } = useStoreSettings();
   const { data: reviewStats = {} } = useAllReviewStats();
   const { data: allProductImages = [] } = useAllProductImages();
+  const { data: allSizeStock = [] } = useAllSizeStock();
   const { viewedIds } = useRecentlyViewed();
+
+  // Build sold-out map: product_id -> boolean (all sizes have 0 available)
+  const soldOutMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    const grouped: Record<string, { available: number }[]> = {};
+    for (const s of allSizeStock) {
+      if (!grouped[s.product_id]) grouped[s.product_id] = [];
+      grouped[s.product_id].push({ available: s.total_stock - s.sold_count + s.cancelled_count + s.returned_count });
+    }
+    for (const [pid, stocks] of Object.entries(grouped)) {
+      const totalAvailable = stocks.reduce((sum, s) => sum + s.available, 0);
+      map[pid] = totalAvailable <= 0;
+    }
+    return map;
+  }, [allSizeStock]);
 
   const showProducts = activeCategory || searchQuery;
 
@@ -94,7 +110,7 @@ const Index = () => {
           <p className="text-center text-muted-foreground py-20">No products found.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {products.map(product => <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} />)}
+            {products.map(product => <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} isSoldOut={soldOutMap[product.id] || false} />)}
           </div>
         )}
 
@@ -125,7 +141,7 @@ const Index = () => {
               <div className="w-12 h-px bg-foreground mx-auto mt-4" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {recentProducts.map(product => product && <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} />)}
+              {recentProducts.map(product => product && <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} isSoldOut={soldOutMap[product.id] || false} />)}
             </div>
           </section>
         )}

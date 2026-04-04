@@ -136,7 +136,9 @@ export type Database = {
       }
       orders: {
         Row: {
+          admin_notes: string | null
           advance_payment: number
+          call_attempts: number
           consignment_id: string | null
           courier_fee: number
           courier_provider: string | null
@@ -165,7 +167,9 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_notes?: string | null
           advance_payment?: number
+          call_attempts?: number
           consignment_id?: string | null
           courier_fee?: number
           courier_provider?: string | null
@@ -194,7 +198,9 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_notes?: string | null
           advance_payment?: number
+          call_attempts?: number
           consignment_id?: string | null
           courier_fee?: number
           courier_provider?: string | null

@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useOrders, useUpdateOrder, useProducts } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { callCourier, sendOrderEmail } from '@/lib/api';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store, Package, FileText } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store, Package, FileText, Phone, MessageSquare, StickyNote } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -69,8 +69,8 @@ const AdminOrders = () => {
   const [editingAmount, setEditingAmount] = useState(false);
   const [amountData, setAmountData] = useState({ total: 0, discount: 0, delivery_charge: 0, advance_payment: 0 });
 
-  // Pending summary toggle
-  const [showPendingSummary, setShowPendingSummary] = useState(false);
+  // Processing summary toggle
+  const [showProcessingSummary, setShowProcessingSummary] = useState(false);
 
   const filteredByStatus = filter === 'All' ? orders : orders.filter(o => o.status === filter);
   const filtered = searchQuery.trim()
@@ -84,11 +84,11 @@ const AdminOrders = () => {
       })
     : filteredByStatus;
 
-  // Pending orders size summary
-  const pendingSummary = useMemo(() => {
-    const pendingOrders = orders.filter(o => o.status === 'Pending');
+  // Processing orders size summary
+  const processingSummary = useMemo(() => {
+    const processingOrders = orders.filter(o => o.status === 'Processing');
     const summary: Record<string, Record<string, number>> = {};
-    pendingOrders.forEach(o => {
+    processingOrders.forEach(o => {
       const items = Array.isArray(o.items) ? o.items : [];
       items.forEach((item: any) => {
         const name = item.name || 'Unknown';
@@ -101,7 +101,7 @@ const AdminOrders = () => {
     return summary;
   }, [orders]);
 
-  const pendingOrderCount = orders.filter(o => o.status === 'Pending').length;
+  const processingOrderCount = orders.filter(o => o.status === 'Processing').length;
 
   const downloadInvoice = (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
@@ -731,26 +731,26 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
 
   return (
     <div className="space-y-6">
-      {/* Pending Orders Packaging Summary */}
+      {/* Processing Orders Packaging Summary */}
       <div className="border border-border rounded-lg overflow-hidden">
         <button
-          onClick={() => setShowPendingSummary(!showPendingSummary)}
+          onClick={() => setShowProcessingSummary(!showProcessingSummary)}
           className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Package size={16} className="text-primary" />
-            <span className="text-sm font-medium">📦 Pending Orders - Packaging Summary</span>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{pendingOrderCount} orders</span>
+            <span className="text-sm font-medium">📦 Processing Orders - Packaging Summary</span>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{processingOrderCount} orders</span>
           </div>
-          <span className="text-xs text-muted-foreground">{showPendingSummary ? '▲ Hide' : '▼ Show'}</span>
+          <span className="text-xs text-muted-foreground">{showProcessingSummary ? '▲ Hide' : '▼ Show'}</span>
         </button>
-        {showPendingSummary && (
+        {showProcessingSummary && (
           <div className="border-t border-border p-4">
-            {Object.keys(pendingSummary).length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">কোনো pending order নেই 🎉</p>
+            {Object.keys(processingSummary).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">কোনো processing order নেই 🎉</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Object.entries(pendingSummary).map(([productName, sizes]) => {
+                {Object.entries(processingSummary).map(([productName, sizes]) => {
                   const totalQty = Object.values(sizes).reduce((s, q) => s + q, 0);
                   return (
                     <div key={productName} className="border border-border rounded-lg p-3 bg-gradient-to-br from-primary/5 to-transparent">
@@ -826,6 +826,7 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Total</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Status</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden lg:table-cell">Courier</th>
+                  <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">📞</th>
                   <th className="text-right p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Actions</th>
                 </tr>
               </thead>
@@ -875,6 +876,13 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                         <span className="text-xs font-mono text-muted-foreground">{(order as any).tracking_code}</span>
                       ) : (
                         <span className="text-xs text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="p-3 hidden md:table-cell">
+                      {((order as any).call_attempts || 0) > 0 ? (
+                        <span className="text-xs font-bold text-primary">{(order as any).call_attempts}x 📞</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/40">—</span>
                       )}
                     </td>
                     <td className="p-3 text-right flex items-center justify-end gap-1">
@@ -1026,6 +1034,68 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
               )}
               <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
               <p><span className="text-muted-foreground">Date:</span> {new Date(selectedOrder.created_at).toLocaleString()}</p>
+
+              {/* Call Tracking */}
+              <div className="border border-border rounded-lg p-3 mt-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={12} /> Call Attempts</span>
+                  <div className="flex items-center gap-2">
+                    {[1,2,3,4,5].map(n => (
+                      <button key={n} onClick={async () => {
+                        await updateOrder.mutateAsync({ id: selectedOrder.id, call_attempts: n });
+                        setSelectedOrder((p: any) => ({ ...p, call_attempts: n }));
+                        toast.success(`Call attempts: ${n}`);
+                      }} className={`w-7 h-7 rounded-full text-xs font-bold border transition-all ${
+                        n <= ((selectedOrder as any).call_attempts || 0)
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border text-muted-foreground hover:border-primary'
+                      }`}>{n}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Admin Notes */}
+              <div className="border border-border rounded-lg p-3 mt-2 space-y-2">
+                <span className="text-xs text-muted-foreground flex items-center gap-1"><StickyNote size={12} /> Admin Notes</span>
+                <textarea
+                  value={(selectedOrder as any).admin_notes || ''}
+                  onChange={e => setSelectedOrder((p: any) => ({ ...p, admin_notes: e.target.value }))}
+                  onBlur={async (e) => {
+                    await updateOrder.mutateAsync({ id: selectedOrder.id, admin_notes: e.target.value || null });
+                    toast.success('Note saved');
+                  }}
+                  rows={2}
+                  placeholder="অর্ডার সম্পর্কে নোট লিখুন..."
+                  className="luxury-input w-full text-xs"
+                />
+              </div>
+
+              {/* WhatsApp Order Link */}
+              <div className="mt-2">
+                <button
+                  onClick={() => {
+                    const items = Array.isArray(selectedOrder.items) ? selectedOrder.items : [];
+                    const itemText = items.map((i: any) => `${i.name} (${i.size || '-'}) x${i.quantity}`).join(', ');
+                    const msg = encodeURIComponent(
+                      `আসসালামু আলাইকুম, ${selectedOrder.customer_name}!\n\n` +
+                      `আপনার অর্ডার #${selectedOrder.id.slice(0, 8)} কনফার্ম হয়েছে ✅\n\n` +
+                      `📦 Items: ${itemText}\n` +
+                      `💰 Total: ৳${selectedOrder.total.toLocaleString()}\n` +
+                      `${(selectedOrder as any).advance_payment > 0 ? `✅ Advance: ৳${(selectedOrder as any).advance_payment}\n💵 Due: ৳${(selectedOrder.total - (selectedOrder as any).advance_payment).toLocaleString()}\n` : ''}` +
+                      `${selectedOrder.tracking_code ? `🚚 Tracking: ${selectedOrder.tracking_code}\n` : ''}` +
+                      `\nOrder Track: ${window.location.origin}/track/${selectedOrder.order_token || selectedOrder.id}\n\n` +
+                      `ধন্যবাদ! - HIGHLIGHTS`
+                    );
+                    const phone = selectedOrder.customer_phone.replace(/^0/, '88');
+                    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+                  }}
+                  className="w-full py-2 text-[10px] flex items-center justify-center gap-1.5 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white transition-colors tracking-wider uppercase rounded"
+                >
+                  <MessageSquare size={12} />
+                  WhatsApp এ অর্ডার পাঠান
+                </button>
+              </div>
             </div>
 
             {/* Courier Info & Actions */}

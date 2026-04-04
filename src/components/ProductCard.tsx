@@ -10,9 +10,10 @@ interface ProductCardProps {
   product: Product;
   reviewStats?: Record<string, { avg: number; count: number }>;
   hoverImageUrl?: string | null;
+  isSoldOut?: boolean;
 }
 
-const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardProps) => {
+const ProductCard = ({ product, reviewStats = {}, hoverImageUrl, isSoldOut = false }: ProductCardProps) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const [showSizes, setShowSizes] = useState(false);
@@ -86,12 +87,16 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardPr
             />
           )}
 
-          {/* Discount badge with subtle shadow */}
-          {discountPercent && (
+          {/* Discount badge / Sold Out badge */}
+          {isSoldOut ? (
+            <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-destructive-foreground bg-destructive">
+              Sold Out
+            </span>
+          ) : discountPercent ? (
             <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-foreground bg-foreground/10 backdrop-blur-sm">
               -{discountPercent}%
             </span>
-          )}
+          ) : null}
 
           {/* Wishlist + Quick view - fully transparent */}
           <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
@@ -137,8 +142,8 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardPr
             </div>
           )}
 
-          {/* Add to cart button - transparent with blur */}
-          {!showSizes && (
+          {/* Add to cart button - hidden when sold out */}
+          {!showSizes && !isSoldOut && (
             <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
               <button
                 onClick={handleOpenSizes}
@@ -147,6 +152,19 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardPr
               >
                 <ShoppingBag size={12} className="sm:w-[13px] sm:h-[13px]" />
                 Add to Cart
+              </button>
+            </div>
+          )}
+          {/* Wishlist only when sold out */}
+          {isSoldOut && (
+            <div className="absolute bottom-0 left-0 right-0 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+              <button
+                onClick={handleWishlist}
+                className="w-full py-2.5 sm:py-3 text-[9px] sm:text-[10px] flex items-center justify-center gap-1.5 sm:gap-2 bg-foreground/50 backdrop-blur-md text-background tracking-[0.2em] uppercase transition-all duration-300 hover:bg-foreground/70"
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                <Heart size={12} className="sm:w-[13px] sm:h-[13px]" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} />
+                {isInWishlist(product.id) ? 'In Wishlist' : 'Add to Wishlist'}
               </button>
             </div>
           )}
