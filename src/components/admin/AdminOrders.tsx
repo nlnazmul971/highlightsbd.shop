@@ -69,8 +69,8 @@ const AdminOrders = () => {
   const [editingAmount, setEditingAmount] = useState(false);
   const [amountData, setAmountData] = useState({ total: 0, discount: 0, delivery_charge: 0, advance_payment: 0 });
 
-  // Pending summary toggle
-  const [showPendingSummary, setShowPendingSummary] = useState(false);
+  // Processing summary toggle
+  const [showProcessingSummary, setShowProcessingSummary] = useState(false);
 
   const filteredByStatus = filter === 'All' ? orders : orders.filter(o => o.status === filter);
   const filtered = searchQuery.trim()
