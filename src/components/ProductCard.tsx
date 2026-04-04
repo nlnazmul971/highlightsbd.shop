@@ -87,12 +87,16 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl, isSoldOut = fal
             />
           )}
 
-          {/* Discount badge with subtle shadow */}
-          {discountPercent && (
+          {/* Discount badge / Sold Out badge */}
+          {isSoldOut ? (
+            <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-destructive-foreground bg-destructive">
+              Sold Out
+            </span>
+          ) : discountPercent ? (
             <span className="absolute top-3 left-3 text-[10px] tracking-[0.15em] uppercase font-semibold px-2.5 py-1 text-foreground bg-foreground/10 backdrop-blur-sm">
               -{discountPercent}%
             </span>
-          )}
+          ) : null}
 
           {/* Wishlist + Quick view - fully transparent */}
           <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex flex-col gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
