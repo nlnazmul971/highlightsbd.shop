@@ -13,7 +13,7 @@ interface ProductCardProps {
   isSoldOut?: boolean;
 }
 
-const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardProps) => {
+const ProductCard = ({ product, reviewStats = {}, hoverImageUrl, isSoldOut = false }: ProductCardProps) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const [showSizes, setShowSizes] = useState(false);
