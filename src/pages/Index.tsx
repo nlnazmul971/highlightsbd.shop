@@ -110,7 +110,7 @@ const Index = () => {
           <p className="text-center text-muted-foreground py-20">No products found.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {products.map(product => <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} />)}
+            {products.map(product => <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} isSoldOut={soldOutMap[product.id] || false} />)}
           </div>
         )}
 
