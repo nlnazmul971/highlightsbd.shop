@@ -141,7 +141,7 @@ const Index = () => {
               <div className="w-12 h-px bg-foreground mx-auto mt-4" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-              {recentProducts.map(product => product && <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} />)}
+              {recentProducts.map(product => product && <ProductCard key={product.id} product={product} reviewStats={reviewStats} hoverImageUrl={hoverImageMap[product.id]} isSoldOut={soldOutMap[product.id] || false} />)}
             </div>
           </section>
         )}
