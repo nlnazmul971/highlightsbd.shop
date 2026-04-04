@@ -84,11 +84,11 @@ const AdminOrders = () => {
       })
     : filteredByStatus;
 
-  // Pending orders size summary
-  const pendingSummary = useMemo(() => {
-    const pendingOrders = orders.filter(o => o.status === 'Pending');
+  // Processing orders size summary
+  const processingSummary = useMemo(() => {
+    const processingOrders = orders.filter(o => o.status === 'Processing');
     const summary: Record<string, Record<string, number>> = {};
-    pendingOrders.forEach(o => {
+    processingOrders.forEach(o => {
       const items = Array.isArray(o.items) ? o.items : [];
       items.forEach((item: any) => {
         const name = item.name || 'Unknown';
@@ -101,7 +101,7 @@ const AdminOrders = () => {
     return summary;
   }, [orders]);
 
-  const pendingOrderCount = orders.filter(o => o.status === 'Pending').length;
+  const processingOrderCount = orders.filter(o => o.status === 'Processing').length;
 
   const downloadInvoice = (order: any) => {
     const items = Array.isArray(order.items) ? order.items : [];
