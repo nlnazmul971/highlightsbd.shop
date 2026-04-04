@@ -1088,6 +1088,11 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                       WhatsApp এ অর্ডার পাঠান
                     </button>
                   </div>
+                </>
+              )}
+              <p><span className="text-muted-foreground">Status:</span> <span className="luxury-badge">{selectedOrder.status}</span></p>
+              <p><span className="text-muted-foreground">Date:</span> {new Date(selectedOrder.created_at).toLocaleString()}</p>
+            </div>
 
             {/* Courier Info & Actions */}
             <div className="border border-border p-4 space-y-3">
