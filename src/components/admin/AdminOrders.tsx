@@ -878,6 +878,13 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                         <span className="text-xs text-muted-foreground/50">—</span>
                       )}
                     </td>
+                    <td className="p-3 hidden md:table-cell">
+                      {((order as any).call_attempts || 0) > 0 ? (
+                        <span className="text-xs font-bold text-primary">{(order as any).call_attempts}x 📞</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/40">—</span>
+                      )}
+                    </td>
                     <td className="p-3 text-right flex items-center justify-end gap-1">
                       {(order as any).consignment_id && (
                         <button onClick={() => syncCourierStatus(order)} disabled={syncingStatus === order.id} className="p-1.5 hover:bg-accent transition-colors" title="Sync courier status">
