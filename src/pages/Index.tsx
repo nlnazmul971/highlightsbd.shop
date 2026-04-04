@@ -21,7 +21,23 @@ const Index = () => {
   const { data: settings = {} } = useStoreSettings();
   const { data: reviewStats = {} } = useAllReviewStats();
   const { data: allProductImages = [] } = useAllProductImages();
+  const { data: allSizeStock = [] } = useAllSizeStock();
   const { viewedIds } = useRecentlyViewed();
+
+  // Build sold-out map: product_id -> boolean (all sizes have 0 available)
+  const soldOutMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    const grouped: Record<string, { available: number }[]> = {};
+    for (const s of allSizeStock) {
+      if (!grouped[s.product_id]) grouped[s.product_id] = [];
+      grouped[s.product_id].push({ available: s.total_stock - s.sold_count + s.cancelled_count + s.returned_count });
+    }
+    for (const [pid, stocks] of Object.entries(grouped)) {
+      const totalAvailable = stocks.reduce((sum, s) => sum + s.available, 0);
+      map[pid] = totalAvailable <= 0;
+    }
+    return map;
+  }, [allSizeStock]);
 
   const showProducts = activeCategory || searchQuery;
 
