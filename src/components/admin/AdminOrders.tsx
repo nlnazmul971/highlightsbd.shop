@@ -731,26 +731,26 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
 
   return (
     <div className="space-y-6">
-      {/* Pending Orders Packaging Summary */}
+      {/* Processing Orders Packaging Summary */}
       <div className="border border-border rounded-lg overflow-hidden">
         <button
-          onClick={() => setShowPendingSummary(!showPendingSummary)}
+          onClick={() => setShowProcessingSummary(!showProcessingSummary)}
           className="w-full flex items-center justify-between p-4 hover:bg-accent/50 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Package size={16} className="text-primary" />
-            <span className="text-sm font-medium">📦 Pending Orders - Packaging Summary</span>
-            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{pendingOrderCount} orders</span>
+            <span className="text-sm font-medium">📦 Processing Orders - Packaging Summary</span>
+            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{processingOrderCount} orders</span>
           </div>
-          <span className="text-xs text-muted-foreground">{showPendingSummary ? '▲ Hide' : '▼ Show'}</span>
+          <span className="text-xs text-muted-foreground">{showProcessingSummary ? '▲ Hide' : '▼ Show'}</span>
         </button>
-        {showPendingSummary && (
+        {showProcessingSummary && (
           <div className="border-t border-border p-4">
-            {Object.keys(pendingSummary).length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">কোনো pending order নেই 🎉</p>
+            {Object.keys(processingSummary).length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">কোনো processing order নেই 🎉</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {Object.entries(pendingSummary).map(([productName, sizes]) => {
+                {Object.entries(processingSummary).map(([productName, sizes]) => {
                   const totalQty = Object.values(sizes).reduce((s, q) => s + q, 0);
                   return (
                     <div key={productName} className="border border-border rounded-lg p-3 bg-gradient-to-br from-primary/5 to-transparent">
