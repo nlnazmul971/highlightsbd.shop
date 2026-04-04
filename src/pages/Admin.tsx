@@ -22,6 +22,7 @@ import AdminFacebookOrders from '@/components/admin/AdminFacebookOrders';
 import AdminOfflineOrders from '@/components/admin/AdminOfflineOrders';
 import AdminStockManagement from '@/components/admin/AdminStockManagement';
 import AdminTrash from '@/components/admin/AdminTrash';
+import AdminReturnParcels from '@/components/admin/AdminReturnParcels';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import OrderTracker from '@/components/OrderTracker';
 
