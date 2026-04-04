@@ -211,6 +211,18 @@ const ProductDetail = () => {
   const color = selectedColor || product.colors[0]?.name || '';
   const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
+  // Check sold out per size
+  const productStock = allSizeStock.filter(s => s.product_id === product.id);
+  const getSizeAvailable = (sz: string) => {
+    const s = productStock.find(st => st.size === sz);
+    if (!s) return product.stock > 0 ? 999 : 0; // fallback to product.stock if no size stock data
+    return s.total_stock - s.sold_count + s.cancelled_count + s.returned_count;
+  };
+  const currentSizeAvailable = getSizeAvailable(size);
+  const allSoldOut = productStock.length > 0
+    ? product.sizes.every(sz => getSizeAvailable(sz) <= 0)
+    : product.stock <= 0;
+
   const handleAddToCart = () => addItem(product, size, color, quantity);
   const handleBuyNow = () => {
     addItem(product, size, color, quantity);
