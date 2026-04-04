@@ -10,6 +10,7 @@ interface ProductCardProps {
   product: Product;
   reviewStats?: Record<string, { avg: number; count: number }>;
   hoverImageUrl?: string | null;
+  isSoldOut?: boolean;
 }
 
 const ProductCard = ({ product, reviewStats = {}, hoverImageUrl }: ProductCardProps) => {
