@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useOrders, useUpdateOrder, useProducts } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
 import { callCourier, sendOrderEmail } from '@/lib/api';
-import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store, Package, FileText } from 'lucide-react';
+import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshCw, RotateCcw, Truck, Download, Upload, Trash2, Facebook, CheckSquare, Square, Store, Package, FileText, Phone, MessageSquare, StickyNote } from 'lucide-react';
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
