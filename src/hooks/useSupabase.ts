@@ -440,3 +440,19 @@ export const useUpdateStoreSetting = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['store-settings'] }),
   });
 };
+
+// Size stock for sold-out checks
+export const useAllSizeStock = () => {
+  return useQuery({
+    queryKey: ['all-size-stock'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('product_size_stock').select('*');
+      if (error) throw error;
+      return (data || []) as Array<{
+        id: string; product_id: string; size: string;
+        total_stock: number; sold_count: number;
+        cancelled_count: number; returned_count: number;
+      }>;
+    },
+  });
+};
