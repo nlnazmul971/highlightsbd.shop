@@ -116,6 +116,51 @@ export type Database = {
         }
         Relationships: []
       }
+      fraud_checks: {
+        Row: {
+          cancel_parcel: number
+          checked_at: string
+          created_at: string
+          id: string
+          phone: string
+          response: Json
+          score: number
+          source: string
+          status: string
+          success_parcel: number
+          total_parcel: number
+          updated_at: string
+        }
+        Insert: {
+          cancel_parcel?: number
+          checked_at?: string
+          created_at?: string
+          id?: string
+          phone: string
+          response?: Json
+          score?: number
+          source?: string
+          status?: string
+          success_parcel?: number
+          total_parcel?: number
+          updated_at?: string
+        }
+        Update: {
+          cancel_parcel?: number
+          checked_at?: string
+          created_at?: string
+          id?: string
+          phone?: string
+          response?: Json
+          score?: number
+          source?: string
+          status?: string
+          success_parcel?: number
+          total_parcel?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       newsletter_subscribers: {
         Row: {
           created_at: string
