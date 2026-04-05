@@ -512,6 +512,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
     setFraudLoading(true);
     setFraudData(null);
     try {
+      // Local DB stats
       const { data: dbOrders } = await supabase.from('orders').select('status, total, created_at').eq('customer_phone', phone);
       const localOrders = dbOrders || [];
       const statusCounts: Record<string, number> = {};
@@ -523,16 +524,23 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
       const cancelRate = totalOrders > 0 ? Math.round((cancelledCount / totalOrders) * 100) : 0;
       const totalSpent = localOrders.reduce((sum, o) => sum + (o.total || 0), 0);
 
-      let steadfastInfo = null;
-      try { const sfResult = await callCourier('steadfast', 'check_status', { consignment_id: phone }); if (sfResult?.success) steadfastInfo = sfResult.data; } catch {}
-      let pathaoInfo = null;
-      try { const ptResult = await callCourier('pathao', 'view_order', { consignment_id: phone }); if (ptResult?.success) pathaoInfo = ptResult.data; } catch {}
+      // OCS Fraud Checker (cached in DB)
+      let ocsData: any = null;
+      try {
+        const { data: ocsResult } = await supabase.functions.invoke('fraud-checker', { body: { phone } });
+        if (ocsResult && !ocsResult.error) ocsData = ocsResult;
+      } catch {}
 
       let riskLevel: 'low' | 'medium' | 'high' = 'low';
-      if (cancelRate > 50 || (totalOrders >= 3 && cancelRate > 40)) riskLevel = 'high';
-      else if (cancelRate > 25 || (totalOrders >= 2 && cancelledCount > 0)) riskLevel = 'medium';
+      if (ocsData) {
+        if (ocsData.status === 'Fraud' || ocsData.score <= 30) riskLevel = 'high';
+        else if (ocsData.status === 'Warning' || ocsData.score <= 60) riskLevel = 'medium';
+      } else {
+        if (cancelRate > 50 || (totalOrders >= 3 && cancelRate > 40)) riskLevel = 'high';
+        else if (cancelRate > 25 || (totalOrders >= 2 && cancelledCount > 0)) riskLevel = 'medium';
+      }
 
-      setFraudData({ pieData, totalOrders, cancelledCount, deliveredCount, cancelRate, totalSpent, riskLevel, steadfastInfo, pathaoInfo, customerName: name, customerPhone: phone });
+      setFraudData({ pieData, totalOrders, cancelledCount, deliveredCount, cancelRate, totalSpent, riskLevel, ocsData, customerName: name, customerPhone: phone });
     } catch (err: any) { toast.error('Fraud check failed: ' + err.message); }
     finally { setFraudLoading(false); }
   };
