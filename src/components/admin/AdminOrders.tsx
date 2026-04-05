@@ -1193,8 +1193,44 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                 </div>
                 <div className="text-[10px] text-muted-foreground border-t border-border pt-3 space-y-0.5">
                   <p>✓ Local database ({fraudData.totalOrders} orders)</p>
-                  <p>{fraudData.steadfastInfo ? '✓' : '○'} Steadfast {fraudData.steadfastInfo ? 'data found' : 'checked'}</p>
-                  <p>{fraudData.pathaoInfo ? '✓' : '○'} Pathao {fraudData.pathaoInfo ? 'data found' : 'checked'}</p>
+                  {fraudData.ocsData ? (
+                    <>
+                      <p className="font-medium text-foreground mt-2">🔍 OneCodeSoft Fraud Check {fraudData.ocsData.cached ? '(Cached)' : '(Live)'}</p>
+                      <div className="grid grid-cols-3 gap-2 mt-1.5 text-[11px]">
+                        <div className="border border-border p-2 text-center">
+                          <div className="text-muted-foreground">Score</div>
+                          <div className={`text-lg font-bold ${fraudData.ocsData.score >= 70 ? 'text-green-600' : fraudData.ocsData.score >= 40 ? 'text-yellow-600' : 'text-destructive'}`}>{fraudData.ocsData.score}</div>
+                        </div>
+                        <div className="border border-border p-2 text-center">
+                          <div className="text-muted-foreground">Status</div>
+                          <div className={`text-sm font-bold ${fraudData.ocsData.status === 'Safe' ? 'text-green-600' : fraudData.ocsData.status === 'Fraud' ? 'text-destructive' : 'text-yellow-600'}`}>{fraudData.ocsData.status}</div>
+                        </div>
+                        <div className="border border-border p-2 text-center">
+                          <div className="text-muted-foreground">Parcels</div>
+                          <div className="text-sm font-bold">{fraudData.ocsData.success_parcel}/{fraudData.ocsData.total_parcel}</div>
+                        </div>
+                      </div>
+                      {fraudData.ocsData.response && typeof fraudData.ocsData.response === 'object' && (
+                        <div className="mt-2 space-y-1">
+                          {Object.entries(fraudData.ocsData.response).map(([courier, info]: [string, any]) => (
+                            info?.status ? (
+                              <div key={courier} className="flex justify-between items-center border-b border-border pb-1">
+                                <span className="capitalize font-medium text-foreground">{courier}</span>
+                                <span>✅ {info.data?.success || 0}/{info.data?.total || 0} ({info.data?.deliveredPercentage || 0}%)</span>
+                              </div>
+                            ) : (
+                              <div key={courier} className="flex justify-between items-center border-b border-border pb-1">
+                                <span className="capitalize text-muted-foreground">{courier}</span>
+                                <span className="text-muted-foreground/50">No data</span>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-yellow-600">○ OneCodeSoft API unavailable</p>
+                  )}
                 </div>
               </div>
             )}
