@@ -1049,12 +1049,18 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                   <span className="text-xs text-muted-foreground flex items-center gap-1"><Phone size={12} /> Call Attempts</span>
                   <div className="flex items-center gap-2">
                     {[1,2,3,4,5].map(n => (
-                      <button key={n} onClick={async () => {
-                        await updateOrder.mutateAsync({ id: selectedOrder.id, call_attempts: n });
-                        setSelectedOrder((p: any) => ({ ...p, call_attempts: n }));
-                        toast.success(`Call attempts: ${n}`);
-                      }} className={`w-7 h-7 rounded-full text-xs font-bold border transition-all ${
-                        n <= ((selectedOrder as any).call_attempts || 0)
+                      <button key={n} type="button" onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          await updateOrder.mutateAsync({ id: selectedOrder.id, call_attempts: n });
+                          setSelectedOrder((p: any) => p ? { ...p, call_attempts: n } : p);
+                          toast.success(`Call attempts: ${n}`);
+                        } catch (err: any) {
+                          toast.error('Failed: ' + (err.message || 'Unknown error'));
+                        }
+                      }} className={`w-7 h-7 rounded-full text-xs font-bold border transition-all cursor-pointer ${
+                        n <= (selectedOrder?.call_attempts || 0)
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'border-border text-muted-foreground hover:border-primary'
                       }`}>{n}</button>
