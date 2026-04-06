@@ -1197,8 +1197,8 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                     <div className="flex justify-between"><span className="text-muted-foreground">Total Spent</span><span className="font-medium">৳{fraudData.totalSpent.toLocaleString()}</span></div>
                   </div>
                 </div>
-                <div className="text-[10px] text-muted-foreground border-t border-border pt-3 space-y-0.5">
-                  <p>✓ Local database ({fraudData.totalOrders} orders)</p>
+                <div className="text-xs text-muted-foreground border-t border-border pt-3 space-y-1">
+                  <p className="text-sm">✓ Local database ({fraudData.totalOrders} orders)</p>
                   {fraudData.ocsData ? (
                     <>
                       <p className="font-semibold text-foreground mt-2 text-sm">🔍 OneCodeSoft Fraud Check {fraudData.ocsData.cached ? '(Cached)' : '(Live)'}</p>
