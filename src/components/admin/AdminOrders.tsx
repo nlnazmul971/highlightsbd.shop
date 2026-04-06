@@ -1217,15 +1217,15 @@ ${d.extraLines.filter((l: string) => l.trim()).map((l: string) => '<div class="e
                         </div>
                       </div>
                       {fraudData.ocsData.response && typeof fraudData.ocsData.response === 'object' && (
-                        <div className="mt-2 space-y-1">
+                        <div className="mt-3 space-y-1.5">
                           {Object.entries(fraudData.ocsData.response).map(([courier, info]: [string, any]) => (
                             info?.status ? (
-                              <div key={courier} className="flex justify-between items-center border-b border-border pb-1">
-                                <span className="capitalize font-medium text-foreground">{courier}</span>
-                                <span>✅ {info.data?.success || 0}/{info.data?.total || 0} ({info.data?.deliveredPercentage || 0}%)</span>
+                              <div key={courier} className="flex justify-between items-center border-b border-border pb-1.5 text-sm">
+                                <span className="capitalize font-semibold text-foreground">{courier}</span>
+                                <span className="font-medium">✅ {info.data?.success || 0}/{info.data?.total || 0} ({info.data?.deliveredPercentage || 0}%)</span>
                               </div>
                             ) : (
-                              <div key={courier} className="flex justify-between items-center border-b border-border pb-1">
+                              <div key={courier} className="flex justify-between items-center border-b border-border pb-1.5 text-sm">
                                 <span className="capitalize text-muted-foreground">{courier}</span>
                                 <span className="text-muted-foreground/50">No data</span>
                               </div>
