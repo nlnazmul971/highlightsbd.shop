@@ -352,6 +352,17 @@ const Checkout = () => {
           city: form.city,
         }).catch(() => {});
       }
+      // Meta Pixel Advanced Matching
+      if (typeof window !== 'undefined' && (window as any).fbq && (window as any)._fbPixelId) {
+        (window as any).fbq('init', (window as any)._fbPixelId, {
+          em: form.email || '',
+          ph: form.phone?.replace(/[^0-9]/g, '') || '',
+          fn: form.name?.split(' ')[0]?.toLowerCase() || '',
+          ln: form.name?.split(' ').slice(1).join(' ')?.toLowerCase() || '',
+          ct: form.city?.toLowerCase() || '',
+          country: 'bd',
+        });
+      }
       // GTM: purchase event
       window.dataLayer = window.dataLayer || [];
       window.dataLayer.push({ ecommerce: null });

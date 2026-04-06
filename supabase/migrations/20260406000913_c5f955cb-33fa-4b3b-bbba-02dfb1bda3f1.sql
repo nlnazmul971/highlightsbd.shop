@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN return_received BOOLEAN NOT NULL DEFAULT false;
