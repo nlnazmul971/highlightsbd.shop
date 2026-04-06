@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrders, useUpdateOrder } from '@/hooks/useSupabase';
 import { supabase } from '@/integrations/supabase/client';
-import { RotateCcw, Eye, X, Loader2, Search, Package, DollarSign, TrendingDown } from 'lucide-react';
+import { RotateCcw, Eye, X, Search, Package, DollarSign, TrendingDown, PackageCheck, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 
 const AdminReturnParcels = () => {
@@ -10,10 +10,13 @@ const AdminReturnParcels = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [filter, setFilter] = useState<'Returned' | 'Cancelled' | 'All'>('All');
+  const [receivedFilter, setReceivedFilter] = useState<'all' | 'received' | 'not_received'>('all');
 
   const returnedOrders = useMemo(() => {
     let filtered = orders.filter(o => o.status === 'Returned' || o.status === 'Cancelled');
     if (filter !== 'All') filtered = filtered.filter(o => o.status === filter);
+    if (receivedFilter === 'received') filtered = filtered.filter(o => (o as any).return_received === true);
+    if (receivedFilter === 'not_received') filtered = filtered.filter(o => !(o as any).return_received);
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(o =>
@@ -24,18 +27,27 @@ const AdminReturnParcels = () => {
       );
     }
     return filtered;
-  }, [orders, filter, searchQuery]);
+  }, [orders, filter, searchQuery, receivedFilter]);
 
   const returnedCount = orders.filter(o => o.status === 'Returned').length;
   const cancelledCount = orders.filter(o => o.status === 'Cancelled').length;
   const returnedRevenueLoss = orders.filter(o => o.status === 'Returned').reduce((s, o) => s + o.total, 0);
   const cancelledRevenueLoss = orders.filter(o => o.status === 'Cancelled').reduce((s, o) => s + o.total, 0);
+  const receivedCount = orders.filter(o => (o.status === 'Returned' || o.status === 'Cancelled') && (o as any).return_received).length;
+  const notReceivedCount = orders.filter(o => (o.status === 'Returned' || o.status === 'Cancelled') && !(o as any).return_received).length;
+
+  const toggleReceived = async (order: any) => {
+    const newVal = !(order as any).return_received;
+    try {
+      await updateOrder.mutateAsync({ id: order.id, return_received: newVal } as any);
+      toast.success(newVal ? 'পার্সেল হাতে পেয়েছেন মার্ক করা হয়েছে ✅' : 'পার্সেল কুরিয়ারে আছে মার্ক করা হয়েছে');
+      if (selectedOrder?.id === order.id) setSelectedOrder({ ...selectedOrder, return_received: newVal });
+    } catch (err: any) { toast.error(err.message); }
+  };
 
   const handleRestoreOrder = async (order: any) => {
     try {
-      await updateOrder.mutateAsync({ id: order.id, status: 'Pending' });
-
-      // Restore stock - reverse the cancelled/returned counts
+      await updateOrder.mutateAsync({ id: order.id, status: 'Pending', return_received: false } as any);
       const items = Array.isArray(order.items) ? order.items : [];
       for (const item of items) {
         if (item.product_id && item.size) {
@@ -53,12 +65,9 @@ const AdminReturnParcels = () => {
           });
         }
       }
-
       toast.success('অর্ডার Pending এ ফিরিয়ে আনা হয়েছে এবং স্টক আপডেট হয়েছে');
       setSelectedOrder(null);
-    } catch (err: any) {
-      toast.error(err.message);
-    }
+    } catch (err: any) { toast.error(err.message); }
   };
 
   return (
@@ -69,7 +78,7 @@ const AdminReturnParcels = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-pink-500/5 to-transparent">
           <div className="flex items-center gap-2 mb-1"><RotateCcw size={14} className="text-pink-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">Returned</span></div>
           <p className="text-xl font-light">{returnedCount}</p>
@@ -85,6 +94,14 @@ const AdminReturnParcels = () => {
         <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-red-500/5 to-transparent">
           <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-red-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">Cancel Loss</span></div>
           <p className="text-xl font-light">৳{cancelledRevenueLoss.toLocaleString()}</p>
+        </div>
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-green-500/5 to-transparent">
+          <div className="flex items-center gap-2 mb-1"><PackageCheck size={14} className="text-green-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">হাতে পেয়েছি</span></div>
+          <p className="text-xl font-light">{receivedCount}</p>
+        </div>
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-yellow-500/5 to-transparent">
+          <div className="flex items-center gap-2 mb-1"><Truck size={14} className="text-yellow-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">কুরিয়ারে আছে</span></div>
+          <p className="text-xl font-light">{notReceivedCount}</p>
         </div>
       </div>
 
@@ -102,6 +119,20 @@ const AdminReturnParcels = () => {
                 filter === f ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'
               }`}>
               {f} {f !== 'All' && `(${orders.filter(o => o.status === f).length})`}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1.5">
+          {([
+            { key: 'all', label: 'সব' },
+            { key: 'received', label: '✅ হাতে পেয়েছি' },
+            { key: 'not_received', label: '🚚 কুরিয়ারে' },
+          ] as const).map(f => (
+            <button key={f.key} onClick={() => setReceivedFilter(f.key as any)}
+              className={`text-[10px] tracking-[0.1em] px-3 py-1.5 border transition-colors ${
+                receivedFilter === f.key ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'
+              }`}>
+              {f.label}
             </button>
           ))}
         </div>
@@ -124,6 +155,7 @@ const AdminReturnParcels = () => {
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden sm:table-cell">Items</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Total</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Status</th>
+                  <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">পার্সেল</th>
                   <th className="text-left p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium hidden md:table-cell">Courier</th>
                   <th className="text-right p-3 text-xs text-muted-foreground tracking-wider uppercase font-medium">Actions</th>
                 </tr>
@@ -131,6 +163,7 @@ const AdminReturnParcels = () => {
               <tbody>
                 {returnedOrders.map(order => {
                   const items = Array.isArray(order.items) ? order.items : [];
+                  const isReceived = (order as any).return_received;
                   return (
                     <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
                       <td className="p-3 font-mono text-xs">#{order.id.slice(0, 8)}</td>
@@ -148,6 +181,19 @@ const AdminReturnParcels = () => {
                         <span className={`text-[10px] tracking-wider uppercase px-2 py-1 border ${
                           order.status === 'Returned' ? 'border-pink-500/40 bg-pink-500/10 text-pink-600' : 'border-red-500/40 bg-red-500/10 text-red-600'
                         }`}>{order.status}</span>
+                      </td>
+                      <td className="p-3">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleReceived(order); }}
+                          className={`text-[10px] tracking-wider uppercase px-2 py-1 border transition-colors cursor-pointer ${
+                            isReceived
+                              ? 'border-green-500/40 bg-green-500/10 text-green-600'
+                              : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-700'
+                          }`}
+                        >
+                          {isReceived ? '✅ হাতে পেয়েছি' : '🚚 কুরিয়ারে'}
+                        </button>
                       </td>
                       <td className="p-3 hidden md:table-cell">
                         {(order as any).tracking_code ? (
@@ -188,6 +234,19 @@ const AdminReturnParcels = () => {
               {(selectedOrder as any).tracking_code && <p><span className="text-muted-foreground">Tracking:</span> {(selectedOrder as any).tracking_code}</p>}
               {(selectedOrder as any).courier_provider && <p><span className="text-muted-foreground">Courier:</span> {(selectedOrder as any).courier_provider}</p>}
               {(selectedOrder as any).admin_notes && <p><span className="text-muted-foreground">Notes:</span> <span className="italic">{(selectedOrder as any).admin_notes}</span></p>}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => toggleReceived(selectedOrder)}
+                  className={`text-sm px-4 py-2 border transition-colors cursor-pointer rounded ${
+                    (selectedOrder as any).return_received
+                      ? 'border-green-500/40 bg-green-500/10 text-green-600'
+                      : 'border-yellow-500/40 bg-yellow-500/10 text-yellow-700'
+                  }`}
+                >
+                  {(selectedOrder as any).return_received ? '✅ পার্সেল হাতে পেয়েছি' : '🚚 পার্সেল এখনো কুরিয়ারে আছে — ক্লিক করে হাতে পাওয়া মার্ক করুন'}
+                </button>
+              </div>
             </div>
             <div className="border-t border-border pt-3">
               <h4 className="text-xs tracking-wider uppercase text-muted-foreground mb-2">Items</h4>
