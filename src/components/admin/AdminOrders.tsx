@@ -207,6 +207,7 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
 ${toExport.map(order => {
   const items = Array.isArray(order.items) ? order.items : [];
   const adv = (order as any).advance_payment || 0;
+  const subtotal = items.reduce((s: number, i: any) => s + (i.price || 0) * (i.quantity || 1), 0);
   return `<div class="invoice-page">
 <div class="brand">HIGHLIGHTS</div>
 <div class="brand-sub">www.highlightsbd.shop</div>
@@ -217,12 +218,26 @@ ${toExport.map(order => {
   <div class="section-title">Customer</div>
   <p><strong>${order.customer_name}</strong></p>
   <p>${order.customer_phone}</p>
+  ${order.customer_email ? '<p>' + order.customer_email + '</p>' : ''}
   <p>${order.customer_address}, ${order.customer_city}</p>
 </div>
+${order.courier_provider || order.tracking_code ? `<div style="background:#f5f5f5;padding:10px 14px;margin:10px 0;">
+  <div class="section-title">Courier Information</div>
+  ${order.courier_provider ? '<p><strong>Courier:</strong> ' + (order.courier_provider === 'steadfast' ? 'Steadfast Courier' : order.courier_provider === 'pathao' ? 'Pathao Courier' : order.courier_provider) + '</p>' : ''}
+  ${order.tracking_code ? '<p><strong>Tracking ID:</strong> ' + order.tracking_code + '</p>' : ''}
+  ${order.consignment_id && order.consignment_id !== order.tracking_code ? '<p><strong>Consignment ID:</strong> ' + order.consignment_id + '</p>' : ''}
+</div>` : ''}
+<div class="info">
+  <div class="section-title">Payment & Delivery</div>
+  <p>Payment: ${order.payment_method}${order.payment_sender_number ? ' | Sender: ' + order.payment_sender_number : ''}${order.transaction_id ? ' | TxID: ' + order.transaction_id : ''}</p>
+  <p>Delivery: ${order.delivery_method}</p>
+</div>
+${order.customer_note ? '<div style="padding:8px 12px;background:#f9f9f9;font-size:11px;color:#666;font-style:italic;margin:8px 0;">Note: ' + order.customer_note + '</div>' : ''}
 <table><thead><tr><th>Item</th><th>Size</th><th>Qty</th><th>Price</th></tr></thead><tbody>
 ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.quantity}</td><td>৳${((i.price || 0) * (i.quantity || 1)).toLocaleString()}</td></tr>`).join('')}
 </tbody></table>
 <div class="totals">
+  ${(order.discount || 0) > 0 ? `<div class="row"><span>Subtotal</span><span>৳${subtotal.toLocaleString()}</span></div>` : ''}
   ${(order.discount || 0) > 0 ? `<div class="row"><span>Discount</span><span>-৳${order.discount.toLocaleString()}</span></div>` : ''}
   ${(order.delivery_charge || 0) > 0 ? `<div class="row"><span>Delivery</span><span>৳${order.delivery_charge.toLocaleString()}</span></div>` : ''}
   <div class="row grand"><span>Total</span><span>৳${order.total.toLocaleString()}</span></div>
