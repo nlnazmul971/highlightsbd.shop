@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct, useProductImages, useAddProductImage, useDeleteProductImage } from '@/hooks/useSupabase';
 import { Product, getProductImage } from '@/data/products';
-import { Edit, Trash2, Plus, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, X, Upload, Image as ImageIcon, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from './ImageUpload';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ const AdminProducts = () => {
   const createProduct = useCreateProduct();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [copyChartOpen, setCopyChartOpen] = useState(false);
 
   const filtered = products;
 
@@ -24,10 +25,19 @@ const AdminProducts = () => {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." className="luxury-input pl-9" />
         </div>
-        <button onClick={() => { setShowAddForm(true); setEditingProduct({ id: '', name: '', price: 0, original_price: null, image_url: '', category: 'T-Shirt', description: '', sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Black', hex: '#1a1a1a' }], stock: 0, featured: false, brand: '', sku: '', size_chart: [], created_at: '', updated_at: '' }); }} className="luxury-button-primary inline-flex items-center gap-2 text-[10px]">
-          <Plus size={14} /> Add Product
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => setCopyChartOpen(true)} className="luxury-button-outline inline-flex items-center gap-2 text-[10px]">
+            <Copy size={14} /> Copy Size Chart
+          </button>
+          <button onClick={() => { setShowAddForm(true); setEditingProduct({ id: '', name: '', price: 0, original_price: null, image_url: '', category: 'T-Shirt', description: '', sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Black', hex: '#1a1a1a' }], stock: 0, featured: false, brand: '', sku: '', size_chart: [], created_at: '', updated_at: '' }); }} className="luxury-button-primary inline-flex items-center gap-2 text-[10px]">
+            <Plus size={14} /> Add Product
+          </button>
+        </div>
       </div>
+
+      {copyChartOpen && (
+        <CopySizeChartModal products={products} onClose={() => setCopyChartOpen(false)} />
+      )}
 
       {editingProduct && (
         <ProductForm product={editingProduct} isNew={showAddForm} onSave={async (p) => {
@@ -88,6 +98,123 @@ const AdminProducts = () => {
         </div>
       </div>
       <p className="text-xs text-muted-foreground">{filtered.length} product(s)</p>
+    </div>
+  );
+};
+
+const CopySizeChartModal = ({ products, onClose }: { products: Product[]; onClose: () => void }) => {
+  const [sourceId, setSourceId] = useState('');
+  const [targetIds, setTargetIds] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
+  const updateProduct = useUpdateProduct();
+
+  const sourcesWithChart = products.filter(p => Array.isArray(p.size_chart) && p.size_chart.length > 0);
+  const source = products.find(p => p.id === sourceId);
+  const sourceChart = source && Array.isArray(source.size_chart) ? source.size_chart : [];
+  const targetCandidates = products
+    .filter(p => p.id !== sourceId)
+    .filter(p => !search.trim() || p.name.toLowerCase().includes(search.toLowerCase()));
+
+  const toggle = (id: string) => {
+    const next = new Set(targetIds);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setTargetIds(next);
+  };
+
+  const toggleAll = () => {
+    if (targetIds.size === targetCandidates.length) setTargetIds(new Set());
+    else setTargetIds(new Set(targetCandidates.map(p => p.id)));
+  };
+
+  const apply = async () => {
+    if (!sourceId) { toast.error('Source product select করুন'); return; }
+    if (targetIds.size === 0) { toast.error('কমপক্ষে একটি product select করুন'); return; }
+    setSaving(true);
+    try {
+      let success = 0;
+      for (const id of targetIds) {
+        const target = products.find(p => p.id === id);
+        if (!target) continue;
+        await updateProduct.mutateAsync({ ...target, size_chart: sourceChart } as any);
+        success++;
+      }
+      toast.success(`${success} product এ size chart copy করা হয়েছে`);
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-foreground/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-background border border-border max-w-2xl w-full max-h-[85vh] overflow-auto p-6 space-y-4" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-medium tracking-wide">Copy Size Chart to Multiple Products</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-accent"><X size={16} /></button>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground tracking-wider uppercase">Source Product (যেটার size chart নিবেন)</label>
+          <select value={sourceId} onChange={e => setSourceId(e.target.value)} className="luxury-input">
+            <option value="">-- Select source product --</option>
+            {sourcesWithChart.map(p => (
+              <option key={p.id} value={p.id}>{p.name} ({(p.size_chart as any[]).length} rows)</option>
+            ))}
+          </select>
+          {sourcesWithChart.length === 0 && (
+            <p className="text-xs text-destructive">কোনো product এ size chart নেই। আগে একটিতে size chart বানিয়ে নিন।</p>
+          )}
+        </div>
+
+        {sourceId && sourceChart.length > 0 && (
+          <div className="border border-border p-2 max-h-32 overflow-auto">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Preview</p>
+            <table className="w-full text-[11px]">
+              <thead><tr>{Object.keys(sourceChart[0]).map(c => <th key={c} className="text-left px-1.5 py-0.5 font-medium">{c}</th>)}</tr></thead>
+              <tbody>{sourceChart.map((r: any, i: number) => (
+                <tr key={i}>{Object.keys(sourceChart[0]).map(c => <td key={c} className="px-1.5 py-0.5">{r[c]}</td>)}</tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs text-muted-foreground tracking-wider uppercase">Target Products ({targetIds.size} selected)</label>
+            <button onClick={toggleAll} className="text-[10px] text-primary hover:underline">
+              {targetIds.size === targetCandidates.length ? 'Unselect all' : 'Select all'}
+            </button>
+          </div>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." className="luxury-input text-xs" />
+          <div className="border border-border max-h-64 overflow-auto">
+            {targetCandidates.map(p => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => toggle(p.id)}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-left text-xs border-b border-border last:border-0 hover:bg-muted/30 ${targetIds.has(p.id) ? 'bg-primary/5' : ''}`}
+              >
+                <div className={`w-4 h-4 border flex items-center justify-center ${targetIds.has(p.id) ? 'bg-primary border-primary' : 'border-border'}`}>
+                  {targetIds.has(p.id) && <Check size={10} className="text-primary-foreground" />}
+                </div>
+                <img src={getProductImage(p.image_url)} alt="" className="w-8 h-10 object-cover" />
+                <span className="flex-1 truncate">{p.name}</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {Array.isArray(p.size_chart) && p.size_chart.length > 0 ? `${p.size_chart.length} rows (will overwrite)` : 'no chart'}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex gap-2 justify-end pt-2 border-t border-border">
+          <button onClick={onClose} className="luxury-button-outline text-[10px]">Cancel</button>
+          <button onClick={apply} disabled={saving || !sourceId || targetIds.size === 0} className="luxury-button-primary text-[10px] disabled:opacity-50">
+            {saving ? 'Copying...' : `Copy to ${targetIds.size} product(s)`}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

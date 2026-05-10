@@ -24,7 +24,7 @@ const AdminDashboard = () => {
   }, [orders, dateRange]);
 
   // Revenue excludes Cancelled & Returned orders
-  const activeOrders = filteredOrders.filter(o => o.status !== 'Cancelled' && o.status !== 'Returned');
+  const activeOrders = filteredOrders.filter(o => o.status !== 'Cancelled' && o.status !== 'Returned' && o.status !== 'ReturnCancel');
   const totalRevenue = activeOrders.reduce((sum, o) => sum + o.total, 0);
   const totalCourierFee = activeOrders.reduce((sum, o) => sum + ((o as any).courier_fee || 0), 0);
   const totalAdvance = activeOrders.reduce((sum, o) => sum + ((o as any).advance_payment || 0), 0);
@@ -57,7 +57,7 @@ const AdminDashboard = () => {
   const dailyData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredOrders.forEach(o => {
-      if (o.status === 'Cancelled' || o.status === 'Returned') return;
+      if (o.status === 'Cancelled' || o.status === 'Returned' || o.status === 'ReturnCancel') return;
       const day = format(parseISO(o.created_at), 'MMM dd');
       map[day] = (map[day] || 0) + o.total;
     });

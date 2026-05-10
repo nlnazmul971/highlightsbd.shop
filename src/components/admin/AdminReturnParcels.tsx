@@ -9,11 +9,13 @@ const AdminReturnParcels = () => {
   const updateOrder = useUpdateOrder();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [filter, setFilter] = useState<'Returned' | 'Cancelled' | 'All'>('All');
+  const [filter, setFilter] = useState<'Returned' | 'Cancelled' | 'ReturnCancel' | 'All'>('All');
   const [receivedFilter, setReceivedFilter] = useState<'all' | 'received' | 'not_received'>('all');
 
+  const isReturnLike = (s: string) => s === 'Returned' || s === 'Cancelled' || s === 'ReturnCancel';
+
   const returnedOrders = useMemo(() => {
-    let filtered = orders.filter(o => o.status === 'Returned' || o.status === 'Cancelled');
+    let filtered = orders.filter(o => isReturnLike(o.status));
     if (filter !== 'All') filtered = filtered.filter(o => o.status === filter);
     if (receivedFilter === 'received') filtered = filtered.filter(o => (o as any).return_received === true);
     if (receivedFilter === 'not_received') filtered = filtered.filter(o => !(o as any).return_received);
@@ -31,10 +33,12 @@ const AdminReturnParcels = () => {
 
   const returnedCount = orders.filter(o => o.status === 'Returned').length;
   const cancelledCount = orders.filter(o => o.status === 'Cancelled').length;
+  const returnCancelCount = orders.filter(o => o.status === 'ReturnCancel').length;
+  const returnCancelLoss = orders.filter(o => o.status === 'ReturnCancel').reduce((s, o) => s + ((o as any).courier_fee || 0), 0);
   const returnedRevenueLoss = orders.filter(o => o.status === 'Returned').reduce((s, o) => s + o.total, 0);
   const cancelledRevenueLoss = orders.filter(o => o.status === 'Cancelled').reduce((s, o) => s + o.total, 0);
-  const receivedCount = orders.filter(o => (o.status === 'Returned' || o.status === 'Cancelled') && (o as any).return_received).length;
-  const notReceivedCount = orders.filter(o => (o.status === 'Returned' || o.status === 'Cancelled') && !(o as any).return_received).length;
+  const receivedCount = orders.filter(o => isReturnLike(o.status) && (o as any).return_received).length;
+  const notReceivedCount = orders.filter(o => isReturnLike(o.status) && !(o as any).return_received).length;
 
   const toggleReceived = async (order: any) => {
     const newVal = !(order as any).return_received;
@@ -54,7 +58,7 @@ const AdminReturnParcels = () => {
           const { data: existing } = await supabase.from('product_size_stock')
             .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
           if (existing) {
-            const field = order.status === 'Cancelled' ? 'cancelled_count' : 'returned_count';
+            const field = order.status === 'Returned' ? 'returned_count' : 'cancelled_count';
             const newVal = Math.max(0, (existing as any)[field] - (item.quantity || 1));
             await supabase.from('product_size_stock').update({ [field]: newVal } as any).eq('id', existing.id);
           }
@@ -95,6 +99,11 @@ const AdminReturnParcels = () => {
           <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-red-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">Cancel Loss</span></div>
           <p className="text-xl font-light">৳{cancelledRevenueLoss.toLocaleString()}</p>
         </div>
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-orange-600/5 to-transparent">
+          <div className="flex items-center gap-2 mb-1"><X size={14} className="text-orange-600" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">Return Cancel</span></div>
+          <p className="text-xl font-light">{returnCancelCount}</p>
+          <p className="text-[10px] text-muted-foreground">Courier loss: ৳{returnCancelLoss.toLocaleString()}</p>
+        </div>
         <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-green-500/5 to-transparent">
           <div className="flex items-center gap-2 mb-1"><PackageCheck size={14} className="text-green-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">হাতে পেয়েছি</span></div>
           <p className="text-xl font-light">{receivedCount}</p>
@@ -112,13 +121,13 @@ const AdminReturnParcels = () => {
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by name, phone, order ID, tracking..."
             className="luxury-input pl-9 w-full text-sm" />
         </div>
-        <div className="flex gap-1.5">
-          {(['All', 'Returned', 'Cancelled'] as const).map(f => (
+        <div className="flex gap-1.5 flex-wrap">
+          {(['All', 'Returned', 'Cancelled', 'ReturnCancel'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 border transition-colors ${
                 filter === f ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'
               }`}>
-              {f} {f !== 'All' && `(${orders.filter(o => o.status === f).length})`}
+              {f === 'ReturnCancel' ? 'Return Cancel' : f} {f !== 'All' && `(${orders.filter(o => o.status === f).length})`}
             </button>
           ))}
         </div>
@@ -179,8 +188,10 @@ const AdminReturnParcels = () => {
                       <td className="p-3 font-medium">৳{order.total.toLocaleString()}</td>
                       <td className="p-3">
                         <span className={`text-[10px] tracking-wider uppercase px-2 py-1 border ${
-                          order.status === 'Returned' ? 'border-pink-500/40 bg-pink-500/10 text-pink-600' : 'border-red-500/40 bg-red-500/10 text-red-600'
-                        }`}>{order.status}</span>
+                          order.status === 'Returned' ? 'border-pink-500/40 bg-pink-500/10 text-pink-600' :
+                          order.status === 'ReturnCancel' ? 'border-orange-600/40 bg-orange-500/10 text-orange-600' :
+                          'border-red-500/40 bg-red-500/10 text-red-600'
+                        }`}>{order.status === 'ReturnCancel' ? 'Return Cancel' : order.status}</span>
                       </td>
                       <td className="p-3">
                         <button
