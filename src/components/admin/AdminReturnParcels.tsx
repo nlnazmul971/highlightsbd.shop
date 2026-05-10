@@ -58,7 +58,7 @@ const AdminReturnParcels = () => {
           const { data: existing } = await supabase.from('product_size_stock')
             .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
           if (existing) {
-            const field = order.status === 'Cancelled' ? 'cancelled_count' : 'returned_count';
+            const field = order.status === 'Returned' ? 'returned_count' : 'cancelled_count';
             const newVal = Math.max(0, (existing as any)[field] - (item.quantity || 1));
             await supabase.from('product_size_stock').update({ [field]: newVal } as any).eq('id', existing.id);
           }
