@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProducts, useDeleteProduct, useUpdateProduct, useCreateProduct, useProductImages, useAddProductImage, useDeleteProductImage } from '@/hooks/useSupabase';
 import { Product, getProductImage } from '@/data/products';
-import { Edit, Trash2, Plus, Search, X, Upload, Image as ImageIcon } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, X, Upload, Image as ImageIcon, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import ImageUpload from './ImageUpload';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ const AdminProducts = () => {
   const createProduct = useCreateProduct();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [copyChartOpen, setCopyChartOpen] = useState(false);
 
   const filtered = products;
 
@@ -24,10 +25,19 @@ const AdminProducts = () => {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products..." className="luxury-input pl-9" />
         </div>
-        <button onClick={() => { setShowAddForm(true); setEditingProduct({ id: '', name: '', price: 0, original_price: null, image_url: '', category: 'T-Shirt', description: '', sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Black', hex: '#1a1a1a' }], stock: 0, featured: false, brand: '', sku: '', size_chart: [], created_at: '', updated_at: '' }); }} className="luxury-button-primary inline-flex items-center gap-2 text-[10px]">
-          <Plus size={14} /> Add Product
-        </button>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => setCopyChartOpen(true)} className="luxury-button-outline inline-flex items-center gap-2 text-[10px]">
+            <Copy size={14} /> Copy Size Chart
+          </button>
+          <button onClick={() => { setShowAddForm(true); setEditingProduct({ id: '', name: '', price: 0, original_price: null, image_url: '', category: 'T-Shirt', description: '', sizes: ['S', 'M', 'L', 'XL'], colors: [{ name: 'Black', hex: '#1a1a1a' }], stock: 0, featured: false, brand: '', sku: '', size_chart: [], created_at: '', updated_at: '' }); }} className="luxury-button-primary inline-flex items-center gap-2 text-[10px]">
+            <Plus size={14} /> Add Product
+          </button>
+        </div>
       </div>
+
+      {copyChartOpen && (
+        <CopySizeChartModal products={products} onClose={() => setCopyChartOpen(false)} />
+      )}
 
       {editingProduct && (
         <ProductForm product={editingProduct} isNew={showAddForm} onSave={async (p) => {
