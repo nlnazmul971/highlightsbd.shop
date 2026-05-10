@@ -99,6 +99,11 @@ const AdminReturnParcels = () => {
           <div className="flex items-center gap-2 mb-1"><DollarSign size={14} className="text-red-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">Cancel Loss</span></div>
           <p className="text-xl font-light">৳{cancelledRevenueLoss.toLocaleString()}</p>
         </div>
+        <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-orange-600/5 to-transparent">
+          <div className="flex items-center gap-2 mb-1"><X size={14} className="text-orange-600" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">Return Cancel</span></div>
+          <p className="text-xl font-light">{returnCancelCount}</p>
+          <p className="text-[10px] text-muted-foreground">Courier loss: ৳{returnCancelLoss.toLocaleString()}</p>
+        </div>
         <div className="border border-border p-4 rounded-lg bg-gradient-to-br from-green-500/5 to-transparent">
           <div className="flex items-center gap-2 mb-1"><PackageCheck size={14} className="text-green-500" /><span className="text-[10px] text-muted-foreground uppercase tracking-wider">হাতে পেয়েছি</span></div>
           <p className="text-xl font-light">{receivedCount}</p>
