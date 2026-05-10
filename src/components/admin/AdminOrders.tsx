@@ -6,7 +6,7 @@ import { ShoppingBag, Eye, X, Pencil, Save, Loader2, ShieldAlert, Send, RefreshC
 import { toast } from 'sonner';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const statusOptions = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Returned', 'Cancelled'];
+const statusOptions = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Returned', 'Cancelled', 'ReturnCancel'];
 const courierOptions = [
   { id: 'steadfast', name: 'Steadfast Courier' },
   { id: 'pathao', name: 'Pathao Courier' },
@@ -31,6 +31,7 @@ const FRAUD_COLORS: Record<string, string> = {
   Shipped: 'hsl(262, 83%, 58%)',
   Cancelled: 'hsl(0, 84%, 60%)',
   Returned: 'hsl(330, 80%, 55%)',
+  ReturnCancel: 'hsl(15, 80%, 50%)',
 };
 
 const AdminOrders = () => {
@@ -427,14 +428,14 @@ ${items.map((i: any) => `<tr><td>${i.name}</td><td>${i.size || '-'}</td><td>${i.
         toast.success(`Order status updated to ${newStatus}`);
         sendStatusEmail(order, newStatus);
 
-        if (newStatus === 'Cancelled' || newStatus === 'Returned') {
+        if (newStatus === 'Cancelled' || newStatus === 'Returned' || newStatus === 'ReturnCancel') {
           const items = Array.isArray(order.items) ? order.items : [];
           for (const item of items) {
             if (item.product_id && item.size) {
               const { data: existing } = await supabase.from('product_size_stock')
                 .select('*').eq('product_id', item.product_id).eq('size', item.size).maybeSingle();
               if (existing) {
-                const field = newStatus === 'Cancelled' ? 'cancelled_count' : 'returned_count';
+                const field = newStatus === 'Returned' ? 'returned_count' : 'cancelled_count';
                 await supabase.from('product_size_stock').update({
                   [field]: (existing as any)[field] + (item.quantity || 1)
                 } as any).eq('id', existing.id);
