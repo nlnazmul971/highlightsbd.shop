@@ -47,9 +47,9 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
   };
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="flex flex-col sm:flex-row gap-3 lg:h-full">
       {/* Thumbnails */}
-      <div className="hidden sm:flex sm:flex-col gap-2 sm:max-h-[600px] overflow-y-auto">
+      <div className="hidden sm:flex sm:flex-col gap-2 sm:max-h-[600px] lg:max-h-full overflow-y-auto">
         {images.map((img, i) => (
           <button
             key={i}
@@ -66,7 +66,7 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
       {/* Main image */}
       <div
         ref={imgRef}
-        className="flex-1 aspect-[3/4] overflow-hidden bg-secondary cursor-crosshair relative"
+        className="flex-1 aspect-[3/4] lg:aspect-auto lg:h-full lg:min-h-0 overflow-hidden bg-secondary cursor-crosshair relative"
         onMouseEnter={() => setZoomed(true)}
         onMouseLeave={() => setZoomed(false)}
         onMouseMove={handleMouseMove}
