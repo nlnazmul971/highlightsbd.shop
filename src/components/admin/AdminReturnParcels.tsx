@@ -188,8 +188,10 @@ const AdminReturnParcels = () => {
                       <td className="p-3 font-medium">৳{order.total.toLocaleString()}</td>
                       <td className="p-3">
                         <span className={`text-[10px] tracking-wider uppercase px-2 py-1 border ${
-                          order.status === 'Returned' ? 'border-pink-500/40 bg-pink-500/10 text-pink-600' : 'border-red-500/40 bg-red-500/10 text-red-600'
-                        }`}>{order.status}</span>
+                          order.status === 'Returned' ? 'border-pink-500/40 bg-pink-500/10 text-pink-600' :
+                          order.status === 'ReturnCancel' ? 'border-orange-600/40 bg-orange-500/10 text-orange-600' :
+                          'border-red-500/40 bg-red-500/10 text-red-600'
+                        }`}>{order.status === 'ReturnCancel' ? 'Return Cancel' : order.status}</span>
                       </td>
                       <td className="p-3">
                         <button
