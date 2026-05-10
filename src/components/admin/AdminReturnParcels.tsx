@@ -9,11 +9,13 @@ const AdminReturnParcels = () => {
   const updateOrder = useUpdateOrder();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
-  const [filter, setFilter] = useState<'Returned' | 'Cancelled' | 'All'>('All');
+  const [filter, setFilter] = useState<'Returned' | 'Cancelled' | 'ReturnCancel' | 'All'>('All');
   const [receivedFilter, setReceivedFilter] = useState<'all' | 'received' | 'not_received'>('all');
 
+  const isReturnLike = (s: string) => s === 'Returned' || s === 'Cancelled' || s === 'ReturnCancel';
+
   const returnedOrders = useMemo(() => {
-    let filtered = orders.filter(o => o.status === 'Returned' || o.status === 'Cancelled');
+    let filtered = orders.filter(o => isReturnLike(o.status));
     if (filter !== 'All') filtered = filtered.filter(o => o.status === filter);
     if (receivedFilter === 'received') filtered = filtered.filter(o => (o as any).return_received === true);
     if (receivedFilter === 'not_received') filtered = filtered.filter(o => !(o as any).return_received);
@@ -31,10 +33,12 @@ const AdminReturnParcels = () => {
 
   const returnedCount = orders.filter(o => o.status === 'Returned').length;
   const cancelledCount = orders.filter(o => o.status === 'Cancelled').length;
+  const returnCancelCount = orders.filter(o => o.status === 'ReturnCancel').length;
+  const returnCancelLoss = orders.filter(o => o.status === 'ReturnCancel').reduce((s, o) => s + ((o as any).courier_fee || 0), 0);
   const returnedRevenueLoss = orders.filter(o => o.status === 'Returned').reduce((s, o) => s + o.total, 0);
   const cancelledRevenueLoss = orders.filter(o => o.status === 'Cancelled').reduce((s, o) => s + o.total, 0);
-  const receivedCount = orders.filter(o => (o.status === 'Returned' || o.status === 'Cancelled') && (o as any).return_received).length;
-  const notReceivedCount = orders.filter(o => (o.status === 'Returned' || o.status === 'Cancelled') && !(o as any).return_received).length;
+  const receivedCount = orders.filter(o => isReturnLike(o.status) && (o as any).return_received).length;
+  const notReceivedCount = orders.filter(o => isReturnLike(o.status) && !(o as any).return_received).length;
 
   const toggleReceived = async (order: any) => {
     const newVal = !(order as any).return_received;
