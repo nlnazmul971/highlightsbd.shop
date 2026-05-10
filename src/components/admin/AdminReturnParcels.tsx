@@ -121,13 +121,13 @@ const AdminReturnParcels = () => {
           <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search by name, phone, order ID, tracking..."
             className="luxury-input pl-9 w-full text-sm" />
         </div>
-        <div className="flex gap-1.5">
-          {(['All', 'Returned', 'Cancelled'] as const).map(f => (
+        <div className="flex gap-1.5 flex-wrap">
+          {(['All', 'Returned', 'Cancelled', 'ReturnCancel'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`text-[10px] tracking-[0.15em] uppercase px-3 py-1.5 border transition-colors ${
                 filter === f ? 'bg-primary text-primary-foreground border-primary' : 'border-border text-muted-foreground hover:text-foreground'
               }`}>
-              {f} {f !== 'All' && `(${orders.filter(o => o.status === f).length})`}
+              {f === 'ReturnCancel' ? 'Return Cancel' : f} {f !== 'All' && `(${orders.filter(o => o.status === f).length})`}
             </button>
           ))}
         </div>
