@@ -109,9 +109,16 @@ const CopySizeChartModal = ({ products, onClose }: { products: Product[]; onClos
   const [saving, setSaving] = useState(false);
   const updateProduct = useUpdateProduct();
 
-  const sourcesWithChart = products.filter(p => Array.isArray(p.size_chart) && p.size_chart.length > 0);
+  const parseChart = (sc: any): any[] => {
+    if (!sc) return [];
+    if (Array.isArray(sc)) return sc;
+    if (typeof sc === 'string') { try { const p = JSON.parse(sc); return Array.isArray(p) ? p : []; } catch { return []; } }
+    return [];
+  };
+
+  const sourcesWithChart = products.filter(p => parseChart(p.size_chart).length > 0);
   const source = products.find(p => p.id === sourceId);
-  const sourceChart = source && Array.isArray(source.size_chart) ? source.size_chart : [];
+  const sourceChart = parseChart(source?.size_chart);
   const targetCandidates = products
     .filter(p => p.id !== sourceId)
     .filter(p => !search.trim() || p.name.toLowerCase().includes(search.toLowerCase()));
@@ -129,18 +136,24 @@ const CopySizeChartModal = ({ products, onClose }: { products: Product[]; onClos
 
   const apply = async () => {
     if (!sourceId) { toast.error('Source product select করুন'); return; }
+    if (sourceChart.length === 0) { toast.error('Source product এ valid size chart নেই'); return; }
     if (targetIds.size === 0) { toast.error('কমপক্ষে একটি product select করুন'); return; }
     setSaving(true);
     try {
       let success = 0;
+      let failed = 0;
       for (const id of targetIds) {
-        const target = products.find(p => p.id === id);
-        if (!target) continue;
-        await updateProduct.mutateAsync({ ...target, size_chart: sourceChart } as any);
-        success++;
+        try {
+          await updateProduct.mutateAsync({ id, size_chart: sourceChart } as any);
+          success++;
+        } catch (e) {
+          console.error('Copy failed for', id, e);
+          failed++;
+        }
       }
-      toast.success(`${success} product এ size chart copy করা হয়েছে`);
-      onClose();
+      if (success > 0) toast.success(`${success} product এ size chart copy হয়েছে${failed ? ` (${failed} failed)` : ''}`);
+      if (success === 0) toast.error('কোনো product update হয়নি');
+      if (success > 0) onClose();
     } catch (err: any) {
       toast.error(err.message);
     } finally { setSaving(false); }
@@ -159,7 +172,7 @@ const CopySizeChartModal = ({ products, onClose }: { products: Product[]; onClos
           <select value={sourceId} onChange={e => setSourceId(e.target.value)} className="luxury-input">
             <option value="">-- Select source product --</option>
             {sourcesWithChart.map(p => (
-              <option key={p.id} value={p.id}>{p.name} ({(p.size_chart as any[]).length} rows)</option>
+              <option key={p.id} value={p.id}>{p.name} ({parseChart(p.size_chart).length} rows)</option>
             ))}
           </select>
           {sourcesWithChart.length === 0 && (
@@ -201,7 +214,7 @@ const CopySizeChartModal = ({ products, onClose }: { products: Product[]; onClos
                 <img src={getProductImage(p.image_url)} alt="" className="w-8 h-10 object-cover" />
                 <span className="flex-1 truncate">{p.name}</span>
                 <span className="text-[10px] text-muted-foreground">
-                  {Array.isArray(p.size_chart) && p.size_chart.length > 0 ? `${p.size_chart.length} rows (will overwrite)` : 'no chart'}
+                  {parseChart(p.size_chart).length > 0 ? `${parseChart(p.size_chart).length} rows (will overwrite)` : 'no chart'}
                 </span>
               </button>
             ))}
