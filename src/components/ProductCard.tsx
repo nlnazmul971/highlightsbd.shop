@@ -11,9 +11,10 @@ interface ProductCardProps {
   reviewStats?: Record<string, { avg: number; count: number }>;
   hoverImageUrl?: string | null;
   isSoldOut?: boolean;
+  priority?: boolean;
 }
 
-const ProductCard = ({ product, reviewStats = {}, hoverImageUrl, isSoldOut = false }: ProductCardProps) => {
+const ProductCard = ({ product, reviewStats = {}, hoverImageUrl, isSoldOut = false, priority = false }: ProductCardProps) => {
   const { addItem } = useCart();
   const { isInWishlist, toggleItem } = useWishlist();
   const [showSizes, setShowSizes] = useState(false);
@@ -64,25 +65,24 @@ const ProductCard = ({ product, reviewStats = {}, hoverImageUrl, isSoldOut = fal
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {/* Main image - always rendered */}
+          {/* Main image - eager for above-fold, lazy for rest */}
           <img
             src={getProductImage(product.image_url)}
             alt={product.name}
             className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out ${
               isHovered && hoverImage ? 'opacity-0 scale-105' : 'opacity-100 scale-100'
             }`}
-            loading="eager"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto' as any}
             decoding="async"
           />
-          {/* Hover image - preloaded, hidden until hover */}
-          {hoverImage && (
+          {/* Hover image - only mounted after first hover (saves bandwidth) */}
+          {hoverImage && isHovered && (
             <img
               src={hoverImage}
               alt={`${product.name} alternate`}
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out ${
-                isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-              }`}
-              loading="eager"
+              className="absolute inset-0 w-full h-full object-cover transition-all duration-500 ease-in-out opacity-100 scale-100"
+              loading="lazy"
               decoding="async"
             />
           )}
