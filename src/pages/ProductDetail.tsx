@@ -399,28 +399,88 @@ const ProductDetail = () => {
               </div>
             )}
 
-            <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-border">
-              <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4 sm:mb-6">Reviews ({reviews.length})</h3>
+           {/* Size Chart & Reviews Grid - PC View Side by Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mt-8 pt-6 border-t border-border">
               
-              <ReviewForm productId={product.id} />
+              {/* Left Side: Size Chart */}
+              <div className={product.size_chart ? "" : "hidden"}>
+                <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4">Size Chart</h3>
+                <div className="overflow-x-auto">
+                  {(() => {
+                    let chartData = [];
+                    try {
+                      chartData = typeof product.size_chart === 'string' 
+                        ? JSON.parse(product.size_chart) 
+                        : product.size_chart;
+                    } catch (e) { console.error("Size chart error:", e); }
 
-              {reviews.length > 0 && (
-                <div className="space-y-3 sm:space-y-4 mt-6">
-                  {reviews.map(r => (
-                    <div key={r.id} className="pb-3 sm:pb-4 border-b border-border last:border-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="flex">{Array.from({ length: 5 }).map((_, j) => <Star key={j} size={11} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />)}</div>
-                        <span className="text-[11px] font-medium">{r.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{r.comment}</p>
-                    </div>
-                  ))}
+                    if (!Array.isArray(chartData) || chartData.length === 0) return null;
+
+                    return (
+                      <table className="w-full text-xs sm:text-sm border border-border">
+                        <thead>
+                          <tr className="bg-muted/30">
+                            {Object.keys(chartData[0]).map(key => (
+                              <th key={key} className="px-3 py-2 text-left text-[10px] sm:text-xs uppercase tracking-wider text-muted-foreground border-b border-border font-medium">
+                                {key}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {chartData.map((row: any, i: number) => (
+                            <tr key={i} className="border-b border-border last:border-0 hover:bg-muted/10">
+                              {Object.values(row).map((val: any, j: number) => (
+                                <td key={j} className="px-3 py-2 text-foreground">{val}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    );
+                  })()}
                 </div>
-              )}
+              </div>
+
+              {/* Right Side: Review Form & Recent Reviews */}
+              <div>
+                <h3 className="luxury-heading text-base sm:text-lg tracking-[0.1em] mb-4">Reviews ({reviews.length})</h3>
+                <ReviewForm productId={product.id} />
+
+                {reviews.length > 0 && (
+                  <div className="space-y-3 mt-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar border-t border-border/50 pt-4">
+                    {reviews.map(r => (
+                      <div key={r.id} className="pb-3 border-b border-border last:border-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, j) => (
+                              <Star key={j} size={10} fill={j < r.rating ? 'currentColor' : 'none'} className={j < r.rating ? 'text-foreground' : 'text-muted-foreground/30'} />
+                            ))}
+                          </div>
+                          <span className="text-[10px] font-medium">{r.name}</span>
+                          <span className="text-[9px] text-muted-foreground">{new Date(r.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">{r.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {relatedProducts.length > 0 && (
+          <section className="mt-12 sm:mt-20 mb-8 sm:mb-12">
+            <div className="text-center mb-8 sm:mb-10">
+              <h2 className="luxury-heading text-xl sm:text-3xl tracking-[0.15em]">You May Also Like</h2>
+              <div className="w-12 h-px bg-foreground mx-auto mt-4" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+              {relatedProducts.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </section>
+        )}
 
         {relatedProducts.length > 0 && (
           <section className="mt-12 sm:mt-20 mb-8 sm:mb-12">
