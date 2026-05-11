@@ -66,7 +66,11 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
       {/* Main image */}
       <div
         ref={imgRef}
+<<<<<<< HEAD
+        className="flex-1 aspect-[3/4] lg:aspect-[3/4] lg:max-w-[500px] overflow-hidden bg-secondary cursor-crosshair relative mx-auto"
+=======
         className="flex-1 aspect-[3/4] overflow-hidden bg-secondary cursor-crosshair relative"
+>>>>>>> 794aadf4a856655f84d2289979d6e2dc2c520397
         onMouseEnter={() => setZoomed(true)}
         onMouseLeave={() => setZoomed(false)}
         onMouseMove={handleMouseMove}
@@ -76,7 +80,7 @@ const ProductImageGallery = ({ mainImage, name, productId }: { mainImage: string
         <img
           src={images[activeIndex]}
           alt={name}
-          className="w-full h-full object-cover transition-transform duration-200"
+          className="w-full h-full object-contain transition-transform duration-200"
           style={zoomed ? { transform: 'scale(2.5)', transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
           draggable={false}
         />
